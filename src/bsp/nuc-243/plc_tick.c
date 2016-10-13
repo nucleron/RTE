@@ -44,7 +44,7 @@ static frac_div_t systick_ctrl;
 #define TICK_STATE_LOW  2
 static uint32_t tick_state = TICK_STATE_HIGH;
 
-bool plc_tick_flag = false;
+volatile bool plc_tick_flag = false;
 
 extern void plc_irq_stub(void);
 

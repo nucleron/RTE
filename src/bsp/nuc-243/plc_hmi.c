@@ -21,10 +21,7 @@
 #include <plc_hw.h>
 #include <plc_iom.h>
 #include <dbnc_flt.h>
-#include <iec_std_lib.h>
 #include <hmi_7seg_conf.h>
-
-
 
 typedef struct
 {
@@ -56,21 +53,26 @@ char str_data[HMI_DIGITS+1];
 
 static uint8_t menu_pos=0; //current position
 static uint8_t number_place=0; //decimal/hexadecimal place
-static uint8_t in_chnl;
-static uint16_t menu_tmp = 0; //for edit mode
+       uint8_t in_chnl;
+       uint16_t menu_tmp = 0; //for edit mode
 static uint32_t screensaver_timer=0;
+static uint8_t previous_pos=0;
 static bool screensaver = true;
+static uint8_t screensaver_par=0;
 
-extern uint32_t mb_baudrate;
-extern uint8_t mb_slave_addr;
-extern dbnc_flt_t in_flt[];
-
-extern uint16_t digital_out;
 #define MENU_TYPE_SYS (1<<7)
 #define MENU_MODE_EDIT (1<<6)
 #define MENU_POS_MASK ~(0x3<<6)
 
-const uint32_t menu_readonly = SYS_MENU_READONLY;
+extern dbnc_flt_t in_flt[];
+
+void menu_sys_save_par(uint8_t num);
+uint16_t menu_sys_get_par(uint8_t num);
+
+extern uint8_t item_designator;
+extern  uint32_t menu_readonly;
+extern  uint32_t sys_menu_enabled;
+#define IS_SYS_PARAM_ENABLED(n) ((sys_menu_enabled&(1<<(n&MENU_POS_MASK)))!=0)
 #define IS_READONLY(x) ((menu_readonly&(1<<(x&MENU_POS_MASK)))!=0)
 
 #include "dbnc_flt.h"
@@ -79,7 +81,7 @@ static uint32_t pressed_timer[HMI_NBUTTONS]; //long press timers
 
 uint8_t hmi_leds;
 uint8_t dec_points;
-uint8_t brightness=0;
+uint8_t hmi_brightness=0;
 
 typedef enum
 {
@@ -192,9 +194,14 @@ void menu_next()
     int i;
     if((menu_pos&MENU_TYPE_SYS))
     {
-        menu_pos++;
-        if((menu_pos&MENU_POS_MASK) > HMI_MENU_SYS_LAST )//enu position overflow
-            menu_pos&=~MENU_POS_MASK; //Set position to 0
+        for(i=0;i<=HMI_MENU_SYS_LAST;i++)
+        {
+            menu_pos++;
+            if((menu_pos&MENU_POS_MASK) > HMI_MENU_SYS_LAST )//enu position overflow
+                menu_pos&=~MENU_POS_MASK; //Set position to 0
+            if(IS_SYS_PARAM_ENABLED(menu_pos&MENU_POS_MASK))
+            break;
+        }
     }
     else //go to next enabled parameter
     {
@@ -214,14 +221,19 @@ void menu_previous()
     int i;
     if((menu_pos&MENU_TYPE_SYS))
     {
-        if((menu_pos&MENU_POS_MASK) == 0 ) //menu underflow
+        for(i=0;i<=HMI_MENU_SYS_LAST;i++)
         {
-            menu_pos&=~MENU_POS_MASK; //Set position to 0
-            menu_pos|=HMI_MENU_SYS_LAST;
-        }
-        else
-        {
-             menu_pos--;
+            if((menu_pos&MENU_POS_MASK) == 0 ) //menu underflow
+            {
+                menu_pos&=~MENU_POS_MASK; //Set position to 0
+                menu_pos|=HMI_MENU_SYS_LAST;
+            }
+            else
+            {
+                 menu_pos--;
+            }
+            if(IS_SYS_PARAM_ENABLED(menu_pos&MENU_POS_MASK))
+            break;
         }
     }
     else //go to prevoius enabled parameter
@@ -241,43 +253,28 @@ void menu_previous()
         }
     }
 }
+
+void menu_save_par(void)
+{
+    uint8_t num = menu_pos&MENU_POS_MASK;
+
+    if(menu_pos&MENU_TYPE_SYS)
+    {
+        menu_sys_save_par(num);
+    }
+    else
+    {
+        app_params[num]=menu_tmp%9999; //clamp decimal value to 4 decimal places
+    }
+}
+
 uint16_t menu_get_par(void)
 {
     uint8_t num = menu_pos&MENU_POS_MASK;
-    static tm now;
+
     if(menu_pos&MENU_TYPE_SYS)
     {
-        if(num>=0 && num <= 2)
-            plc_rtc_dt_get(&now);
-        switch(num)
-        {
-        case 0: //YYYY
-            return now.tm_year;
-        case 1: //MM.DD
-            return now.tm_day+now.tm_mon*100;
-        case 2: //HH.MM
-            return now.tm_min + now.tm_hour*100;
-        case 3: //hmi display brightness
-            return brightness;
-        case 4:
-            return in_chnl;
-        case 5:
-            return in_flt[in_chnl].thr_on;
-        case 6:
-            return in_flt[in_chnl].thr_off;
-        case 7:
-            return digital_out;
-
-        //modbus baudrate
-        case 19:
-            return mb_baudrate/100;
-        case 20:
-            return mb_slave_addr;
-
-        default:
-            return 42; //dummy
-        }
-
+        return menu_sys_get_par(num);
     }
 
     else
@@ -300,46 +297,6 @@ param_type menu_get_par_type()
         return app_param_type[num];
     }
 }
-
-void menu_save_par(void)
-{
-    uint8_t num = menu_pos&MENU_POS_MASK;
-    static tm now;
-    if(menu_pos&MENU_TYPE_SYS)
-    {
-        if(num>=0 && num <= 2)
-            plc_rtc_dt_get(&now);
-        switch(num)
-        {
-        case 0: //YYYY
-            now.tm_year = menu_tmp;
-            plc_rtc_dt_set(&now);
-            break;
-        case 1: //MM.DD
-            now.tm_day = menu_tmp%100;
-            now.tm_mon = menu_tmp/100;
-            plc_rtc_dt_set(&now);
-            break;
-        case 2: //HH.MM
-            now.tm_min = menu_tmp%100;
-            now.tm_hour = menu_tmp/100;
-            plc_rtc_dt_set(&now);
-            break;
-        case 3: //hmi display brightness
-            brightness = MIN(menu_tmp,7);
-            break;
-        case 4:
-            in_chnl = MIN(menu_tmp,(PLC_DI_NUM-1));
-            break;
-        }
-
-    }
-    else
-    {
-            app_params[num]=menu_tmp%9999; //clamp decimal value to 4 decimal places
-    }
-}
-
 
 void menu_increment()
 {
@@ -423,6 +380,7 @@ void button_pressed(uint8_t button,bool longpress)
             else
             {
                 menu_pos^=MENU_TYPE_SYS;
+                dec_points = 0;
             }
         }
         //we do everything else on button release
@@ -462,25 +420,33 @@ void button_pressed(uint8_t button,bool longpress)
 void hmi_display_poll(void )
 {
     int i;
-    if(screensaver_timer==0) return;
     for(i=0;i<(HMI_DIGITS-1);i++)
     {
         convert_buffer[i]=char_to_7seg(str_data[i]); //process text
-    }
-
-    convert_buffer[HMI_DIGITS-1]=hmi_leds; //process led states
-
-    for(i=0;i<(HMI_DIGITS-1);i++) //process decimal point states
-    {
         convert_buffer[i]&=0x7f; //clear DP bit
         convert_buffer[i]|=(dec_points<<(7-i)&0x80); //set 7-th bit for each place
     }
-     //do not report conversion done while scr
-        conversion_ready = true;
+
+    convert_buffer[HMI_DIGITS-1]=hmi_leds&0x3; //process led states
+    if(hmi_leds&(1<<2)) //led 3
+        convert_buffer[HMI_DIGITS-1]|=1<<5;
+    if(hmi_leds&(1<<3)) //led 4
+        convert_buffer[HMI_DIGITS-1]|=1<<6;
+    if(hmi_leds&(1<<4)) //led 5
+        convert_buffer[HMI_DIGITS-1]|=1<<3;
+    if(hmi_leds&(1<<5)) //led 6
+        convert_buffer[HMI_DIGITS-1]|=1<<2;
+    if(hmi_leds&(1<<6)) //led 7
+        convert_buffer[HMI_DIGITS-1]|=1<<4;
+    if(hmi_leds&(1<<7)) //led 8
+        convert_buffer[HMI_DIGITS-1]|=1<<7;
+
+    conversion_ready = true;
 }
 
-char menu_pos_to_char(uint8_t pos)
+char menu_pos_to_char()
 {
+    uint8_t pos = menu_pos&MENU_POS_MASK;
     switch(pos)
         {
         case 0:
@@ -545,7 +511,7 @@ void par_value_str(char* s)
             sprintf(s,"%4x",val);
             break;
         case pt_dt:
-            sprintf(s,"%2d%02d",val/100,val%100);
+            sprintf(s,"%04d",val);
             break;
         default:
             sprintf(s,"Err ");
@@ -553,41 +519,77 @@ void par_value_str(char* s)
     }
 }
 
-void menu_display_poll(uint32_t tick)
+void hmi_menu_poll(uint32_t tick)
 {
     static uint32_t blink_timer;
     static uint8_t counter;
+    uint8_t i;
 
-    if(screensaver_timer!=0)
+    if(screensaver_timer!=0) //menu active
     {
-        str_data[0]=menu_pos_to_char(menu_pos&MENU_POS_MASK); //display current position
+        str_data[0]=menu_pos_to_char(); //display current position
         par_value_str(str_data+1); //display current parameter value
-        /*
-
-        */
+    }
+    else //screensaver active
+    {
+        menu_pos = screensaver_par;
+        str_data[0]=menu_pos_to_char(); //display current position
+        par_value_str(str_data+1);
     }
 
     if(tick>blink_timer)//.5s blink & animation timer
     {
         blink_timer=tick+HMI_REPEAT;
         counter++;
-        if(counter>=HMI_NSS)
-            counter = 0;
-        if(screensaver_timer==0)//screensaver active
-        {
-            memset(convert_buffer,0,HMI_DIGITS);
-            convert_buffer[screensaver_seq[counter][0]]= segmentLookup[screensaver_seq[counter][1]];
-            conversion_ready = true;
-        }
-        else
+        if(screensaver_timer!=0)//screensaver is not active
         {
             if((menu_pos&MENU_TYPE_SYS)!=0)
-               dec_points=counter%2; //blink 1st dot in sys menu
+               {
+                   dec_points=counter%2; //blink 1st dot in sys menu
+               }
         }
     }
 
+    if((menu_pos&MENU_TYPE_SYS)==0) //application menu always has dot after parameter number
+    {
+       dec_points|=1;
+    }
+    else
+    {
+        hmi_leds=0; //Leds display input states in system menu
+        if(counter%2==0)
+        {
+            for(i=0;i<PLC_HMI_DISPLAY_LEDS;i++)
+            {
+               if(dbnc_flt_get(in_flt+i))
+                    hmi_leds|=(1<<i);
+            }
+        }
+        else
+        {
+            for(i=0;i<(PLC_DI_NUM-PLC_HMI_DISPLAY_LEDS);i++)
+            {
+               if(dbnc_flt_get(in_flt+i+PLC_HMI_DISPLAY_LEDS))
+                    hmi_leds|=(1<<i);
+            }
+        }
+
+        if(menu_get_par_type()==pt_dt)
+            dec_points|=(1<<2); //date or time separator
+        else
+            dec_points&=~(1<<2);//do no need one
+    }
+
     if((menu_pos&MENU_MODE_EDIT)&&(counter%2))
-        str_data[number_place+1]='_'; //blink value in edit mode
+    {
+        if((menu_get_par_type()==pt_bool_oo)||(menu_get_par_type()==pt_bool_tf))
+        {
+            str_data[1]=str_data[2]=str_data[3]=str_data[4]=' ';
+        }
+        else
+            str_data[number_place+1]='_'; //blink value in edit mode
+    }
+
 }
 
 void hmi_button_poll(uint32_t tick)
@@ -602,6 +604,8 @@ void hmi_button_poll(uint32_t tick)
     if((screensaver_timer!=0)&(tick > screensaver_timer)) //screensaver timeout passed
     {
         screensaver_timer=0;
+        previous_pos = menu_pos;
+        dec_points = 0;
     }
     for(i = 0; i < HMI_NBUTTONS; i++)
     {
@@ -614,6 +618,7 @@ void hmi_button_poll(uint32_t tick)
             {
                 screensaver_timer = tick+HMI_SCREENASVER; //close screensaver and set timer
                  wait_exit_screensaver = true; //do not process button release or hold if this button invoked screensaver close
+                 menu_pos = previous_pos;
                  break;
             }
             screensaver_timer = tick+HMI_SCREENASVER; //close screensaver and set timer
@@ -683,7 +688,7 @@ void dynamic_7seg_poll(void)
         pwm=0;
     }
 
-   if(pwm>brightness)
+   if(pwm>hmi_brightness)
     {
        gpio_clear(anodes[anode_n].port,anodes[anode_n].pin);
     }
@@ -737,6 +742,8 @@ void PLC_IOM_LOCAL_INIT(void)
         rcc_periph_clock_enable(buttons[i].periph);
         gpio_mode_setup          (buttons[i].port, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, buttons[i].pin);
     }
+
+    hmi_brightness = MIN(plc_backup_load_brightness(),7);
 }
 
 bool PLC_IOM_LOCAL_TEST_HW(void)
@@ -746,7 +753,7 @@ bool PLC_IOM_LOCAL_TEST_HW(void)
 
 const char plc_hmi_err_dir[]      = "Only output and memory locations are supported for HMI";
 const char plc_hmi_err_type[]      = "Only BOOL type output locations are supported for HMI";
-const char plc_hmi_err_olim[]    = "HMI output must have address 0...1!";
+const char plc_hmi_err_olim[]    = "HMI output must have address 0...13!";
 const char plc_hmi_err_mlim[]    = "Parameter address out of limits!";
 const char plc_hmi_err_multi[] = "Memory location address must be unique!";
 const char plc_hmi_err_mem_type[] = "Memory location data type must be bool or word!";
@@ -758,12 +765,11 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     addr = PLC_APP->l_tab[i]->a_data[0];
 
 
-    if(PLC_APP->l_tab[i]->v_type == PLC_LT_Q ) //led outputs
+    if(PLC_APP->l_tab[i]->v_type == PLC_LT_Q ) //led outputs and screensaver parameter
     {
         if( PLC_APP->l_tab[i]->v_size == PLC_LSZ_X )
         {
-
-            if ((PLC_HMI_DISPLAY_LEDS+PLC_HMI_DISPLAY_LEDS+PLC_HMI_DISPLAY_DOTS) < addr)
+            if ((PLC_HMI_DO_NUM+PLC_HMI_DISPLAY_LEDS+PLC_HMI_DISPLAY_DOTS) <= addr)
             {
                 plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_hmi_err_olim, sizeof(plc_hmi_err_olim));
                 return false;
@@ -772,6 +778,16 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             {
                 return true;
             }
+        }
+        else if(PLC_APP->l_tab[i]->v_size == PLC_LSZ_B)
+        {
+            if(addr!=0)
+            {
+                plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_hmi_err_mlim, sizeof(plc_hmi_err_mlim));
+                return false;
+            }
+            else
+                return true;
         }
         else
         {
@@ -827,6 +843,26 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             }
         }
     }
+    else if(PLC_APP->l_tab[i]->v_type == PLC_LT_I )
+    {
+        if( PLC_APP->l_tab[i]->v_size == PLC_LSZ_B ) //menu current position location
+        {
+            if(addr==0)
+            {
+                return true;
+            }
+            else
+            {
+                plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_hmi_err_mlim, sizeof(plc_hmi_err_mlim));
+                return false;
+            }
+        }
+        else //bad type
+        {
+            plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_hmi_err_mem_type, sizeof(plc_hmi_err_mem_type));
+            return false;
+        }
+    }
     else
     {
         plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_hmi_err_dir, sizeof(plc_hmi_err_dir));
@@ -857,7 +893,7 @@ uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
 void PLC_IOM_LOCAL_POLL(uint32_t tick)
 {
     hmi_button_poll(tick);
-    menu_display_poll(tick);
+    hmi_menu_poll(tick);
     hmi_display_poll();
 }
 uint32_t PLC_IOM_LOCAL_WEIGTH(uint16_t lid)
@@ -879,32 +915,50 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
             break;
         }
     }
+    else if(PLC_APP->l_tab[i]->v_type == PLC_LT_I)
+    {
+        *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf) = menu_pos&MENU_POS_MASK;
+    }
     return 0;
 }
 uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 {
     locations_initialized = true;
     int addr = (plc_curr_app->l_tab[i]->a_data[0]);
-    if(PLC_APP->l_tab[i]->v_type == PLC_LT_Q ) //led outputs
+    if(PLC_APP->l_tab[i]->v_type == PLC_LT_Q ) //led outputs and screensaver parameter
     {
-        if(addr<PLC_HMI_DO_NUM) //RxTx led
+        if(PLC_APP->l_tab[i]->v_size == PLC_LSZ_X)
         {
-            plc_hmi_set_dout( plc_curr_app->l_tab[i]->a_data[0], *(bool *)(plc_curr_app->l_tab[i]->v_buf) );
+            if(addr<PLC_HMI_DO_NUM) //RxTx led
+            {
+                plc_hmi_set_dout( plc_curr_app->l_tab[i]->a_data[0], *(bool *)(plc_curr_app->l_tab[i]->v_buf) );
+            }
+            else if((PLC_HMI_DO_NUM <= addr) && (addr< (PLC_HMI_DO_NUM+PLC_HMI_DISPLAY_LEDS))) //main leds
+            {
+                if((menu_pos&MENU_TYPE_SYS)==0) //only switch leds when in application menu
+                {
+                    if(*(bool *)(plc_curr_app->l_tab[i]->v_buf)==true)
+                        hmi_leds |=(1<<(addr-PLC_HMI_DO_NUM));
+                    else
+                        hmi_leds &=~(1<<(addr-PLC_HMI_DO_NUM));
+                }
+            }//dots
+            else if(((PLC_HMI_DO_NUM+PLC_HMI_DISPLAY_LEDS) <= addr) && (addr< (PLC_HMI_DO_NUM+PLC_HMI_DISPLAY_LEDS+PLC_HMI_DISPLAY_DOTS))) //dots
+            {
+                if((menu_pos&MENU_TYPE_SYS)==0) //only switch dots when in application menu
+                {
+                    if(*(bool *)(plc_curr_app->l_tab[i]->v_buf)==true)
+                        dec_points |=(1<<(addr-PLC_HMI_DO_NUM-PLC_HMI_DISPLAY_LEDS+1));
+                    else
+                        dec_points &=~(1<<(addr-PLC_HMI_DO_NUM-PLC_HMI_DISPLAY_LEDS+1));
+                }
+            }
         }
-        else if((PLC_HMI_DO_NUM <= addr) && (addr< (PLC_HMI_DISPLAY_LEDS+PLC_HMI_DISPLAY_LEDS))) //main leds
+        else if(PLC_APP->l_tab[i]->v_size == PLC_LSZ_B) //screensaver parameter is the only byte value for now
         {
-            if(*(bool *)(plc_curr_app->l_tab[i]->v_buf)==true)
-                hmi_leds |=(1<<addr-PLC_HMI_DO_NUM);
-            else
-                hmi_leds &=~(1<<(addr-PLC_HMI_DO_NUM));
-        }//dots
-        else if(((PLC_HMI_DISPLAY_LEDS+PLC_HMI_DISPLAY_LEDS) <= addr) && (addr< (PLC_HMI_DISPLAY_LEDS+PLC_HMI_DISPLAY_LEDS+PLC_HMI_DISPLAY_DOTS))) //dots
-        {
-            if(*(bool *)(plc_curr_app->l_tab[i]->v_buf)==true)
-                dec_points |=(1<<addr-PLC_HMI_DO_NUM-PLC_HMI_DISPLAY_LEDS);
-            else
-                dec_points &=~(1<<(addr-PLC_HMI_DO_NUM));
+            screensaver_par = *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf);
         }
+
     }
     else if(PLC_APP->l_tab[i]->v_type == PLC_LT_M)
     {

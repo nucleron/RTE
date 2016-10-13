@@ -73,7 +73,7 @@ static bool mb_gotinit = false;
 static bool mb_enabled = false;
 static bool mb_ascii = false;
 uint32_t mb_baudrate = 9600;
-uint8_t mb_slave_addr = 0;
+uint8_t mb_slave_addr = 1;
 
 static unsigned short usRegHoldingStart = REG_HOLDING_START;
 static unsigned short usRegHoldingBuf[REG_HOLDING_NREGS-MB_REG_SEC-1];

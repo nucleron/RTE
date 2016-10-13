@@ -1,6 +1,7 @@
 #ifndef HMI_7SEG_CONF_H_INCLUDED
 #define HMI_7SEG_CONF_H_INCLUDED
 
+    #include <stdint.h>
     //Anodes
 
     #define HMI_ANODE_0_PERIPH RCC_GPIOC
@@ -155,20 +156,16 @@ const uint8_t segmentLookup[] =
     0x08  // _ (invalid character has to be at the end of array)
     };
 
-const uint8_t item_designator[] =
-{"0123456789abcdefghjlpr"};
 
-#define SYS_MENU_READONLY (1<<5) | (1<<6) | (1<<7) | (1<<9) | (1<<12) | (1<<13) | (1<<14) | (1<<17) | (1<<18) | (1<<19) | (1<<20) | (1<<21)
-
-const uint8_t screensaver_seq[][2]={{0,30},{0,25},{1,25},{2,25},{3,25},{4,25},{4,27},{4,28},{4,26},{3,26},{2,26},{1,26},{0,26},{0,29}};
-#define HMI_NSS 14
+//const uint8_t screensaver_seq[][2]={{0,30},{0,25},{1,25},{2,25},{3,25},{4,25},{4,27},{4,28},{4,26},{3,26},{2,26},{1,26},{0,26},{0,29}};
+//#define HMI_NSS 14
 
 #define HMI_DIGITS   6
 #define HMI_NBUTTONS 3
 
-#define HMI_BTN_UP   0
+#define HMI_BTN_UP   2
 #define HMI_BTN_OK   1
-#define HMI_BTN_DOWN 2
+#define HMI_BTN_DOWN 0
 #define HMI_BTN_RELEASE (1<<7)
 
 #define HMI_LONGPRESS 1500 //ticks

@@ -36,7 +36,7 @@ void plc_wait_tmr_init(void)
     nvic_enable_irq( PLC_WAIT_TMR_VECTOR );
 }
 
-uint32_t plc_sys_timer = 0;
+volatile uint32_t plc_sys_timer = 0;
 
 void PLC_WAIT_TMR_ISR(void)
 {

@@ -215,9 +215,11 @@
 #define MB_DEFAULT_TRANSPORT 0//1=ASCII 0=RTU
 
 /*
-*  Backup domain offsets
+*  Backup domain things
 */
 
+#define BACKUP_UNLOCK() PWR_CR |= PWR_CR_DBP
+#define BACKUP_LOCK() PWR_CR &= ~PWR_CR_DBP
 
 ///TODO: correct these!
 #define PLC_BKP_VER1_OFFSET      0x0
@@ -225,6 +227,7 @@
 
 #define PLC_BKP_BANK2_VER1_OFFSET      0x24
 #define PLC_BKP_BANK2_VER2_OFFSET      0x28
+#define PLC_BKP_BRIGHT_OFFSET          0x2C
 
 #define PLC_BKP_RTC_IS_OK_OFFSET 0x8
 /// IRQ_stub info!

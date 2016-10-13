@@ -44,7 +44,8 @@
 *.depend
 *.layout
 *.cscope_file_list
-
+*obj*
+*bin*
 
 # Something else #
 ##################
@@ -64,11 +65,11 @@
 ########
 doc/doxygen/html/**
 
+
+
 # Specific files #
 ##################
-#src/stm32flash/stm32flash
-#src/stm32flash/stm32flash.1
-stm32flash
+
 # Makefiles #
 #############
 #Makefile

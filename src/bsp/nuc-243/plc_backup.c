@@ -27,6 +27,8 @@
 #define PLC_BKP_BANK2_VER1   MMIO32(BACKUP_REGS_BASE + PLC_BKP_BANK2_VER1_OFFSET)
 #define PLC_BKP_BANK2_VER2   MMIO32(BACKUP_REGS_BASE + PLC_BKP_BANK2_VER2_OFFSET)
 
+#define PLC_BKP_BRIGHT       MMIO32(BACKUP_REGS_BASE + PLC_BKP_BRIGHT_OFFSET)
+
 #define PLC_BKP_BANK1_START (uint32_t *)(BKPSRAM_BASE)
 #define PLC_BKP_BANK2_START (uint32_t *)(BKPSRAM_BASE+PLC_BKP_SIZE)
 
@@ -56,6 +58,18 @@ void plc_backup_init(void)
     BACKUP_LOCK();
 }
 
+void plc_backup_save_brightness(uint8_t data)
+{
+    BACKUP_UNLOCK();
+    PLC_BKP_BRIGHT = data;
+    BACKUP_LOCK();
+}
+
+uint8_t plc_backup_load_brightness(void)
+{
+    return PLC_BKP_BRIGHT;
+}
+
 void plc_backup_invalidate(void)
 {
     BACKUP_UNLOCK();
@@ -70,7 +84,7 @@ void plc_backup_invalidate(void)
     BACKUP_LOCK();
 }
 
-void plc_backup_invalidate_all(void) //used to reset
+void plc_backup_reset(void) //used to reset
 {
     BACKUP_UNLOCK();
 
