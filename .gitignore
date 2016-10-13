@@ -1,0 +1,76 @@
+# Compiled Object files #
+#########################
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers #
+#######################
+*.gch
+*.pch
+
+# Compiled Dynamic libraries #
+##############################
+*.so
+*.dylib
+*.dll
+
+# Fortran module files #
+########################
+*.mod
+
+# Compiled Static libraries #
+#############################
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables #
+###############
+*.exe
+*.out
+*.app
+*.elf
+*.hex
+
+# IDE/Toolchain generated #
+###########################
+*.save
+*.map
+*.lss
+*.d
+*.depend
+*.layout
+*.cscope_file_list
+
+
+# Something else #
+##################
+*.py[ocd]
+*.rej
+
+# Backup files #
+################
+*~
+*.orig
+
+# Directory files #
+###################
+*directory
+
+# Docs #
+########
+doc/doxygen/html/**
+
+# Specific files #
+##################
+#src/stm32flash/stm32flash
+#src/stm32flash/stm32flash.1
+stm32flash
+# Makefiles #
+#############
+#Makefile
+
+
