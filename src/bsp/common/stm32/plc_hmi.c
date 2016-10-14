@@ -16,6 +16,7 @@
 #include <libopencm3/cm3/scb.h>
 
 #include <plc_config.h>
+#include <plc_gpio.h>
 #include <plc_abi.h>
 #include <plc_wait_tmr.h>
 #include <plc_hw.h>
@@ -113,39 +114,39 @@ void flip_buffers(void)
     conversion_ready = false;
 }
 
-static const dio_t hmi[PLC_HMI_DO_NUM] =
+static const plc_gpio_t hmi[PLC_HMI_DO_NUM] =
 {
-    PLC_hmi_REC(O,0),
-    PLC_hmi_REC(O,1),
+    PLC_GPIO_REC(LED_STG),
+    PLC_GPIO_REC(LED_STR)
 };
 
-static const dio_t anodes[HMI_DIGITS] =
+static const plc_gpio_t anodes[HMI_DIGITS] =
 {
-    PLC_ANODE_REC(0),
-    PLC_ANODE_REC(1),
-    PLC_ANODE_REC(2),
-    PLC_ANODE_REC(3),
-    PLC_ANODE_REC(4),
-    PLC_ANODE_REC(5)
+    PLC_GPIO_REC(HMI_ANODE_0),
+    PLC_GPIO_REC(HMI_ANODE_1),
+    PLC_GPIO_REC(HMI_ANODE_2),
+    PLC_GPIO_REC(HMI_ANODE_3),
+    PLC_GPIO_REC(HMI_ANODE_4),
+    PLC_GPIO_REC(HMI_ANODE_5)
 };
 
-static const dio_t segments[8] =
+static const plc_gpio_t segments[8] =
 {
-    PLC_SEG_REC(0),
-    PLC_SEG_REC(1),
-    PLC_SEG_REC(2),
-    PLC_SEG_REC(3),
-    PLC_SEG_REC(4),
-    PLC_SEG_REC(5),
-    PLC_SEG_REC(6),
-    PLC_SEG_REC(7),
+    PLC_GPIO_REC(HMI_SEG_0),
+    PLC_GPIO_REC(HMI_SEG_1),
+    PLC_GPIO_REC(HMI_SEG_2),
+    PLC_GPIO_REC(HMI_SEG_3),
+    PLC_GPIO_REC(HMI_SEG_4),
+    PLC_GPIO_REC(HMI_SEG_5),
+    PLC_GPIO_REC(HMI_SEG_6),
+    PLC_GPIO_REC(HMI_SEG_7),
 };
 
-static const dio_t buttons[HMI_NBUTTONS] =
+static const plc_gpio_t buttons[HMI_NBUTTONS] =
 {
-    PLC_BTN_REC(0),
-    PLC_BTN_REC(1),
-    PLC_BTN_REC(2),
+    PLC_GPIO_REC(HMI_BTN_0),
+    PLC_GPIO_REC(HMI_BTN_1),
+    PLC_GPIO_REC(HMI_BTN_2),
 };
 
 uint8_t char_to_7seg(unsigned char c)
@@ -599,9 +600,9 @@ void hmi_button_poll(uint32_t tick)
     static bool laststate[HMI_NBUTTONS];
     for (i = 0; i < HMI_NBUTTONS; i++)
     {
-        dbnc_flt_poll(btn_flt+i, tick, !gpio_get(buttons[i].port, buttons[i].pin)); //get and filter button states
+        dbnc_flt_poll(btn_flt+i, tick, !plc_gpio_get(buttons+i)); //get and filter button states
     }
-    if((screensaver_timer!=0)&(tick > screensaver_timer)) //screensaver timeout passed
+    if ((screensaver_timer !=0) & (tick > screensaver_timer)) //screensaver timeout passed
     {
         screensaver_timer=0;
         previous_pos = menu_pos;
@@ -612,7 +613,9 @@ void hmi_button_poll(uint32_t tick)
         if(dbnc_flt_get( btn_flt + i)) //button is down
         {
             if(wait_exit_screensaver)
+            {
                 break;
+            }
 
             if(screensaver_timer==0)
             {
@@ -633,22 +636,29 @@ void hmi_button_poll(uint32_t tick)
             {
                 if(laststate[i]==false) break;
                 pressed_timer[i] = tick+HMI_REPEAT;
-                if(i==HMI_BTN_OK) //no repeat for OK button
+                if (i==HMI_BTN_OK) //no repeat for OK button
+                {
                     laststate[i] = false;
+                }
                 button_pressed(i,true); //Long press event/repeat event
                 break;
             }
         }
         else //button is up
         {
-            if(i==(HMI_NBUTTONS-1))//all buttons up
+            if (i == (HMI_NBUTTONS-1))//all buttons up
             {
-                if(wait_exit_screensaver) laststate[i] = false; //do not send release event when closing screensaver
+                if (wait_exit_screensaver)
+                {
+                    laststate[i] = false; //do not send release event when closing screensaver
+                }
                 wait_exit_screensaver = false;
             }
 
-            if(laststate[i]==true) //Button was just released
+            if (laststate[i] == true) //Button was just released
+            {
                 button_pressed(i+128,false);
+            }
 
             laststate[i]=false; //reset everything
             pressed_timer[i]=0;
@@ -665,35 +675,43 @@ void dynamic_7seg_poll(void)
 
     if(pwm>7) //end of one pwm cycle
     {
-        gpio_clear(anodes[anode_n].port,anodes[anode_n].pin); //switch off previous char
-        for(i=0;i<8;i++)
+        plc_gpio_clear(anodes + anode_n);//switch off previous char
+
+        for (i=0; i<8; i++)
         {
-            gpio_clear(segments[i].port, segments[i].pin);     //set segment values
+            plc_gpio_clear(segments + i);//set segment values
         }
         anode_n++; //go to next place
-        if(anode_n>=HMI_DIGITS) //End of frame
+        if (anode_n >= HMI_DIGITS) //End of frame
         {
             anode_n = 0;
         }
-
-        if(conversion_ready==true) //we have new data to display
-                flip_buffers();
-
-        for(i=0;i<8;i++)
+        //we have new data to display
+        if (conversion_ready == true)
         {
-            do_set = ((video_buffer[anode_n]&(1<<i))!=0)?gpio_set:gpio_clear;
-            do_set(segments[i].port, segments[i].pin);     //set segment values
+            flip_buffers();
         }
-        gpio_set(anodes[anode_n].port,anodes[anode_n].pin); //turn on new char
+        //set segment values
+        for (i=0; i<8; i++)
+        {
+            if ((video_buffer[anode_n]&(1<<i)) == 0)
+            {
+                plc_gpio_clear(segments + i);
+            }
+            else
+            {
+                plc_gpio_set(segments + i);
+            }
+        }
+        plc_gpio_set(anodes + anode_n); //turn on new char
         pwm=0;
     }
 
-   if(pwm>hmi_brightness)
+    if (pwm > hmi_brightness)
     {
-       gpio_clear(anodes[anode_n].port,anodes[anode_n].pin);
+       plc_gpio_clear(anodes + anode_n);
     }
     pwm++;
-
 }
 
 
@@ -717,30 +735,14 @@ void PLC_IOM_LOCAL_INIT(void)
 {
     //Anodes init
     uint32_t i;
-    for (i=0; i<HMI_DIGITS; i++)
-    {
-        rcc_periph_clock_enable(anodes[i].periph );
-        gpio_mode_setup        (anodes[i].port, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, anodes[i].pin);
-        gpio_set_output_options(anodes[i].port, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, anodes[i].pin);
-        gpio_clear             (anodes[i].port, anodes[i].pin);
-    }
-
+    PLC_GPIO_GR_CFG_OUT(anodes);
     //Segment lines init
-    for (i=0; i<8; i++)
-    {
-        rcc_periph_clock_enable(segments[i].periph );
-        gpio_mode_setup        (segments[i].port, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, segments[i].pin);
-        gpio_set_output_options(segments[i].port, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, segments[i].pin);
-        gpio_clear             (segments[i].port, segments[i].pin);
-    }
-
+    PLC_GPIO_GR_CFG_OUT(segments);
     //Buttons init
     for (i=0; i<HMI_NBUTTONS; i++)
     {
         dbnc_flt_init(btn_flt+i);
-
-        rcc_periph_clock_enable(buttons[i].periph);
-        gpio_mode_setup          (buttons[i].port, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, buttons[i].pin);
+        plc_gpio_cfg_in(buttons+i);
     }
 
     hmi_brightness = MIN(plc_backup_load_brightness(),7);

@@ -4,77 +4,77 @@
     #include <stdint.h>
     //Anodes
 
-    #define HMI_ANODE_0_PERIPH RCC_GPIOC
-    #define HMI_ANODE_0_PORT GPIOC
-    #define HMI_ANODE_0_PIN  GPIO13
+    #define PLC_HMI_ANODE_0_PERIPH RCC_GPIOC
+    #define PLC_HMI_ANODE_0_PORT GPIOC
+    #define PLC_HMI_ANODE_0_PIN  GPIO13
 
-    #define HMI_ANODE_1_PERIPH RCC_GPIOE
-    #define HMI_ANODE_1_PORT GPIOE
-    #define HMI_ANODE_1_PIN  GPIO10
+    #define PLC_HMI_ANODE_1_PERIPH RCC_GPIOE
+    #define PLC_HMI_ANODE_1_PORT GPIOE
+    #define PLC_HMI_ANODE_1_PIN  GPIO10
 
-    #define HMI_ANODE_2_PERIPH RCC_GPIOE
-    #define HMI_ANODE_2_PORT GPIOE
-    #define HMI_ANODE_2_PIN  GPIO8
+    #define PLC_HMI_ANODE_2_PERIPH RCC_GPIOE
+    #define PLC_HMI_ANODE_2_PORT GPIOE
+    #define PLC_HMI_ANODE_2_PIN  GPIO8
 
-    #define HMI_ANODE_3_PERIPH RCC_GPIOC
-    #define HMI_ANODE_3_PORT GPIOC
-    #define HMI_ANODE_3_PIN  GPIO3
+    #define PLC_HMI_ANODE_3_PERIPH RCC_GPIOC
+    #define PLC_HMI_ANODE_3_PORT GPIOC
+    #define PLC_HMI_ANODE_3_PIN  GPIO3
 
-    #define HMI_ANODE_4_PERIPH RCC_GPIOA
-    #define HMI_ANODE_4_PORT GPIOA
-    #define HMI_ANODE_4_PIN  GPIO5
+    #define PLC_HMI_ANODE_4_PERIPH RCC_GPIOA
+    #define PLC_HMI_ANODE_4_PORT GPIOA
+    #define PLC_HMI_ANODE_4_PIN  GPIO5
 
-    #define HMI_ANODE_5_PERIPH RCC_GPIOA
-    #define HMI_ANODE_5_PORT GPIOA
-    #define HMI_ANODE_5_PIN  GPIO3
+    #define PLC_HMI_ANODE_5_PERIPH RCC_GPIOA
+    #define PLC_HMI_ANODE_5_PORT GPIOA
+    #define PLC_HMI_ANODE_5_PIN  GPIO3
 
     //Segment pins
 
-    #define HMI_SEG_6_PERIPH RCC_GPIOA //Segment A
-    #define HMI_SEG_6_PORT GPIOA
-    #define HMI_SEG_6_PIN  GPIO0
+    #define PLC_HMI_SEG_6_PERIPH RCC_GPIOA //Segment A
+    #define PLC_HMI_SEG_6_PORT GPIOA
+    #define PLC_HMI_SEG_6_PIN  GPIO0
 
-    #define HMI_SEG_5_PERIPH RCC_GPIOC //Segment B
-    #define HMI_SEG_5_PORT GPIOC
-    #define HMI_SEG_5_PIN  GPIO2
+    #define PLC_HMI_SEG_5_PERIPH RCC_GPIOC //Segment B
+    #define PLC_HMI_SEG_5_PORT GPIOC
+    #define PLC_HMI_SEG_5_PIN  GPIO2
 
-    #define HMI_SEG_4_PERIPH RCC_GPIOA //Segment C
-    #define HMI_SEG_4_PORT GPIOA
-    #define HMI_SEG_4_PIN  GPIO6
+    #define PLC_HMI_SEG_4_PERIPH RCC_GPIOA //Segment C
+    #define PLC_HMI_SEG_4_PORT GPIOA
+    #define PLC_HMI_SEG_4_PIN  GPIO6
 
-    #define HMI_SEG_3_PERIPH RCC_GPIOE //Segment D
-    #define HMI_SEG_3_PORT GPIOE
-    #define HMI_SEG_3_PIN  GPIO11
+    #define PLC_HMI_SEG_3_PERIPH RCC_GPIOE //Segment D
+    #define PLC_HMI_SEG_3_PORT GPIOE
+    #define PLC_HMI_SEG_3_PIN  GPIO11
 
-    #define HMI_SEG_2_PERIPH RCC_GPIOE //Segment E
-    #define HMI_SEG_2_PORT GPIOE
-    #define HMI_SEG_2_PIN  GPIO9
+    #define PLC_HMI_SEG_2_PERIPH RCC_GPIOE //Segment E
+    #define PLC_HMI_SEG_2_PORT GPIOE
+    #define PLC_HMI_SEG_2_PIN  GPIO9
 
-    #define HMI_SEG_1_PERIPH RCC_GPIOC //Segment F
-    #define HMI_SEG_1_PORT GPIOC
-    #define HMI_SEG_1_PIN  GPIO1
+    #define PLC_HMI_SEG_1_PERIPH RCC_GPIOC //Segment F
+    #define PLC_HMI_SEG_1_PORT GPIOC
+    #define PLC_HMI_SEG_1_PIN  GPIO1
 
-    #define HMI_SEG_0_PERIPH RCC_GPIOC //Segment G
-    #define HMI_SEG_0_PORT GPIOC
-    #define HMI_SEG_0_PIN  GPIO0
+    #define PLC_HMI_SEG_0_PERIPH RCC_GPIOC //Segment G
+    #define PLC_HMI_SEG_0_PORT GPIOC
+    #define PLC_HMI_SEG_0_PIN  GPIO0
 
-    #define HMI_SEG_7_PERIPH RCC_GPIOA  //Decimal point
-    #define HMI_SEG_7_PORT GPIOA
-    #define HMI_SEG_7_PIN  GPIO4
+    #define PLC_HMI_SEG_7_PERIPH RCC_GPIOA  //Decimal point
+    #define PLC_HMI_SEG_7_PORT GPIOA
+    #define PLC_HMI_SEG_7_PIN  GPIO4
 
     //Buttons
 
-    #define HMI_BTN_0_PERIPH RCC_GPIOE //Button 0
-    #define HMI_BTN_0_PORT GPIOE
-    #define HMI_BTN_0_PIN  GPIO5
+    #define PLC_HMI_BTN_0_PERIPH RCC_GPIOE //Button 0
+    #define PLC_HMI_BTN_0_PORT GPIOE
+    #define PLC_HMI_BTN_0_PIN  GPIO5
 
-    #define HMI_BTN_1_PERIPH RCC_GPIOE //Button 1
-    #define HMI_BTN_1_PORT GPIOE
-    #define HMI_BTN_1_PIN  GPIO6
+    #define PLC_HMI_BTN_1_PERIPH RCC_GPIOE //Button 1
+    #define PLC_HMI_BTN_1_PORT GPIOE
+    #define PLC_HMI_BTN_1_PIN  GPIO6
 
-    #define HMI_BTN_2_PERIPH RCC_GPIOA  //Button 2
-    #define HMI_BTN_2_PORT GPIOA
-    #define HMI_BTN_2_PIN  GPIO1
+    #define PLC_HMI_BTN_2_PERIPH RCC_GPIOA  //Button 2
+    #define PLC_HMI_BTN_2_PORT GPIOA
+    #define PLC_HMI_BTN_2_PIN  GPIO1
 
 
     #define PLC_ANODE_THING(n,name) (PLC_hmi_CONCAT2(HMI_ANODE_,PLC_hmi_CONCAT(n,name)))

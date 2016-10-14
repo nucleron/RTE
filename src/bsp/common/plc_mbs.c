@@ -5,10 +5,6 @@
  * see License.txt for details.
  */
 
-/*
- * Modbus slave interface
- */
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -76,8 +72,8 @@ static bool mb_start = false;
 static bool mb_gotinit = false;
 static bool mb_enabled = false;
 static bool mb_ascii = false;
-static uint32_t baudrate = 9600;
-static uint8_t slave_addr = 0;
+uint32_t mb_baudrate = 9600;
+uint8_t mb_slave_addr = 1;
 
 static unsigned short usRegHoldingStart = REG_HOLDING_START;
 static unsigned short usRegHoldingBuf[REG_HOLDING_NREGS-MB_REG_SEC-1];
@@ -287,8 +283,8 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         }
 
         mb_gotinit = true;
-        baudrate = (int)PLC_APP->l_tab[i]->a_data[1];
-        slave_addr = (int)PLC_APP->l_tab[i]->a_data[0];
+        mb_baudrate = (int)PLC_APP->l_tab[i]->a_data[1];
+        mb_slave_addr = (int)PLC_APP->l_tab[i]->a_data[0];
         mb_ascii = ((int)PLC_APP->l_tab[i]->a_data[2]!=0);
         return true;
 
@@ -316,9 +312,18 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     }
 }
 
+void PLC_IOM_LOCAL_START(uint16_t i)
+{
+}
+
+void PLC_IOM_LOCAL_STOP(void)
+{
+}
+
 void PLC_IOM_LOCAL_BEGIN(uint16_t i)
 {
 }
+
 //Do once!
 void PLC_IOM_LOCAL_END(uint16_t i)
 {
@@ -329,22 +334,18 @@ void PLC_IOM_LOCAL_END(uint16_t i)
         if (!mb_gotinit)
         {
             mb_ascii = MB_DEFAULT_TRANSPORT;
-            slave_addr = MB_DEFAULT_ADDRESS;
-            baudrate = MB_DEFAULT_BAUDRATE;
+            mb_slave_addr = MB_DEFAULT_ADDRESS;
+            mb_baudrate = MB_DEFAULT_BAUDRATE;
             mb_enabled = true;
             mb_start = true;
         }
-        eMBInit( (mb_ascii==true)?MB_ASCII:MB_RTU, slave_addr, 0, baudrate, MB_PAR_NONE );
+        eMBInit( (mb_ascii==true)?MB_ASCII:MB_RTU, mb_slave_addr, 0, mb_baudrate, MB_PAR_NONE );
     }
 }
 
 uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
 {
     return 0;
-}
-
-void PLC_IOM_LOCAL_START(void)
-{
 }
 
 void PLC_IOM_LOCAL_POLL(uint32_t tick)
@@ -369,11 +370,6 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
         plc_rtc_dt_set( &mbtime );
     }
 }
-
-void PLC_IOM_LOCAL_STOP(void)
-{
-}
-
 uint32_t PLC_IOM_LOCAL_WEIGTH(uint16_t i)
 {
     return PLC_APP->l_tab[i]->a_data[0];
