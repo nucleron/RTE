@@ -76,31 +76,6 @@
     #define PLC_HMI_BTN_2_PORT GPIOA
     #define PLC_HMI_BTN_2_PIN  GPIO1
 
-
-    #define PLC_ANODE_THING(n,name) (PLC_hmi_CONCAT2(HMI_ANODE_,PLC_hmi_CONCAT(n,name)))
-
-    #define PLC_ANODE_PERIPH(n) PLC_ANODE_THING(n,_PERIPH)
-    #define PLC_ANODE_PORT(n)   PLC_ANODE_THING(n,_PORT)
-    #define PLC_ANODE_PIN(n)    PLC_ANODE_THING(n,_PIN)
-
-    #define PLC_ANODE_REC(n) {PLC_ANODE_PERIPH(n),PLC_ANODE_PORT(n),PLC_ANODE_PIN(n)}
-
-    #define PLC_SEG_THING(n,name) (PLC_hmi_CONCAT2(HMI_SEG_,PLC_hmi_CONCAT(n,name)))
-
-    #define PLC_SEG_PERIPH(n) PLC_SEG_THING(n,_PERIPH)
-    #define PLC_SEG_PORT(n)   PLC_SEG_THING(n,_PORT)
-    #define PLC_SEG_PIN(n)    PLC_SEG_THING(n,_PIN)
-
-    #define PLC_SEG_REC(n) {PLC_SEG_PERIPH(n),PLC_SEG_PORT(n),PLC_SEG_PIN(n)}
-
-    #define PLC_BTN_THING(n,name) (PLC_hmi_CONCAT2(HMI_BTN_,PLC_hmi_CONCAT(n,name)))
-
-    #define PLC_BTN_PERIPH(n) PLC_BTN_THING(n,_PERIPH)
-    #define PLC_BTN_PORT(n)   PLC_BTN_THING(n,_PORT)
-    #define PLC_BTN_PIN(n)    PLC_BTN_THING(n,_PIN)
-
-    #define PLC_BTN_REC(n) {PLC_BTN_PERIPH(n),PLC_BTN_PORT(n),PLC_BTN_PIN(n)}
-
 //bit:  7 6 5 4 3 2 1 0
 //seg: dp a b c d e f g
 
