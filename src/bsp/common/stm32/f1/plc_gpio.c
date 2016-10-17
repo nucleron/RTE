@@ -6,6 +6,8 @@
 
 #include <plc_gpio.h>
 
+//#pragma GCC optimize ("O0")
+
 void plc_gpio_cfg_in(const plc_gpio_t * self)
 {
     rcc_periph_clock_enable(self->periph);

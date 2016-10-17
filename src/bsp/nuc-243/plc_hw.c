@@ -16,6 +16,7 @@
 #include <libopencm3/cm3/scb.h>
 
 #include <plc_config.h>
+#include <plc_gpio.h>
 #include <plc_abi.h>
 #include <plc_iom.h>
 #include <plc_dbg.h>
@@ -67,155 +68,35 @@ void plc_boot_mode_enter(void)
     scb_reset_system();
 }
 
-
-//Led blink timer
-static uint32_t blink_tmr;
-void plc_heart_beat_init(void)
-{
-    //LEDs
-    PLC_CLEAR_TIMER( blink_tmr );
-
-    rcc_periph_clock_enable( PLC_LED_STG_PERIPH );
-    gpio_mode_setup(PLC_LED_STG_PORT,  GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PLC_LED_STG_PIN);
-    gpio_set_output_options(PLC_LED_STG_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ,  PLC_LED_STG_PIN);
-    gpio_clear( PLC_LED_STG_PORT, PLC_LED_STG_PIN );
-
-    rcc_periph_clock_enable( PLC_LED_STR_PERIPH );
-    gpio_mode_setup(PLC_LED_STR_PORT,  GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PLC_LED_STR_PIN);
-    gpio_set_output_options(PLC_LED_STR_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, PLC_LED_STR_PIN);
-    gpio_clear( PLC_LED_STR_PORT, PLC_LED_STR_PIN );
-
-    rcc_periph_clock_enable( PLC_LED_TX_PERIPH );
-    gpio_mode_setup(PLC_LED_TX_PORT,  GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PLC_LED_TX_PIN);
-    gpio_set_output_options(PLC_LED_TX_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, PLC_LED_TX_PIN);
-    gpio_clear( PLC_LED_TX_PORT, PLC_LED_TX_PIN );
-
-    rcc_periph_clock_enable( PLC_LED_RX_PERIPH );
-    gpio_mode_setup(PLC_LED_RX_PORT,  GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PLC_LED_RX_PIN);
-    gpio_set_output_options(PLC_LED_RX_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, PLC_LED_RX_PIN);
-    gpio_clear( PLC_LED_RX_PORT, PLC_LED_RX_PIN );
-}
-
-extern uint32_t plc_backup_satus;
-
-static bool hse_post_flag = true;
-const char plc_hse_err_msg[] = "HSE oscilator failed!";
-static bool lse_post_flag = true;
-const char plc_lse_err_msg[] = "LSE oscilator failed!";
-
-static bool dl_post_flag = true;
-const char plc_dl_err_msg[] = "Deadline violation detected, PLC is stoped!";
-
-void plc_heart_beat_poll(void)
-{
-    uint32_t blink_thr;
-    if( plc_hw_status > 0 )
-    {
-        blink_thr = 500;
-    }
-    else
-    {
-        blink_thr = 1000;
-    }
-
-    if( PLC_TIMER(blink_tmr) > (blink_thr>>1) )
-    {
-        if (plc_hw_status  & PLC_HW_ERR_CRITICAL)
-         {
-             gpio_set( PLC_LED_STR_PORT, PLC_LED_STR_PIN );
-         }
-         else
-         {
-             gpio_set( PLC_LED_STG_PORT, PLC_LED_STG_PIN );
-         }
-        //if(  *(uint8_t *)BKPSRAM_BASE == 1 )
-        if(plc_hw_status  & PLC_HW_ERR_HSE)
-        {
-            if( hse_post_flag )
-            {
-                hse_post_flag = false;
-                plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_hse_err_msg, sizeof(plc_hse_err_msg));
-            }
-            gpio_set( PLC_LED_STR_PORT, PLC_LED_STR_PIN );
-        }
-
-        //if( *( (uint8_t *)BKPSRAM_BASE + 1) == 1 )
-        if(plc_hw_status  & PLC_HW_ERR_LSE)
-        {
-            if( lse_post_flag )
-            {
-                lse_post_flag = false;
-                plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_lse_err_msg, sizeof(plc_lse_err_msg));
-            }
-            gpio_set( PLC_LED_STR_PORT, PLC_LED_STR_PIN );
-        }
-        if (plc_hw_status  & PLC_HW_ERR_DEADLINE)
-         {
-            if( dl_post_flag )
-            {
-                dl_post_flag = false;
-                plc_app_stop();/* Must stop the app now! */
-                plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_dl_err_msg, sizeof(plc_dl_err_msg));
-            }
-            gpio_set( PLC_LED_STR_PORT, PLC_LED_STR_PIN );
-        }
-    }
-
-    if( PLC_TIMER(blink_tmr) > blink_thr )
-    {
-        PLC_CLEAR_TIMER(blink_tmr);
-        gpio_clear( PLC_LED_STR_PORT, PLC_LED_STR_PIN );
-        gpio_clear( PLC_LED_STG_PORT, PLC_LED_STG_PIN );
-    }
-}
-
 #include "dbnc_flt.h"
 dbnc_flt_t in_flt[PLC_DI_NUM];
 
-typedef struct
+static const plc_gpio_t din[PLC_DI_NUM] =
 {
-    enum rcc_periph_clken periph;
-    uint32_t port;
-    uint16_t pin;
-} dio_t;
-
-#define PLC_DIO_CONCAT(a,b) a##b
-#define PLC_DIO_CONCAT2(a,b) PLC_DIO_CONCAT(a,b)
-
-#define PLC_DIO_THING(t,n,name) (PLC_DIO_CONCAT2(PLC_DIO_CONCAT(PLC_,t),PLC_DIO_CONCAT(n,name)))
-
-#define PLC_DIO_PERIPH(t,n) PLC_DIO_THING(t,n,_PERIPH)
-#define PLC_DIO_PORT(t,n)   PLC_DIO_THING(t,n,_PORT)
-#define PLC_DIO_PIN(t,n)    PLC_DIO_THING(t,n,_PIN)
-
-#define PLC_DIO_REC(t,n) {PLC_DIO_PERIPH(t,n),PLC_DIO_PORT(t,n),PLC_DIO_PIN(t,n)}
-
-static const dio_t din[PLC_DI_NUM] =
-{
-    PLC_DIO_REC(I,0),
-    PLC_DIO_REC(I,1),
-    PLC_DIO_REC(I,2),
-    PLC_DIO_REC(I,3),
-    PLC_DIO_REC(I,4),
-    PLC_DIO_REC(I,5),
-    PLC_DIO_REC(I,6),
-    PLC_DIO_REC(I,7),
-    PLC_DIO_REC(I,8),
-    PLC_DIO_REC(I,9),
-    PLC_DIO_REC(I,10),
-    PLC_DIO_REC(I,11),
+    PLC_GPIO_REC(I0),
+    PLC_GPIO_REC(I1),
+    PLC_GPIO_REC(I2),
+    PLC_GPIO_REC(I3),
+    PLC_GPIO_REC(I4),
+    PLC_GPIO_REC(I5),
+    PLC_GPIO_REC(I6),
+    PLC_GPIO_REC(I7),
+    PLC_GPIO_REC(I8),
+    PLC_GPIO_REC(I9),
+    PLC_GPIO_REC(I10),
+    PLC_GPIO_REC(I11),
 };
 
-static const dio_t dout[PLC_DO_NUM] =
+static const plc_gpio_t dout[PLC_DO_NUM] =
 {
-    PLC_DIO_REC(O,0),
-    PLC_DIO_REC(O,1),
-    PLC_DIO_REC(O,2),
-    PLC_DIO_REC(O,3),
-    PLC_DIO_REC(O,4),
-    PLC_DIO_REC(O,5),
-    PLC_DIO_REC(O,6),
-    PLC_DIO_REC(O,7)
+    PLC_GPIO_REC(O0),
+    PLC_GPIO_REC(O1),
+    PLC_GPIO_REC(O2),
+    PLC_GPIO_REC(O3),
+    PLC_GPIO_REC(O4),
+    PLC_GPIO_REC(O5),
+    PLC_GPIO_REC(O6),
+    PLC_GPIO_REC(O7)
 };
 
 bool plc_get_din(uint32_t i)
@@ -272,22 +153,14 @@ void plc_set_aout( uint32_t i, uint32_t val )
 #define LOCAL_PROTO plc_dio
 void PLC_IOM_LOCAL_INIT(void)
 {
-    ///Outputs
     uint32_t i;
-    for (i=0; i<PLC_DO_NUM; i++)
-    {
-        rcc_periph_clock_enable(dout[i].periph );
-        gpio_mode_setup        (dout[i].port,GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, dout[i].pin);
-        gpio_set_output_options(dout[i].port, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, dout[i].pin);
-        gpio_clear             (dout[i].port,                                     dout[i].pin);
-    }
+    ///Outputs
+    PLC_GPIO_GR_CFG_OUT(dout);
     ///Inputs
     for (i=0; i<PLC_DI_NUM; i++)
     {
         dbnc_flt_init(in_flt+i);
-
-        rcc_periph_clock_enable(din[i].periph);
-        gpio_mode_setup          (din[i].port, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, din[i].pin);
+        plc_gpio_cfg_in(din+i);
     }
 }
 
@@ -317,7 +190,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     case PLC_LSZ_X:
         if (1 != PLC_APP->l_tab[i]->a_size)
         {
-            plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_dio_err_asz, sizeof(plc_dio_err_asz));
+            PLC_LOG_ERROR(plc_dio_err_asz);
             return false;
         }
         //Check type and address
@@ -326,7 +199,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         case PLC_LT_I:
             if (PLC_DI_NUM <= addr)
             {
-                plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_dio_err_ilim, sizeof(plc_dio_err_ilim));
+                PLC_LOG_ERROR(plc_dio_err_ilim);
                 return false;
             }
             else
@@ -336,13 +209,13 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 
         case PLC_LT_M:
         default:
-            plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_iom_err_sz, plc_iom_err_sz_sz);
+            PLC_LOG_ERR_SZ();
             return false;
 
         case PLC_LT_Q:
             if (PLC_DO_NUM <= addr)
             {
-                plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_dio_err_olim, sizeof(plc_dio_err_olim));
+                PLC_LOG_ERROR(plc_dio_err_olim);
                 return false;
             }
             else
@@ -355,32 +228,32 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     case PLC_LSZ_B:
         if (2 != PLC_APP->l_tab[i]->a_size)
         {
-            plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_dio_err_asz_flt, sizeof(plc_dio_err_asz_flt));
+            PLC_LOG_ERROR(plc_dio_err_asz_flt);
             return false;
         }
 
         if (PLC_LT_M != PLC_APP->l_tab[i]->v_type)
         {
-            plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_dio_err_tp_flt, sizeof(plc_dio_err_tp_flt));
+            PLC_LOG_ERROR(plc_dio_err_tp_flt);
             return false;
         }
 
         if (PLC_DI_NUM <= addr)
         {
-            plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_dio_err_ilim, sizeof(plc_dio_err_ilim));
+            PLC_LOG_ERROR(plc_dio_err_ilim);
             return false;
         }
 
         addr = PLC_APP->l_tab[i]->a_data[1];
         if( addr > 1 )
         {
-            plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_dio_err_flt_lim, sizeof(plc_dio_err_flt_lim));
+            PLC_LOG_ERROR(plc_dio_err_flt_lim);
             return false;
         }
         return true;
 
     default:
-        plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_iom_err_sz, plc_iom_err_sz_sz);
+        PLC_LOG_ERROR(plc_iom_err_sz_sz);
         return false;
     }
 }

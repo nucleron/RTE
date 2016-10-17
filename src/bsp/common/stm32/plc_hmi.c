@@ -98,8 +98,8 @@ void flip_buffers(void)
 
 static const plc_gpio_t hmi[PLC_HMI_DO_NUM] =
 {
-    PLC_GPIO_REC(LED_STG),
-    PLC_GPIO_REC(LED_STR)
+    PLC_GPIO_REC(LED_TX),
+    PLC_GPIO_REC(LED_RX)
 };
 
 static const plc_gpio_t anodes[HMI_DIGITS] =
@@ -544,7 +544,7 @@ void hmi_menu_poll(uint32_t tick)
         {
             for(i=0;i<PLC_HMI_DISPLAY_LEDS;i++)
             {
-               if(dbnc_flt_get(in_flt+i))
+               if(plc_get_din(i))
                     hmi_leds|=(1<<i);
             }
         }
@@ -552,7 +552,7 @@ void hmi_menu_poll(uint32_t tick)
         {
             for(i=0;i<(PLC_DI_NUM-PLC_HMI_DISPLAY_LEDS);i++)
             {
-               if(dbnc_flt_get(in_flt+i+PLC_HMI_DISPLAY_LEDS))
+               if(plc_get_din(i+PLC_HMI_DISPLAY_LEDS))
                     hmi_leds|=(1<<i);
             }
         }
@@ -715,8 +715,10 @@ void plc_hmi_set_dout( uint32_t i, bool val )
 #define LOCAL_PROTO plc_hmi
 void PLC_IOM_LOCAL_INIT(void)
 {
-    //Anodes init
     uint32_t i;
+    //LED
+    PLC_GPIO_GR_CFG_OUT(hmi);
+    //Anodes init
     PLC_GPIO_GR_CFG_OUT(anodes);
     //Segment lines init
     PLC_GPIO_GR_CFG_OUT(segments);

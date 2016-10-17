@@ -112,4 +112,7 @@ extern void plc_iom_check_print(uint16_t i);
 extern const uint32_t plc_iom_err_sz_sz;
 extern const char     plc_iom_err_sz[];
 
+#define PLC_LOG_ERROR(a) plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)(a), sizeof(a))
+#define PLC_LOG_ERR_SZ() plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)(plc_iom_err_sz), plc_iom_err_sz_sz)
+
 #endif // _PLC_IOM_H_

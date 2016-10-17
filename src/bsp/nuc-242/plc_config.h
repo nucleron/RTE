@@ -16,6 +16,7 @@
 *  PLC clocks
 */
 #define PLC_HSE_CONFIG cfg_hse_16Mhz
+#define PLC_RCC_AHB_FREQ 64
 /*
 *  Debug USART
 */

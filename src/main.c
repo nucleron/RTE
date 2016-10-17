@@ -44,7 +44,7 @@ const tm default_date =
 
 const char plc_start_msg[] = "This is YAPLC! Everything is OK!";
 const char plc_app_err_msg[] = "PLC app is not valid!!!";
-const char plc_hw_err_msg[] = "PLC herdware is damaged!!!";
+const char plc_hw_err_msg[] = "PLC hardware is damaged!!!";
 
 #ifndef PLC_RESET_HOOK
 #define PLC_RESET_HOOK() do{}while(0)
@@ -90,6 +90,10 @@ int main(void)
                 //Everything is OK may use app code
                 plc_curr_app = (plc_app_abi_t *)PLC_APP;
                 plc_curr_app->log_msg_post(LOG_DEBUG, (char *)plc_start_msg, sizeof(plc_start_msg));
+            }
+            else
+            {
+                plc_hw_status |= PLC_HW_ERR_LOCATION; //Message is allready posted!
             }
         }
         else

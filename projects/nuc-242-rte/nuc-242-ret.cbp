@@ -52,6 +52,7 @@
 			<Add directory="../../../freemodbus-v1.5.0/modbus/rtu" />
 			<Add directory="../../../freemodbus-v1.5.0/modbus/ascii" />
 			<Add directory="../../src/bsp/nuc-242/fmb_port" />
+			<Add directory="../../src/bsp/common/stm32" />
 		</Compiler>
 		<Linker>
 			<Add option="-mthumb" />
@@ -70,6 +71,15 @@
 		<Unit filename="../../src/COPYING.GPL3" />
 		<Unit filename="../../src/COPYING.LGPL3" />
 		<Unit filename="../../src/License.txt" />
+		<Unit filename="../../src/bsp/common/plc_tick.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f1/plc_gpio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/plc_diag.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../../src/bsp/nuc-242/fmb_port/port.h" />
 		<Unit filename="../../src/bsp/nuc-242/fmb_port/portevent.c">
 			<Option compilerVar="CC" />
@@ -91,9 +101,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../src/bsp/nuc-242/plc_config.h" />
-		<Unit filename="../../src/bsp/nuc-242/plc_diag.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="../../src/bsp/nuc-242/plc_hmi.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -113,9 +120,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../src/bsp/nuc-242/plc_serial.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../src/bsp/nuc-242/plc_tick.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../src/bsp/nuc-242/plc_wait_tmr.c">

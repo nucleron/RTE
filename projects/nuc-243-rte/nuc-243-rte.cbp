@@ -107,6 +107,9 @@
 		<Unit filename="../../src/bsp/common/stm32/f2/plc_serial.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/plc_diag.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../../src/bsp/common/stm32/plc_gpio.h" />
 		<Unit filename="../../src/bsp/common/stm32/plc_hmi.c">
 			<Option compilerVar="CC" />
@@ -116,9 +119,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../src/bsp/nuc-243/plc_config.h" />
-		<Unit filename="../../src/bsp/nuc-243/plc_diag.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="../../src/bsp/nuc-243/plc_hw.c">
 			<Option compilerVar="CC" />
 		</Unit>

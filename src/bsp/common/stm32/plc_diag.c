@@ -21,7 +21,7 @@
 #include <plc_wait_tmr.h>
 
 
-static const plc_gpio_t led_hb[PLC_DO_NUM] =
+static const plc_gpio_t led_hb[] =
 {
     PLC_GPIO_REC(LED_STG),
     PLC_GPIO_REC(LED_STR)

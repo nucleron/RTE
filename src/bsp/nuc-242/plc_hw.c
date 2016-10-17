@@ -68,7 +68,7 @@ void plc_boot_mode_enter(void)
     scb_reset_system();
 }
 
-
+/*
 //Led blink timer
 static uint32_t blink_tmr;
 void plc_heart_beat_init(void)
@@ -149,7 +149,7 @@ void plc_heart_beat_poll(void)
             if( dl_post_flag )
             {
                 dl_post_flag = false;
-                plc_app_stop();/* Must stop the app now! */
+                plc_app_stop();// Must stop the app now!
                 plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_dl_err_msg, sizeof(plc_dl_err_msg));
             }
             gpio_set( PLC_LED_STR_PORT, PLC_LED_STR_PIN );
@@ -163,7 +163,7 @@ void plc_heart_beat_poll(void)
         gpio_clear( PLC_LED_STG_PORT, PLC_LED_STG_PIN );
     }
 }
-
+*/
 #include "dbnc_flt.h"
 static dbnc_flt_t in_flt[PLC_DI_NUM];
 

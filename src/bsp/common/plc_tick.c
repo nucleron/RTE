@@ -10,9 +10,12 @@
 #include <libopencm3/cm3/systick.h>
 
 #include <plc_config.h>
+#include <plc_abi.h>
+#include <plc_dbg.h>
 #include <plc_tick.h>
 #include <frac_div.h>
 #include <plc_hw.h>
+#include <plc_iom.h>
 
 static bool systick_set_period(uint32_t period, uint32_t ahb, uint8_t clk_source)
 {
@@ -53,18 +56,37 @@ extern void plc_irq_stub(void);
 extern bool plc_dbg_mode;
 extern volatile uint32_t plc_hw_status;
 
+static bool dl_post_flag = true;
+
+void plc_heart_beat_init(void)
+{
+}
+
+void plc_heart_beat_poll(void)
+{
+    if (plc_hw_status  & PLC_HW_ERR_DEADLINE)
+    {
+        if( dl_post_flag )
+        {
+            dl_post_flag = false;
+            plc_app_stop();/* Must stop the app now! */
+        }
+    }
+}
+
 void sys_tick_handler(void)
 {
     //Soft watchdog
     if (plc_tick_flag)
     {
-        plc_irq_stub();
         if (plc_dbg_mode)
         {
-           plc_hw_status |= PLC_HW_ERR_DEADLINE;
+            //In debug mode we stop the program
+            plc_hw_status |= PLC_HW_ERR_DEADLINE;
         }
         else
-       {
+        {
+            //In normal mode we reset PLC
             plc_irq_stub();
         }
     }

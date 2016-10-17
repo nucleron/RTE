@@ -148,7 +148,7 @@ static void pll_setup( const clk_cfg *clock )
     /* Select PLL as SYSCLK source. */
     rcc_set_sysclk_source(RCC_CFGR_SWS_PLL);
 
-     /* Wait for PLL clock to be selected. */
+    /* Wait for PLL clock to be selected. */
     rcc_wait_for_sysclk_status(RCC_PLL);
 
     /* Set the peripheral clock frequencies used */
