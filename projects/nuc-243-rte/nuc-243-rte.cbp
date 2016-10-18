@@ -114,6 +114,10 @@
 		<Unit filename="../../src/bsp/common/stm32/plc_hmi.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/plc_hmi.h" />
+		<Unit filename="../../src/bsp/common/stm32/plc_hmi_ref.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../../src/bsp/nuc-243/hmi_7seg_conf.h" />
 		<Unit filename="../../src/bsp/nuc-243/menu_api.c">
 			<Option compilerVar="CC" />
