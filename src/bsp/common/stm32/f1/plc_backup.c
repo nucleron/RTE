@@ -19,31 +19,28 @@
 #include <plc_hw.h>
 
 //Use RTC backup registers for validation
-#define PLC_BKP_VER1   MMIO32(BACKUP_REGS_BASE + PLC_BKP_VER1_OFFSET)
-#define PLC_BKP_VER2   MMIO32(BACKUP_REGS_BASE + PLC_BKP_VER2_OFFSET)
-#define PLC_BKP_START (uint32_t *)(BACKUP_REGS_BASE + PLC_BKP_REG_OFFSET)
+#define PLC_BKP_VER_1   MMIO32(BACKUP_REGS_BASE + PLC_BKP_VER1_OFFSET)
+#define PLC_BKP_VER_2   MMIO32(BACKUP_REGS_BASE + PLC_BKP_VER2_OFFSET)
+#define PLC_BKP_START_1 (uint32_t *)(BACKUP_REGS_BASE + PLC_BKP_REG_OFFSET)
+#define PLC_BKP_START_2 (uint32_t *)(BACKUP_REGS_BASE + PLC_BKP_REG_OFFSET + PLC_BKP_REG_NUM)
 
-#define PLC_BKP_SIZE (PLC_BKP_REG_NUM*2ul) //Lowe 16bits are used
+#define PLC_BKP_SIZE (PLC_BKP_REG_NUM*2ul) //Lower 16bits are used
 
 static uint16_t plc_backup_buff[PLC_BKP_REG_NUM];
-static uint32_t * plc_backup_reg = PLC_BKP_START;
+static uint32_t * plc_backup_reg_1 = PLC_BKP_START_1;
+static uint32_t * plc_backup_reg_2 = PLC_BKP_START_2;
 
 void plc_backup_init(void)
 {
-    uint32_t i;
     rcc_periph_clock_enable(RCC_PWR);
     rcc_periph_clock_enable(RCC_BKP);
-
-    for(i = 0; i < PLC_BKP_REG_NUM; i++)
-    {
-        plc_backup_buff[i] = (uint16_t)(plc_backup_reg[i]&0xffff);
-    }
 }
 
 void plc_backup_reset(void)
 {
     pwr_disable_backup_domain_write_protect();
-    PLC_BKP_VER1++;
+    PLC_BKP_VER_1=0;
+    PLC_BKP_VER_2=0;
     pwr_enable_backup_domain_write_protect();
 }
 
@@ -57,29 +54,53 @@ void plc_backup_invalidate(void)
 void plc_backup_validate(void)
 {
     uint32_t i;
-
+    //Write bank 1
     pwr_disable_backup_domain_write_protect();
-    PLC_BKP_VER1++;
+    PLC_BKP_VER_1 &= 0xFFFFFFE; //Invalidate bank
 
     for(i = 0; i < PLC_BKP_REG_NUM; i++)
     {
-        plc_backup_reg[i] = (uint32_t)plc_backup_buff[i];
+        plc_backup_reg_1[i] = (uint32_t)plc_backup_buff[i];
     }
 
-    PLC_BKP_VER2 = PLC_BKP_VER1;
+    PLC_BKP_VER_1 += 3;//Validate bank
+    pwr_enable_backup_domain_write_protect();
+
+    //Write bank 2
+    pwr_disable_backup_domain_write_protect();
+    PLC_BKP_VER_2 &= 0xFFFFFFE; //Invalidate bank
+
+    for(i = 0; i < PLC_BKP_REG_NUM; i++)
+    {
+        plc_backup_reg_2[i] = (uint32_t)plc_backup_buff[i];
+    }
+
+    PLC_BKP_VER_2 += 3;//Validate bank
     pwr_enable_backup_domain_write_protect();
 }
 
 int plc_backup_check(void)
 {
-    if (PLC_BKP_VER1 != PLC_BKP_VER2)
+    uint32_t i;
+    if ((PLC_BKP_VER_1 > PLC_BKP_VER_2) && (PLC_BKP_VER_1 & 0x1))
     {
-        return 0;
+        for(i = 0; i < PLC_BKP_REG_NUM; i++)
+        {
+            plc_backup_buff[i] = (uint16_t)(plc_backup_reg_1[i]&0xffff);
+        }
+        return 1;//Success!!!
     }
-    else
+
+    if (PLC_BKP_VER_2 & 0x1)
     {
-        return 1; //Success, now may remind
+        for(i = 0; i < PLC_BKP_REG_NUM; i++)
+        {
+            plc_backup_buff[i] = (uint16_t)(plc_backup_reg_2[i]&0xffff);
+        }
+        return 1;//Success!!!
     }
+
+    return 0; //Fail! Use dafaults!
 }
 
 

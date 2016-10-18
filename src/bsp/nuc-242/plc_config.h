@@ -194,7 +194,7 @@
 #define PLC_BKP_IRQ6_OFFSET      0x24
 
 #define PLC_BKP_REG_OFFSET       0x40
-#define PLC_BKP_REG_NUM 32
+#define PLC_BKP_REG_NUM 16
 
 /*Diag info*/
 #define PLC_DIAG_IRQS ((uint32_t *)(BACKUP_REGS_BASE + PLC_BKP_IRQ1_OFFSET))
