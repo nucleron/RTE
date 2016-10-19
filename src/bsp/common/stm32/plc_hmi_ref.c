@@ -155,7 +155,7 @@ static char btn_fsm_poll(btn_fsm_t * self, uint32_t tick, bool in)
         {
             self->state = PLC_HMI_BTN_UP;
 
-            if (PLC_HMI_BTN_DOWN > (tick - self->tmr))
+            if (PLC_HMI_BUTTON_THR > (tick - self->tmr))
             {
                 return self->ch_short;
             }
