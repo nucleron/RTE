@@ -605,12 +605,34 @@ static void plc_hmi_view(void)
 
 static void plc_hmi_init(void)
 {
+    uint8_t i;
+    plc_hmi_kb_init();
+    plc_hmi_vout_init();
+
     hmi.cur_par = 0;
     hmi.state   = PLC_HMI_STATE_VIEW;
     hmi.tmp     = 0;
     hmi.cursor  = 0;
     hmi.cur_show = true;
-    hmi.mdl     = &(PLC_HMI_MDL_DFLT);
+
+    if (0 != PLC_HMI_MDL_DFLT.psize)
+    {
+        hmi.mdl  = &(PLC_HMI_MDL_DFLT);
+    }
+    else
+    {
+        hmi.mdl  = &plc_hmi_sys;
+    }
+
+    for (i = 0; i<hmi.mdl->psize; i++)
+    {
+        if (PLC_HMI_NOT_USED != hmi.mdl->ptype[i])
+        {
+            hmi.cur_par = i;
+            break;
+        }
+    }
+
     plc_hmi_view();
 }
 
@@ -712,7 +734,7 @@ static void plc_hmi_controller(char input)
                 hmi.tmp = !hmi.tmp;
                 break;
             case PLC_HMI_BTN_OK_S: //OK
-                hmi.mdl->par_set(hmi.cur_par, hmi.tmp);
+                hmi.mdl->par_set(hmi.cur_par, (uint16_t)hmi.tmp);
                 //Now exit edit mode
             case PLC_HMI_BTN_OK_L: //Cansel
                 exit_edit_mode();
@@ -772,21 +794,21 @@ static void plc_hmi_controller(char input)
                 break;
             }
             break;
-        case PLC_HMI_NOT_USED:
         default:
             break;
         }
     }
 }
 
-static void plc_hmi_start(void)
+static void plc_hmi_poll(uint32_t tick)
 {
+    char inp;
+    inp = plc_hmi_kb_poll(tick);
+    if (PLC_HMI_BTN_NO_CHAR != inp)
+    {
+        plc_hmi_controller(inp);
+    }
+    hmi.mdl->poll();
+    plc_hmi_view();
 }
 
-static void plc_hmi_poll(void)
-{
-}
-
-static void plc_hmi_stop(void)
-{
-}
