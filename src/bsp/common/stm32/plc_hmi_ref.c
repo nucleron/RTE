@@ -80,24 +80,6 @@
 #define PLC_HMI_SEG_7_PORT GPIOA
 #define PLC_HMI_SEG_7_PIN  GPIO4
 
-#define PLC_HMI_LED_CFG \
-{\
-    {5,1<<0},\
-    {5,1<<1},\
-    {5,1<<5},\
-    {5,1<<6},\
-    {5,1<<3},\
-    {5,1<<2},\
-    {5,1<<4},\
-    {5,1<<7},\
-    \
-    {1,1<<7},\
-    {2,1<<7},\
-    {3,1<<7},\
-    {4,1<<7},\
-    {0,1<<7}\
-}
-
 //Buttons
 #define PLC_HMI_BTN_0_PERIPH RCC_GPIOE //Button 0
 #define PLC_HMI_BTN_0_PORT GPIOE
@@ -110,6 +92,16 @@
 #define PLC_HMI_BTN_2_PERIPH RCC_GPIOA  //Button 2
 #define PLC_HMI_BTN_2_PORT GPIOA
 #define PLC_HMI_BTN_2_PIN  GPIO1
+
+#define PLC_HMI_LED_2 0
+#define PLC_HMI_LED_3 1
+#define PLC_HMI_LED_4 5
+#define PLC_HMI_LED_5 6
+#define PLC_HMI_LED_6 3
+#define PLC_HMI_LED_7 2
+#define PLC_HMI_LED_8 4
+#define PLC_HMI_LED_9 7
+
 ///Перенести в конфиг!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -462,7 +454,25 @@ static uint8_t char_to_7seg(unsigned char c)
     return segmentLookup[sizeof(segmentLookup)-1]; //character not found. displaying '_'
 }
 
-static const plc_hmi_led_rec led_cfg[] = PLC_HMI_LED_CFG;
+static const plc_hmi_led_rec led_cfg[] =
+{
+    //Leds
+    {5,1<<PLC_HMI_LED_2},
+    {5,1<<PLC_HMI_LED_3},
+    {5,1<<PLC_HMI_LED_4},
+    {5,1<<PLC_HMI_LED_5},
+    {5,1<<PLC_HMI_LED_6},
+    {5,1<<PLC_HMI_LED_7},
+    {5,1<<PLC_HMI_LED_8},
+    {5,1<<PLC_HMI_LED_9},
+    //Param value dots
+    {1,1<<7},
+    {2,1<<7},
+    {3,1<<7},
+    {4,1<<7},
+    //Param num dot
+    {0,1<<7}
+};
 
 static void plc_hmi_convert(char * buff, uint32_t led_val)
 {
@@ -604,6 +614,13 @@ static void plc_hmi_init(void)
     plc_hmi_view();
 }
 
+static inline void exit_edit_mode(void)
+{
+    hmi.state  = PLC_HMI_STATE_VIEW;
+}
+
+#define HMI_CUR_START (HMI_DIGITS-2) //Last "digit" is not digit.
+
 static void plc_hmi_controller(char input)
 {
     uint8_t i;
@@ -619,7 +636,7 @@ static void plc_hmi_controller(char input)
         {
         case PLC_HMI_BTN_UP_L: //Move up
         case PLC_HMI_BTN_UP_S:
-            for(i = hmi.mdl->psize; i>0; i++)//Limit iterations
+            for (i = hmi.mdl->psize; i>0; i++)//Limit iterations
             {
                 if (PLC_HMI_NOT_USED != hmi.mdl->ptype[cur_par])
                 {
@@ -635,7 +652,7 @@ static void plc_hmi_controller(char input)
             break;
         case PLC_HMI_BTN_DW_L: //Move down
         case PLC_HMI_BTN_DW_S:
-            for(i = hmi.mdl->psize; i>0; i++)//Limit iterations
+            for (i = hmi.mdl->psize; i>0; i++)//Limit iterations
             {
                 if (PLC_HMI_NOT_USED != hmi.mdl->ptype[cur_par])
                 {
@@ -660,7 +677,10 @@ static void plc_hmi_controller(char input)
                 break; //Can't edit empty params
             }
             //Enter edit mode
-            hmi.state = PLC_HMI_STATE_EDIT;
+            hmi.state  = PLC_HMI_STATE_EDIT;
+            hmi.cursor = HMI_CUR_START;
+            hmi.delta  = 1;
+            hmi.tmp    = hmi.mdl->par_get(cur_par); //Fetch current param
             break;
         case PLC_HMI_BTN_OK_L: //Enter/Exit system menu
             if (&plc_hmi_app == hmi.mdl)
@@ -678,6 +698,84 @@ static void plc_hmi_controller(char input)
     }
     else
     {
+        uint32_t       mul = 10; //Defaul multiplier
+        uint32_t max_delta = 1;
+        uint32_t   max_val = 1;
+        switch (ptype)
+        {
+        case PLC_HMI_BOOL_OO:
+        case PLC_HMI_BOOL_TF:
+            switch (input)
+            {
+            case PLC_HMI_BTN_UP_L: //Toggle val
+            case PLC_HMI_BTN_UP_S:
+                hmi.tmp = !hmi.tmp;
+                break;
+            case PLC_HMI_BTN_OK_S: //OK
+                hmi.mdl->par_set(hmi.cur_par, hmi.tmp);
+                //Now exit edit mode
+            case PLC_HMI_BTN_OK_L: //Cansel
+                exit_edit_mode();
+                break;
+            default: //Do nothing
+                break;
+            }
+            break;
+        case PLC_HMI_HEX:
+            mul = 0x10; //Change default multiplier
+        case PLC_HMI_UINT:
+        case PLC_HMI_MMDD:
+        case PLC_HMI_HHMM:
+            for (i = 0; i<=HMI_CUR_START; i++)
+            {
+                max_delta *= mul;
+            }
+            max_val = max_delta * mul - 1;
+
+            switch (input)
+            {
+            case PLC_HMI_BTN_UP_L: //Minus
+                hmi.tmp -= hmi.delta;
+                hmi.tmp %= max_val;
+                hmi.tmp = hmi.mdl->par_chk(hmi.cur_par, (uint16_t)hmi.tmp);
+                break;
+            case PLC_HMI_BTN_UP_S: //Plus
+                hmi.tmp += hmi.delta;
+                hmi.tmp %= max_val;
+                hmi.tmp = hmi.mdl->par_chk(hmi.cur_par, (uint16_t)hmi.tmp);
+                break;
+            case PLC_HMI_BTN_DW_L: //Prev digit
+                hmi.cursor--;
+                hmi.delta *= mul;
+                if (0 == hmi.cursor)
+                {
+                    hmi.cursor = HMI_CUR_START;
+                    hmi.delta  = 1;
+                }
+                break;
+            case PLC_HMI_BTN_DW_S: //Next digit
+                hmi.cursor++;
+                hmi.delta *= mul;
+                if (HMI_CUR_START < hmi.cursor)
+                {
+                    hmi.cursor = 0;
+                    hmi.delta  = max_delta;
+                }
+                break;
+            case PLC_HMI_BTN_OK_S: //OK
+                hmi.mdl->par_set(hmi.cur_par, (uint16_t)hmi.tmp);
+                //Now exit edit mode
+            case PLC_HMI_BTN_OK_L: //Cansel
+                exit_edit_mode();
+                break;
+            default: //Do nothing
+                break;
+            }
+            break;
+        case PLC_HMI_NOT_USED:
+        default:
+            break;
+        }
     }
 }
 

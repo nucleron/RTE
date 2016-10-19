@@ -46,11 +46,12 @@ struct _plc_hmi_dm_t
 
 struct _plc_hmi_t
 {
-    uint8_t cur_par; //Current param;
-    uint8_t state;
-    uint16_t tmp;
-    const plc_hmi_dm_t * mdl; //Current data mode
-    uint8_t cursor;
+    const plc_hmi_dm_t * mdl; //Current data model
+    uint32_t tmp;             //Temp var for edit mode
+    uint32_t delta;           //Delta in edit mode
+    uint8_t cursor;           //Cursor in edit mode
+    uint8_t cur_par;          //Current param;
+    uint8_t state;            //HMI state
     char buf[HMI_DIGITS];
     bool cur_show;
 };
