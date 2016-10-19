@@ -6,8 +6,8 @@
 
 typedef struct
 {
-    uint8_t shift;
-    uint8_t msk;
+    uint32_t shift;
+    uint32_t msk;
 }
 plc_hmi_led_rec;
 
@@ -40,8 +40,8 @@ struct _plc_hmi_dm_t
     uint16_t (*par_get)(uint8_t);           //parameter get
     uint16_t (*par_chk)(uint8_t, uint16_t); //parameter check
     void     (*par_set)(uint8_t, uint16_t); //parameter set
-    uint16_t (*poll)(void);              //Poll hook
-    bool psize;
+    void     (*poll)(void);              //Poll hook
+    uint8_t  psize;
 };
 
 struct _plc_hmi_t
@@ -59,6 +59,13 @@ struct _plc_hmi_t
 #define PLC_HMI_STATE_VIEW 0
 #define PLC_HMI_STATE_EDIT 1
 
+void plc_hmi_kb_init(void);
+char plc_hmi_kb_poll(uint32_t tick);
+
+void plc_hmi_vout_init(void);
 void plc_hmi_vout_poll(void);
+
+void _plc_hmi_init(void);
+void _plc_hmi_poll(uint32_t tick);
 
 #endif // _PLC_HMI_H_

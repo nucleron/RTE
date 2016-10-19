@@ -19,6 +19,7 @@
 #include <plc_gpio.h>
 #include <plc_abi.h>
 #include <plc_wait_tmr.h>
+#include <plc_hmi.h>
 #include <plc_hw.h>
 #include <plc_iom.h>
 #include <dbnc_flt.h>
@@ -715,6 +716,7 @@ void plc_hmi_set_dout( uint32_t i, bool val )
 #define LOCAL_PROTO plc_hmi
 void PLC_IOM_LOCAL_INIT(void)
 {
+    /*
     uint32_t i;
     //LED
     PLC_GPIO_GR_CFG_OUT(hmi);
@@ -730,6 +732,10 @@ void PLC_IOM_LOCAL_INIT(void)
     }
 
     hmi_brightness = MIN(plc_backup_load_brightness(),7);
+    */
+    //plc_hmi_kb_init();
+    //plc_hmi_vout_init();
+    _plc_hmi_init();
 }
 
 bool PLC_IOM_LOCAL_TEST_HW(void)
@@ -897,9 +903,13 @@ uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
 }
 void PLC_IOM_LOCAL_POLL(uint32_t tick)
 {
+    /*
     hmi_button_poll(tick);
     hmi_menu_poll(tick);
     hmi_display_poll();
+    */
+    //plc_hmi_kb_poll(tick);
+    _plc_hmi_poll(tick);
 }
 uint32_t PLC_IOM_LOCAL_WEIGTH(uint16_t lid)
 {

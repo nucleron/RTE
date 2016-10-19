@@ -1,7 +1,7 @@
 /*
  * Copyright Nucleron R&D LLC 2016
- * 
- * This file is licensed under the terms of NOSL, 
+ *
+ * This file is licensed under the terms of NOSL,
  * see License.txt for details.
  */
 
@@ -26,7 +26,7 @@ void dbnc_flt_poll(dbnc_flt_t * self, uint32_t tick, bool in)
         }
         else
         {
-            if (tick - self->tim_off > self->thr_off)
+            if ((tick - self->tim_off) > self->thr_off)
             {
                 self->flg = false;
                 self->tim_on = tick;
@@ -37,7 +37,7 @@ void dbnc_flt_poll(dbnc_flt_t * self, uint32_t tick, bool in)
     {
         if (in)
         {
-            if (tick - self->tim_on > self->thr_on)
+            if ((tick - self->tim_on) > self->thr_on)
             {
                 self->flg = true;
                 self->tim_off = tick;

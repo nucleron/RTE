@@ -18,9 +18,7 @@
 #include <plc_iom.h>
 #include <plc_wait_tmr.h>
 
-//#include <hmi_7seg_conf.h>
-
-///Перенести в конфиг!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+///TODO: Перенести в конфиг!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #define PLC_HMI_ANODE_0_PERIPH RCC_GPIOC
 #define PLC_HMI_ANODE_0_PORT GPIOC
@@ -102,7 +100,7 @@
 #define PLC_HMI_LED_8 4
 #define PLC_HMI_LED_9 7
 
-///Перенести в конфиг!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+///TODO: Перенести в конфиг!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 #define MIN(x,y) (((x)>(y))?(y):(x))
@@ -139,11 +137,11 @@ static inline void btn_fsm_init(btn_fsm_t * self, char ch_short, char ch_long)
 
 static char btn_fsm_poll(btn_fsm_t * self, uint32_t tick, bool in)
 {
-    dbnc_flt_poll((dbnc_flt_t *)self, tick, in);
+    dbnc_flt_poll(&self->flt, tick, in);
 
     if (PLC_HMI_BTN_DOWN == self->state)
     {
-        if (PLC_HMI_BTN_UP == ((dbnc_flt_t *)self)->flg)
+        if (PLC_HMI_BTN_UP == self->flt.flg)
         {
             self->state = PLC_HMI_BTN_UP;
 
@@ -159,7 +157,7 @@ static char btn_fsm_poll(btn_fsm_t * self, uint32_t tick, bool in)
     }
     else
     {
-        if (PLC_HMI_BTN_DOWN == ((dbnc_flt_t *)self)->flg)
+        if (PLC_HMI_BTN_DOWN == self->flt.flg)
         {
             self->state = PLC_HMI_BTN_DOWN;
             self->tmr = tick;
@@ -196,7 +194,7 @@ static const button_cfg[3][2] =
 
 btn_fsm_t button_fsm[BUTTONS_NUM];
 
-static void plc_hmi_kb_init(void)
+void plc_hmi_kb_init(void)
 {
     uint8_t i;
     for (i=0; i < BUTTONS_NUM; i++)
@@ -206,14 +204,14 @@ static void plc_hmi_kb_init(void)
     }
 }
 
-static char plc_hmi_kb_poll(uint32_t tick)
+char plc_hmi_kb_poll(uint32_t tick)
 {
     uint8_t i;
-    char ret = PLC_HMI_BTN_NO_CHAR;
+    volatile char ret = PLC_HMI_BTN_NO_CHAR;
 
     for (i=0; i < BUTTONS_NUM; i++)
     {
-        ret = btn_fsm_poll(button_fsm + i, tick, plc_gpio_get(button + i));
+        ret = btn_fsm_poll(button_fsm + i, tick, !plc_gpio_get(button + i));
         if( PLC_HMI_BTN_NO_CHAR != ret )
         {
             break;
@@ -231,7 +229,7 @@ static uint8_t buf2[HMI_DIGITS];
 static uint8_t* video     = buf1;
 static uint8_t* convert   = buf2;
 static bool     ready_flg = false;
-static uint8_t  brightness = 0;
+static uint8_t  brightness = 3;
 char            str_buf[HMI_DIGITS+1];
 
 static inline void swap_buf(void)
@@ -241,8 +239,6 @@ static inline void swap_buf(void)
     tmp = video;
     video = convert;
     convert= tmp;
-
-    ready_flg = false;
 }
 
 static const plc_gpio_t hmi_led[PLC_HMI_DO_NUM] =
@@ -273,7 +269,7 @@ static const plc_gpio_t segments[8] =
     PLC_GPIO_REC(HMI_SEG_7),
 };
 
-static inline void plc_hmi_vout_init(void)
+void plc_hmi_vout_init(void)
 {
     //LED
     PLC_GPIO_GR_CFG_OUT(hmi_led);
@@ -281,36 +277,30 @@ static inline void plc_hmi_vout_init(void)
     PLC_GPIO_GR_CFG_OUT(anodes);
     //Segment lines init
     PLC_GPIO_GR_CFG_OUT(segments);
+
+    brightness = MIN(plc_backup_load_brightness(),7);
 }
 
 void plc_hmi_vout_poll(void)
 {
     static uint8_t pwm=0;
     static uint8_t anode_n=0;
+    static bool clr_flg = true;
     uint8_t i;
 
     if(pwm>7) //end of one pwm cycle
     {
-        plc_gpio_clear(anodes + anode_n);//switch off previous char
-
-        for (i=0; i<8; i++)
-        {
-            plc_gpio_clear(segments + i);//set segment values
-        }
+        uint8_t * frame;
+        frame = video;
         anode_n++; //go to next place
         if (anode_n >= HMI_DIGITS) //End of frame
         {
             anode_n = 0;
         }
-        //we have new data to display
-        if (true == ready_flg)
-        {
-            swap_buf();
-        }
         //set segment values
         for (i=0; i<8; i++)
         {
-            if ((video[anode_n]&(1<<i)) == 0)
+            if ((frame[anode_n]&(1<<i)) == 0)
             {
                 plc_gpio_clear(segments + i);
             }
@@ -321,11 +311,17 @@ void plc_hmi_vout_poll(void)
         }
         plc_gpio_set(anodes + anode_n); //turn on new char
         pwm=0;
+        clr_flg = true;
     }
 
-    if (pwm > brightness)
+    if ((clr_flg) && (pwm > brightness))
     {
+        clr_flg = false;
         plc_gpio_clear(anodes + anode_n);
+        for (i=0; i<8; i++)
+        {
+            plc_gpio_clear(segments + i);
+        }
     }
     pwm++;
 }
@@ -474,6 +470,8 @@ static const plc_hmi_led_rec led_cfg[] =
     {0,1<<7}
 };
 
+#define PLC_HMI_PAR_NUM_DOT (1<<12)
+
 static void plc_hmi_convert(char * buff, uint32_t led_val)
 {
     int i;
@@ -485,7 +483,9 @@ static void plc_hmi_convert(char * buff, uint32_t led_val)
         convert[i]&=0x7f; //clear DP bit
     }
 
-    for (i=0, led_msk = 1; i<sizeof(led_cfg); i++, led_msk <<= 1)
+
+    led_msk = 1;
+    for (i=0; i<sizeof(led_cfg)/sizeof(plc_hmi_led_rec); i++)
     {
         const plc_hmi_led_rec * cfg;
 
@@ -493,15 +493,18 @@ static void plc_hmi_convert(char * buff, uint32_t led_val)
 
         if (led_val&led_msk)
         {
-            convert[cfg->shift] |= cfg->msk;
+            convert[cfg->shift] |= (cfg->msk);
         }
         else
         {
-            convert[cfg->shift] &= ~cfg->msk;
+            convert[cfg->shift] &= ~(cfg->msk);
         }
+        led_msk <<= 1;
     }
 
-    ready_flg = true;
+    PLC_DISABLE_INTERRUPTS();
+    swap_buf();
+    PLC_ENABLE_INTERRUPTS();
 }
 //==================================================================
 //                     Menu related things
@@ -512,7 +515,7 @@ static void par_value_str(char* s, plc_hmi_par_t par_type, uint16_t val)
     {
     case PLC_HMI_BOOL_TF:
     case PLC_HMI_RO_BOOL_TF:
-        sprintf(s,(val!=0)?"True":"FAL5E");
+        sprintf(s,(val!=0)?"True":"FAL5");
         break;
     case PLC_HMI_BOOL_OO:
     case PLC_HMI_RO_BOOL_OO:
@@ -548,15 +551,128 @@ static const char par_rep[] =
 };
 #define PLC_HMI_GET_PAR_REP(num) ((num>22)?'?':par_rep[num])
 
+static void     hmi_sys_poll(void);
+extern uint16_t hmi_sys_get(uint8_t par);
+extern uint16_t hmi_sys_chk(uint8_t par, uint16_t val);
+extern void     hmi_sys_set(uint8_t par, uint16_t val);
 
-static plc_hmi_t hmi;
-///TODO: make extern
-plc_hmi_dm_t plc_hmi_sys;
-///TODO: write init, etc.
-plc_hmi_dm_t plc_hmi_app;
+extern plc_hmi_par_t plc_hmi_sys_ptype[];
+extern const uint8_t plc_hmi_sys_psize;
 
-#define PLC_HMI_MDL_DFLT plc_hmi_sys
+#define PLC_HMI_SYS_PSIZE 6 ///TODO: Вынести в отдельный файл.
 
+plc_hmi_dm_t plc_hmi_sys =
+{
+    .leds  = 0,
+    .ptype = plc_hmi_sys_ptype,
+
+    .par_get = hmi_sys_get,
+    .par_set = hmi_sys_set,
+    .par_chk = hmi_sys_chk,
+    .poll    = hmi_sys_poll,
+
+    .psize = PLC_HMI_SYS_PSIZE
+};
+
+static void     hmi_app_poll(void);
+static uint16_t hmi_app_get(uint8_t par);
+static uint16_t hmi_app_chk(uint8_t par, uint16_t val);
+static void     hmi_app_set(uint8_t par, uint16_t val);
+
+static plc_hmi_par_t plc_hmi_app_ptype[] =
+{
+    PLC_HMI_NOT_USED, PLC_HMI_NOT_USED, PLC_HMI_NOT_USED, PLC_HMI_NOT_USED,
+    PLC_HMI_NOT_USED, PLC_HMI_NOT_USED, PLC_HMI_NOT_USED, PLC_HMI_NOT_USED,
+    PLC_HMI_NOT_USED, PLC_HMI_NOT_USED, PLC_HMI_NOT_USED, PLC_HMI_NOT_USED,
+    PLC_HMI_NOT_USED, PLC_HMI_NOT_USED, PLC_HMI_NOT_USED, PLC_HMI_NOT_USED
+};
+
+plc_hmi_dm_t plc_hmi_app =
+{
+    .leds  = 0,
+    .ptype = plc_hmi_app_ptype,
+
+    .par_get = hmi_app_get,
+    .par_set = hmi_app_set,
+    .par_chk = hmi_app_chk,
+    .poll    = hmi_app_poll,
+
+    .psize = 16
+};
+
+plc_hmi_t hmi;
+#define PLC_HMI_PAR_NUM_DOT (1<<12)
+
+static void hmi_app_poll(void)
+{
+    plc_hmi_app.leds |= PLC_HMI_PAR_NUM_DOT;
+}
+
+static uint16_t hmi_app_pdata[16];
+
+static uint16_t hmi_app_get(uint8_t par)
+{
+    return hmi_app_pdata[par];
+}
+static uint16_t hmi_app_chk(uint8_t par, uint16_t val)
+{
+    (void)par;
+    return val;
+}
+static void     hmi_app_set(uint8_t par, uint16_t val)
+{
+    hmi_app_pdata[par] = val;
+}
+//===================================================================
+static void hmi_sys_poll(void)
+{
+    if (hmi.cur_show)
+    {
+        plc_hmi_sys.leds |= PLC_HMI_PAR_NUM_DOT;
+    }
+    else
+    {
+        plc_hmi_sys.leds &= ~PLC_HMI_PAR_NUM_DOT;
+    }
+}
+
+//===================================================================
+///TODO:Вынести в отдельный файл!!!
+uint16_t plc_hmi_sys_pdata[] =
+{
+      2016,
+       103,
+      1300,
+    0xABCD,
+         1,
+         0
+};
+
+plc_hmi_par_t plc_hmi_sys_ptype[] =
+{
+    PLC_HMI_UINT,
+    PLC_HMI_MMDD,
+    PLC_HMI_HHMM,
+    PLC_HMI_HEX,
+    PLC_HMI_BOOL_TF,
+    PLC_HMI_BOOL_OO,
+};
+const uint8_t plc_hmi_sys_psize = sizeof(plc_hmi_sys_ptype)/sizeof(plc_hmi_par_t);
+
+uint16_t hmi_sys_get(uint8_t par)
+{
+    return plc_hmi_sys_pdata[par];
+}
+uint16_t hmi_sys_chk(uint8_t par, uint16_t val)
+{
+    (void)par;
+    return val;
+}
+void     hmi_sys_set(uint8_t par, uint16_t val)
+{
+    plc_hmi_sys_pdata[par] = val;
+}
+//===================================================================
 static void plc_hmi_view(void)
 {
     uint8_t i;
@@ -584,7 +700,7 @@ static void plc_hmi_view(void)
             case PLC_HMI_BOOL_TF:
                 for (i=1; i<HMI_DIGITS; i++)
                 {
-                    hmi.buf[i] = 0;//blink all!
+                    hmi.buf[i] = ' ';//blink all!
                 }
                 break;
             case PLC_HMI_HEX:
@@ -602,8 +718,21 @@ static void plc_hmi_view(void)
     }
     plc_hmi_convert(hmi.buf, hmi.mdl->leds);
 }
-
-static void plc_hmi_init(void)
+static void find_par(void)
+{
+    uint8_t i;
+    hmi.cur_par = 0;
+    for (i = 0; i<hmi.mdl->psize; i++)
+    {
+        if (PLC_HMI_NOT_USED != hmi.mdl->ptype[i])
+        {
+            hmi.cur_par = i;
+            break;
+        }
+    }
+}
+#define PLC_HMI_MDL_DFLT plc_hmi_sys
+void _plc_hmi_init(void)
 {
     uint8_t i;
     plc_hmi_kb_init();
@@ -624,14 +753,7 @@ static void plc_hmi_init(void)
         hmi.mdl  = &plc_hmi_sys;
     }
 
-    for (i = 0; i<hmi.mdl->psize; i++)
-    {
-        if (PLC_HMI_NOT_USED != hmi.mdl->ptype[i])
-        {
-            hmi.cur_par = i;
-            break;
-        }
-    }
+    find_par();
 
     plc_hmi_view();
 }
@@ -660,33 +782,39 @@ static void plc_hmi_controller(char input)
         case PLC_HMI_BTN_UP_S:
             for (i = hmi.mdl->psize; i>0; i++)//Limit iterations
             {
-                if (PLC_HMI_NOT_USED != hmi.mdl->ptype[cur_par])
-                {
-                    hmi.cur_par = cur_par;
-                    break;
-                }
-                cur_par--;
                 if (0 == cur_par)
                 {
                     cur_par = hmi.mdl->psize-1;
                 }
+                else
+                {
+                    cur_par--;
+                }
+                if (PLC_HMI_NOT_USED != hmi.mdl->ptype[cur_par])
+                {
+                    break;
+                }
             }
+            hmi.cur_par = cur_par;
             break;
         case PLC_HMI_BTN_DW_L: //Move down
         case PLC_HMI_BTN_DW_S:
             for (i = hmi.mdl->psize; i>0; i++)//Limit iterations
             {
-                if (PLC_HMI_NOT_USED != hmi.mdl->ptype[cur_par])
-                {
-                    hmi.cur_par = cur_par;
-                    break;
-                }
-                cur_par++;
-                if (0 == hmi.mdl->psize - cur_par)
+                if (hmi.mdl->psize-1 == cur_par)
                 {
                     cur_par = 0;
                 }
+                else
+                {
+                    cur_par++;
+                }
+                if (PLC_HMI_NOT_USED != hmi.mdl->ptype[cur_par])
+                {
+                    break;
+                }
             }
+            hmi.cur_par = cur_par;
             break;
 
         case PLC_HMI_BTN_OK_S: //Enter edit mode
@@ -713,6 +841,7 @@ static void plc_hmi_controller(char input)
             {
                 hmi.mdl = &plc_hmi_app;
             }
+            find_par();
             break;
         default:
             break;
@@ -748,40 +877,49 @@ static void plc_hmi_controller(char input)
         case PLC_HMI_UINT:
         case PLC_HMI_MMDD:
         case PLC_HMI_HHMM:
-            for (i = 0; i<=HMI_CUR_START; i++)
+            for (i = 0; i<HMI_CUR_START-1; i++)
             {
                 max_delta *= mul;
             }
-            max_val = max_delta * mul - 1;
+            max_val = max_delta * mul;
 
             switch (input)
             {
             case PLC_HMI_BTN_UP_L: //Minus
-                hmi.tmp -= hmi.delta;
-                hmi.tmp %= max_val;
+                if (hmi.tmp < hmi.delta)
+                {
+                    hmi.tmp += hmi.delta*(mul-1);
+                }
+                else
+                {
+                    hmi.tmp -= hmi.delta;
+                }
                 hmi.tmp = hmi.mdl->par_chk(hmi.cur_par, (uint16_t)hmi.tmp);
                 break;
             case PLC_HMI_BTN_UP_S: //Plus
                 hmi.tmp += hmi.delta;
-                hmi.tmp %= max_val;
+                if (max_val <= hmi.tmp)
+                {
+                    hmi.tmp %= max_val;
+                }
                 hmi.tmp = hmi.mdl->par_chk(hmi.cur_par, (uint16_t)hmi.tmp);
                 break;
             case PLC_HMI_BTN_DW_L: //Prev digit
+                hmi.cursor++;
+                hmi.delta *= mul;
+                if (HMI_CUR_START < hmi.cursor)
+                {
+                    hmi.cursor = 1;
+                    hmi.delta  = max_delta;
+                }
+                break;
+            case PLC_HMI_BTN_DW_S: //Next digit
                 hmi.cursor--;
                 hmi.delta *= mul;
                 if (0 == hmi.cursor)
                 {
                     hmi.cursor = HMI_CUR_START;
                     hmi.delta  = 1;
-                }
-                break;
-            case PLC_HMI_BTN_DW_S: //Next digit
-                hmi.cursor++;
-                hmi.delta *= mul;
-                if (HMI_CUR_START < hmi.cursor)
-                {
-                    hmi.cursor = 0;
-                    hmi.delta  = max_delta;
                 }
                 break;
             case PLC_HMI_BTN_OK_S: //OK
@@ -800,15 +938,25 @@ static void plc_hmi_controller(char input)
     }
 }
 
-static void plc_hmi_poll(uint32_t tick)
+void _plc_hmi_poll(uint32_t tick)
 {
-    char inp;
-    inp = plc_hmi_kb_poll(tick);
-    if (PLC_HMI_BTN_NO_CHAR != inp)
+    static uint32_t blink;
+    volatile char key;
+
+    if (500 < (tick - blink))
     {
-        plc_hmi_controller(inp);
+        blink = tick;
+        hmi.cur_show = !hmi.cur_show;
     }
+    //Controller
+    key = plc_hmi_kb_poll(tick);
+    if (PLC_HMI_BTN_NO_CHAR != key)
+    {
+        plc_hmi_controller(key);
+    }
+    //Model
     hmi.mdl->poll();
+    //View
     plc_hmi_view();
 }
 
