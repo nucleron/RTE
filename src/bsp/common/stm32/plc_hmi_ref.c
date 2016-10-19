@@ -535,6 +535,9 @@ static void par_value_str(char* s, plc_hmi_par_t par_type, uint16_t val)
     case PLC_HMI_RO_HHMM:
         sprintf(s,"%04d",val);
         break;
+    case PLC_HMI_NOT_USED:
+        sprintf(s,"    ");
+        break;
     default:
         sprintf(s,"Err ");
         break;
@@ -559,7 +562,7 @@ extern void     hmi_sys_set(uint8_t par, uint16_t val);
 extern plc_hmi_par_t plc_hmi_sys_ptype[];
 extern const uint8_t plc_hmi_sys_psize;
 
-#define PLC_HMI_SYS_PSIZE 6 ///TODO: Вынести в отдельный файл.
+#define PLC_HMI_SYS_PSIZE 6 ///TODO: Вынести в конфиг!!!
 
 plc_hmi_dm_t plc_hmi_sys =
 {
