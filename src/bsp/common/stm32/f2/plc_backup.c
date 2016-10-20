@@ -159,7 +159,7 @@ void plc_backup_retain(unsigned int offset, unsigned int count, void *p)
     uint32_t* storage;
     if(offset + count < PLC_BKP_SIZE)
     {
-        if(PLC_BKP_VER_1<=PLC_BKP_VER_2) //store to latest bank
+        if(PLC_BKP_VER_1<=PLC_BKP_VER_2) //store to latest bank (latest means nonvalid with lesser version!)
         {
             storage = plc_backup_reg_bank1;
         }
