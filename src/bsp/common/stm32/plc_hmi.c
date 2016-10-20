@@ -983,7 +983,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
                 {
                 case PLC_LSZ_X:
                 {
-                    static const plc_hmi_par_t ptype[] = {PLC_HMI_BOOL_TF, PLC_HMI_BOOL_OO};
+                    static const plc_hmi_par_t ptype[] = {PLC_HMI_BOOL_TF, PLC_HMI_BOOL_OO, PLC_HMI_RO_BOOL_TF, PLC_HMI_RO_BOOL_OO};
                     if (ptid < sizeof(ptype))
                     {
                         plc_hmi_app_ptype[addr] = ptype[ptid];
@@ -997,7 +997,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
                 }
                 case PLC_LSZ_W:
                 {
-                    static const plc_hmi_par_t ptype[] = {PLC_HMI_UINT, PLC_HMI_HEX};
+                    static const plc_hmi_par_t ptype[] = {PLC_HMI_UINT, PLC_HMI_HEX, PLC_HMI_RO_UINT, PLC_HMI_RO_HEX};
                     if (ptid < sizeof(ptype))
                     {
                         plc_hmi_app_ptype[addr] = ptype[ptid];
