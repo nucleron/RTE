@@ -796,10 +796,34 @@ uint16_t hmi_sys_get(uint8_t par)
         return 0; //dummy
     }
 }
+
+//Спасибо Волкову Мише!!!
+static const uint8_t month_table[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};// Количество дней в месяце. количество дней = month_table[ номер месяца ]
+static uint8_t leap_year_chk( uint8_t month, uint8_t year )// Проверка на 29 февраля
+{
+    if( (month == 2) && (year % 4 == 0) ) return 1;
+    return 0;
+}
+
+static void date_check_day(tm *now)
+{
+    uint8_t max;
+    max = month_table[now->tm_mon] + leap_year_chk(now->tm_mon, now->tm_year);
+    if( now->tm_day > max )
+    {
+        now->tm_day = 1;
+    }
+}
+
+
 uint16_t hmi_sys_chk(uint8_t par, uint16_t val)
 {
     tm now;
-    (void)par;
+    if (par <= PLC_HMI_SYS_PAR_HHMM)
+    {
+        plc_rtc_dt_get(&now);
+    }
+
     switch(par)
     {
     case PLC_HMI_SYS_PAR_YEAR: //YYYY
@@ -815,9 +839,30 @@ uint16_t hmi_sys_chk(uint8_t par, uint16_t val)
     case PLC_HMI_SYS_PAR_MMDD: //MM.DD
         now.tm_day = val%100;
         now.tm_mon = val/100;
+
+        if (now.tm_mon > 12)
+        {
+            now.tm_mon = 1;
+        }
+
+        date_check_day(&now);
+        val = (uint16_t)now.tm_day + 100*(uint16_t)now.tm_mon;
+        break;
+
     case PLC_HMI_SYS_PAR_HHMM: //HH.MM
         now.tm_min = val%100;
         now.tm_hour = val/100;
+
+        if (now.tm_min > 59)
+        {
+            now.tm_min = 1;
+        }
+        if (now.tm_hour > 23)
+        {
+            now.tm_hour = 1;
+        }
+
+        val = (uint16_t)now.tm_min + 100*(uint16_t)now.tm_hour;
         break;
 
     case PLC_HMI_SYS_PAR_BRI: //hmi display plc_hmi_bri
