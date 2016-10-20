@@ -1,6 +1,7 @@
 #ifndef _PLC_HMI_H_
 #define _PLC_HMI_H_
 
+#define PLC_HMI_BRI_LIM 6
 #define HMI_DIGITS   6
 #define HMI_NBUTTONS 3
 
@@ -27,7 +28,8 @@ typedef enum
     PLC_HMI_RO_UINT,
     PLC_HMI_RO_MMDD,
     PLC_HMI_RO_HHMM,
-    PLC_HMI_RO_END
+    PLC_HMI_EMPTY,    //Yes, empty is read only!
+    PLC_HMI_END
 }plc_hmi_par_t; //HMI parameter types
 
 typedef struct _plc_hmi_t plc_hmi_t;//HMI
@@ -40,13 +42,13 @@ struct _plc_hmi_dm_t
     uint16_t (*par_get)(uint8_t);           //parameter get
     uint16_t (*par_chk)(uint8_t, uint16_t); //parameter check
     void     (*par_set)(uint8_t, uint16_t); //parameter set
-    void     (*poll)(void);              //Poll hook
+    void     (*poll)(uint32_t, char);       //Poll hook
     uint8_t  psize;
 };
 
 struct _plc_hmi_t
 {
-    const plc_hmi_dm_t * mdl; //Current data model
+    plc_hmi_dm_t * mdl; //Current data model
     uint32_t tmp;             //Temp var for edit mode
     uint32_t delta;           //Delta in edit mode
     uint8_t cursor;           //Cursor in edit mode

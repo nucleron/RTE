@@ -1,4 +1,6 @@
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
@@ -229,7 +231,7 @@ static uint8_t buf2[HMI_DIGITS];
 static uint8_t* video     = buf1;
 static uint8_t* convert   = buf2;
 static bool     ready_flg = false;
-static uint8_t  brightness = 3;
+uint8_t         plc_hmi_bri = 0;
 char            str_buf[HMI_DIGITS+1];
 
 static inline void swap_buf(void)
@@ -278,7 +280,7 @@ void plc_hmi_vout_init(void)
     //Segment lines init
     PLC_GPIO_GR_CFG_OUT(segments);
 
-    brightness = MIN(plc_backup_load_brightness(),7);
+    plc_hmi_bri = MIN(plc_backup_load_brightness(),PLC_HMI_BRI_LIM);
 }
 
 void plc_hmi_vout_poll(void)
@@ -314,7 +316,7 @@ void plc_hmi_vout_poll(void)
         clr_flg = true;
     }
 
-    if ((clr_flg) && (pwm > brightness))
+    if ((clr_flg) && (pwm > plc_hmi_bri))
     {
         clr_flg = false;
         plc_gpio_clear(anodes + anode_n);
@@ -471,6 +473,7 @@ static const plc_hmi_led_rec led_cfg[] =
 };
 
 #define PLC_HMI_PAR_NUM_DOT (1<<12)
+#define PLC_HMI_PAR_TIME_DOT (1<<9)
 
 static void plc_hmi_convert(char * buff, uint32_t led_val)
 {
@@ -536,6 +539,7 @@ static void par_value_str(char* s, plc_hmi_par_t par_type, uint16_t val)
         sprintf(s,"%04d",val);
         break;
     case PLC_HMI_NOT_USED:
+    case PLC_HMI_EMPTY:
         sprintf(s,"    ");
         break;
     default:
@@ -554,20 +558,20 @@ static const char par_rep[] =
 };
 #define PLC_HMI_GET_PAR_REP(num) ((num>22)?'?':par_rep[num])
 
-static void     hmi_sys_poll(void);
+static void     hmi_sys_poll(uint32_t tick, char input);
 extern uint16_t hmi_sys_get(uint8_t par);
 extern uint16_t hmi_sys_chk(uint8_t par, uint16_t val);
 extern void     hmi_sys_set(uint8_t par, uint16_t val);
 
-extern plc_hmi_par_t plc_hmi_sys_ptype[];
+extern const plc_hmi_par_t plc_hmi_sys_ptype[];
 extern const uint8_t plc_hmi_sys_psize;
 
-#define PLC_HMI_SYS_PSIZE 6 ///TODO: Вынести в конфиг!!!
+#define PLC_HMI_SYS_PSIZE 23 ///TODO: Вынести в конфиг!!!
 
 plc_hmi_dm_t plc_hmi_sys =
 {
     .leds  = 0,
-    .ptype = plc_hmi_sys_ptype,
+    .ptype = (plc_hmi_par_t*)plc_hmi_sys_ptype,
 
     .par_get = hmi_sys_get,
     .par_set = hmi_sys_set,
@@ -577,7 +581,7 @@ plc_hmi_dm_t plc_hmi_sys =
     .psize = PLC_HMI_SYS_PSIZE
 };
 
-static void     hmi_app_poll(void);
+static void     hmi_app_poll(uint32_t tick, char input);
 static uint16_t hmi_app_get(uint8_t par);
 static uint16_t hmi_app_chk(uint8_t par, uint16_t val);
 static void     hmi_app_set(uint8_t par, uint16_t val);
@@ -604,11 +608,38 @@ plc_hmi_dm_t plc_hmi_app =
 };
 
 plc_hmi_t hmi;
-#define PLC_HMI_PAR_NUM_DOT (1<<12)
+#define HMI_SCREENASVER 30000
 
-static void hmi_app_poll(void)
+static uint8_t ss_par = 1;
+
+static void hmi_app_poll(uint32_t tick, char input)
 {
+    static uint32_t ss_tmr = 0;
+    static bool ss_mode = false;
+    static uint8_t saved_par;
+    static uint8_t saved_plc_hmi_bri;
+
     plc_hmi_app.leds |= PLC_HMI_PAR_NUM_DOT;
+
+    if (PLC_HMI_BTN_NO_CHAR != input)
+    {
+        ss_tmr = tick;
+        if (ss_mode)
+        {
+            ss_mode     = false;
+            hmi.cur_par = saved_par;
+            plc_hmi_bri  = saved_plc_hmi_bri;
+        }
+    }
+
+    if ((HMI_SCREENASVER < (tick - ss_tmr)) && !ss_mode)
+    {
+        ss_mode          = true;
+        saved_par        = hmi.cur_par;
+        hmi.cur_par      = ss_par;
+        saved_plc_hmi_bri = plc_hmi_bri;
+        plc_hmi_bri       >>= 1;
+    }
 }
 
 static uint16_t hmi_app_pdata[16];
@@ -627,8 +658,11 @@ static void     hmi_app_set(uint8_t par, uint16_t val)
     hmi_app_pdata[par] = val;
 }
 //===================================================================
-static void hmi_sys_poll(void)
+static void hmi_sys_poll(uint32_t tick, char input)
 {
+    (void)tick;
+    (void)input;
+
     if (hmi.cur_show)
     {
         plc_hmi_sys.leds |= PLC_HMI_PAR_NUM_DOT;
@@ -641,39 +675,201 @@ static void hmi_sys_poll(void)
 
 //===================================================================
 ///TODO:Вынести в отдельный файл!!!
-uint16_t plc_hmi_sys_pdata[] =
-{
-      2016,
-       103,
-      1300,
-    0xABCD,
-         1,
-         0
-};
 
-plc_hmi_par_t plc_hmi_sys_ptype[] =
+#include <plc_config.h>
+#include <iec_std_lib.h>
+#include <dbnc_flt.h>
+
+extern uint8_t plc_hmi_bri;
+
+extern uint32_t mb_baudrate;
+extern uint8_t mb_slave_addr;
+extern dbnc_flt_t in_flt[];
+
+extern uint16_t digital_out;
+extern uint8_t in_chnl;
+
+#define PLC_HMI_SYS_PAR_YEAR 0
+#define PLC_HMI_SYS_PAR_MMDD 1
+#define PLC_HMI_SYS_PAR_HHMM 2
+
+#define PLC_HMI_SYS_PAR_BRI  3
+
+#define PLC_HMI_SYS_PAR_DI   4
+#define PLC_HMI_SYS_PAR_DQ   5
+
+#define PLC_HMI_SYS_PAR_CN   6
+#define PLC_HMI_SYS_PAR_ONF  7
+#define PLC_HMI_SYS_PAR_OFFF 8
+
+
+#define PLC_HMI_SYS_PAR_MBSS 20
+#define PLC_HMI_SYS_PAR_MBSA 21
+
+const plc_hmi_par_t plc_hmi_sys_ptype[] =
 {
-    PLC_HMI_UINT,
-    PLC_HMI_MMDD,
-    PLC_HMI_HHMM,
-    PLC_HMI_HEX,
-    PLC_HMI_BOOL_TF,
-    PLC_HMI_BOOL_OO,
+    PLC_HMI_UINT, //YYYY
+    PLC_HMI_MMDD, //MMDD
+    PLC_HMI_HHMM, //HHMM
+    PLC_HMI_UINT, //Bri
+
+    PLC_HMI_EMPTY,//Discrete inputs
+    PLC_HMI_EMPTY,//Discrete outputs
+
+    PLC_HMI_UINT, //DI chanel number
+    PLC_HMI_RO_UINT, //DI  on filter
+    PLC_HMI_RO_UINT, //DI off filter
+
+    PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,
+    PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,
+    PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,
+
+    PLC_HMI_RO_UINT, //MBS speed
+    PLC_HMI_RO_UINT, //MBS addr
+
+    PLC_HMI_NOT_USED
 };
 const uint8_t plc_hmi_sys_psize = sizeof(plc_hmi_sys_ptype)/sizeof(plc_hmi_par_t);
 
 uint16_t hmi_sys_get(uint8_t par)
 {
-    return plc_hmi_sys_pdata[par];
+    uint32_t i;
+    tm now;
+
+    if (par <= PLC_HMI_SYS_PAR_HHMM)
+    {
+        plc_rtc_dt_get(&now);
+    }
+
+    switch(par)
+    {
+    case PLC_HMI_SYS_PAR_YEAR: //YYYY
+        return now.tm_year;
+    case PLC_HMI_SYS_PAR_MMDD: //MM.DD
+        return now.tm_day+now.tm_mon*100;
+    case PLC_HMI_SYS_PAR_HHMM: //HH.MM
+        return now.tm_min + now.tm_hour*100;
+
+    case PLC_HMI_SYS_PAR_BRI: //hmi display plc_hmi_bri
+        return plc_hmi_bri;
+
+    case PLC_HMI_SYS_PAR_DI:
+        for(i=0; i<PLC_DI_NUM; i++)
+        {
+            if (plc_get_din(i))
+            {
+                plc_hmi_sys.leds |= (1<<i);
+            }
+            else
+            {
+                plc_hmi_sys.leds &= ~(1<<i);
+            }
+        }
+        return 0;
+    case PLC_HMI_SYS_PAR_DQ:
+        for(i=0; i<PLC_DO_NUM; i++)
+        {
+            if (plc_get_dout(i))
+            {
+                plc_hmi_sys.leds |= (1<<i);
+            }
+            else
+            {
+                plc_hmi_sys.leds &= ~(1<<i);
+            }
+        }
+        return 0;
+
+    case PLC_HMI_SYS_PAR_CN:
+        return in_chnl;
+    case PLC_HMI_SYS_PAR_ONF:
+        return in_flt[in_chnl].thr_on;
+    case PLC_HMI_SYS_PAR_OFFF:
+        return in_flt[in_chnl].thr_off;
+
+    case PLC_HMI_SYS_PAR_MBSS:
+        return mb_baudrate/100;
+    case PLC_HMI_SYS_PAR_MBSA:
+        return mb_slave_addr;
+
+    default:
+        return 0; //dummy
+    }
 }
 uint16_t hmi_sys_chk(uint8_t par, uint16_t val)
 {
+    tm now;
     (void)par;
+    switch(par)
+    {
+    case PLC_HMI_SYS_PAR_YEAR: //YYYY
+        if (val>2099)
+        {
+            return 2000;
+        }
+        if (val<2000)
+        {
+            return 2099;
+        }
+        break;
+    case PLC_HMI_SYS_PAR_MMDD: //MM.DD
+        now.tm_day = val%100;
+        now.tm_mon = val/100;
+    case PLC_HMI_SYS_PAR_HHMM: //HH.MM
+        now.tm_min = val%100;
+        now.tm_hour = val/100;
+        break;
+
+    case PLC_HMI_SYS_PAR_BRI: //hmi display plc_hmi_bri
+        if (val > PLC_HMI_BRI_LIM)
+        {
+            return 0;
+        }
+        break;
+
+    case PLC_HMI_SYS_PAR_CN:
+        if (val >= PLC_DI_NUM )
+        {
+            return 0;
+        }
+        break;
+    }
     return val;
 }
 void     hmi_sys_set(uint8_t par, uint16_t val)
 {
-    plc_hmi_sys_pdata[par] = val;
+    tm now;
+    if (par <= PLC_HMI_SYS_PAR_HHMM)
+    {
+        plc_rtc_dt_get(&now);
+    }
+
+    switch(par)
+    {
+    case PLC_HMI_SYS_PAR_YEAR: //YYYY
+        now.tm_year = val;
+        plc_rtc_dt_set(&now);
+        break;
+    case PLC_HMI_SYS_PAR_MMDD: //MM.DD
+        now.tm_day = val%100;
+        now.tm_mon = val/100;
+        plc_rtc_dt_set(&now);
+        break;
+    case PLC_HMI_SYS_PAR_HHMM: //HH.MM
+        now.tm_min = val%100;
+        now.tm_hour = val/100;
+        plc_rtc_dt_set(&now);
+        break;
+
+    case PLC_HMI_SYS_PAR_BRI: //hmi display plc_hmi_bri
+        plc_hmi_bri = MIN(val,PLC_HMI_BRI_LIM);
+        plc_backup_save_brightness(plc_hmi_bri);
+        break;
+
+    case PLC_HMI_SYS_PAR_CN:
+        in_chnl = MIN(val,(PLC_DI_NUM-1));
+        break;
+    }
 }
 //===================================================================
 static void plc_hmi_view(void)
@@ -686,6 +882,17 @@ static void plc_hmi_view(void)
     ptype = hmi.mdl->ptype[cur_par];
 
     hmi.buf[0] = PLC_HMI_GET_PAR_REP(hmi.cur_par);
+
+    switch (ptype)
+    {
+    case PLC_HMI_MMDD:
+    case PLC_HMI_HHMM:
+        hmi.mdl->leds |= PLC_HMI_PAR_TIME_DOT;
+        break;
+    default:
+        hmi.mdl->leds &= ~PLC_HMI_PAR_TIME_DOT;
+        break;
+    }
 
     if (PLC_HMI_STATE_VIEW == hmi.state)
     {
@@ -706,10 +913,10 @@ static void plc_hmi_view(void)
                     hmi.buf[i] = ' ';//blink all!
                 }
                 break;
-            case PLC_HMI_HEX:
-            case PLC_HMI_UINT:
             case PLC_HMI_MMDD:
             case PLC_HMI_HHMM:
+            case PLC_HMI_HEX:
+            case PLC_HMI_UINT:
                 hmi.buf[hmi.cursor] = 0;//blink one digit!
                 break;
             case PLC_HMI_NOT_USED:
@@ -958,7 +1165,7 @@ void _plc_hmi_poll(uint32_t tick)
         plc_hmi_controller(key);
     }
     //Model
-    hmi.mdl->poll();
+    hmi.mdl->poll(tick, key);
     //View
     plc_hmi_view();
 }
