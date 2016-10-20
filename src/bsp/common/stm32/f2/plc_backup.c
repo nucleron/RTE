@@ -28,12 +28,6 @@
 #define PLC_BKP_BANK1_START (uint32_t *)(BKPSRAM_BASE)
 #define PLC_BKP_BANK2_START (uint32_t *)(BKPSRAM_BASE+PLC_BKP_SIZE)
 
-static uint32_t * plc_backup_reg_bank1 = PLC_BKP_BANK1_START;
-static uint32_t * plc_backup_reg_bank2 = PLC_BKP_BANK2_START;
-
-static const void * ver1 = &PLC_BKP_VER_1;
-static const void * ver2 = &PLC_BKP_VER_2;
-
 void plc_backup_init(void)
 {
     uint32_t i;
@@ -129,14 +123,14 @@ int plc_backup_check(void)
 void plc_backup_remind(unsigned int offset, unsigned int count, void *p)
 {
     uint32_t i;
-    uint32_t* source = plc_backup_reg_bank1;
+    uint32_t* source = PLC_BKP_BANK1_START;
 
     if (PLC_BKP_VER_1 > PLC_BKP_VER_2)
     {
         //Try to remind from bank 1
         if (PLC_BKP_VER_1 & 0x1)
         {
-            source = plc_backup_reg_bank1;
+            source = PLC_BKP_BANK1_START;
         }
     }
     else
@@ -144,7 +138,7 @@ void plc_backup_remind(unsigned int offset, unsigned int count, void *p)
         //Try to remind from bank 2
         if (PLC_BKP_VER_2 & 0x1)
         {
-            source = plc_backup_reg_bank2;
+            source = PLC_BKP_BANK2_START;
         }
     }
 
@@ -161,11 +155,11 @@ void plc_backup_retain(unsigned int offset, unsigned int count, void *p)
     {
         if(PLC_BKP_VER_1<=PLC_BKP_VER_2) //store to latest bank (latest means nonvalid with lesser version!)
         {
-            storage = plc_backup_reg_bank1;
+            storage = PLC_BKP_BANK1_START;
         }
         else
         {
-            storage = plc_backup_reg_bank2;
+            storage = PLC_BKP_BANK2_START;
         }
 
         BACKUP_UNLOCK();
