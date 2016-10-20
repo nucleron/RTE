@@ -119,10 +119,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../src/bsp/nuc-243/hmi_7seg_conf.h" />
-		<Unit filename="../../src/bsp/nuc-243/menu_api.c">
+		<Unit filename="../../src/bsp/nuc-243/plc_config.h" />
+		<Unit filename="../../src/bsp/nuc-243/plc_hmi_sys.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/nuc-243/plc_config.h" />
 		<Unit filename="../../src/bsp/nuc-243/plc_hw.c">
 			<Option compilerVar="CC" />
 		</Unit>
