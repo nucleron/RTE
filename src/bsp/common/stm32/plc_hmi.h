@@ -42,7 +42,7 @@ struct _plc_hmi_dm_t
     uint16_t (*par_get)(uint8_t);           //parameter get
     uint16_t (*par_chk)(uint8_t, uint16_t); //parameter check
     void     (*par_set)(uint8_t, uint16_t); //parameter set
-    void     (*poll)(uint32_t, char);       //Poll hook
+    char     (*poll)(uint32_t, char);       //Poll hook
     uint8_t  psize;
 };
 

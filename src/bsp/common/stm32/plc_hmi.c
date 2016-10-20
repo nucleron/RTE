@@ -480,7 +480,7 @@ static const char par_rep[] =
 };
 #define PLC_HMI_GET_PAR_REP(num) ((num>22)?'?':par_rep[num])
 
-static void     hmi_sys_poll(uint32_t tick, char input);
+static char     hmi_sys_poll(uint32_t tick, char input);
 extern uint16_t hmi_sys_get(uint8_t par);
 extern uint16_t hmi_sys_chk(uint8_t par, uint16_t val);
 extern void     hmi_sys_set(uint8_t par, uint16_t val);
@@ -500,7 +500,7 @@ plc_hmi_dm_t plc_hmi_sys =
     .psize = PLC_HMI_SYS_PSIZE
 };
 
-static void     hmi_app_poll(uint32_t tick, char input);
+static char     hmi_app_poll(uint32_t tick, char input);
 static uint16_t hmi_app_get(uint8_t par);
 static uint16_t hmi_app_chk(uint8_t par, uint16_t val);
 static void     hmi_app_set(uint8_t par, uint16_t val);
@@ -533,7 +533,7 @@ plc_hmi_t hmi;
 
 static uint8_t ss_par = 1;
 
-static void hmi_app_poll(uint32_t tick, char input)
+static char hmi_app_poll(uint32_t tick, char input)
 {
     static uint32_t ss_tmr = 0;
     static bool ss_mode = false;
@@ -549,7 +549,10 @@ static void hmi_app_poll(uint32_t tick, char input)
         {
             ss_mode     = false;
             hmi.cur_par = saved_par;
-            plc_hmi_bri  = saved_plc_hmi_bri;
+            hmi.state   = PLC_HMI_STATE_VIEW;
+            plc_hmi_bri = saved_plc_hmi_bri;
+
+            return PLC_HMI_BTN_NO_CHAR;
         }
     }
 
@@ -558,9 +561,12 @@ static void hmi_app_poll(uint32_t tick, char input)
         ss_mode          = true;
         saved_par        = hmi.cur_par;
         hmi.cur_par      = ss_par;
+        hmi.state        = PLC_HMI_STATE_VIEW;
         saved_plc_hmi_bri = plc_hmi_bri;
         plc_hmi_bri       >>= 1;
     }
+
+    return input;
 }
 
 static uint16_t hmi_app_pdata[16];
@@ -579,10 +585,9 @@ static void     hmi_app_set(uint8_t par, uint16_t val)
     hmi_app_pdata[par] = val;
 }
 //===================================================================
-static void hmi_sys_poll(uint32_t tick, char input)
+static char hmi_sys_poll(uint32_t tick, char input)
 {
     (void)tick;
-    (void)input;
 
     if (hmi.cur_show)
     {
@@ -592,6 +597,8 @@ static void hmi_sys_poll(uint32_t tick, char input)
     {
         plc_hmi_sys.leds &= ~PLC_HMI_PAR_NUM_DOT;
     }
+
+    return input;
 }
 //===================================================================
 static void plc_hmi_view(void)
@@ -663,7 +670,7 @@ static void find_par(void)
         }
     }
 }
-#define PLC_HMI_MDL_DFLT plc_hmi_sys
+#define PLC_HMI_MDL_DFLT plc_hmi_app
 void _plc_hmi_init(void)
 {
     uint8_t i;
@@ -882,12 +889,13 @@ void _plc_hmi_poll(uint32_t tick)
     }
     //Controller
     key = plc_hmi_kb_poll(tick);
+    //Model
+    key = hmi.mdl->poll(tick, key);
+
     if (PLC_HMI_BTN_NO_CHAR != key)
     {
         plc_hmi_controller(key);
     }
-    //Model
-    hmi.mdl->poll(tick, key);
     //View
     plc_hmi_view();
 }

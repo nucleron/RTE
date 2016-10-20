@@ -194,7 +194,7 @@ uint16_t hmi_sys_chk(uint8_t par, uint16_t val)
     case PLC_HMI_SYS_PAR_BRI: //hmi display plc_hmi_bri
         if (val > PLC_HMI_BRI_LIM)
         {
-            return 0;
+            return 1;
         }
         break;
 
