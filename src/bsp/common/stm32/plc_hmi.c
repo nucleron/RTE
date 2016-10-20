@@ -589,6 +589,17 @@ static char hmi_sys_poll(uint32_t tick, char input)
 {
     (void)tick;
 
+    switch (hmi.mdl->ptype[hmi.cur_par])
+    {
+    case PLC_HMI_MMDD:
+    case PLC_HMI_HHMM:
+        plc_hmi_sys.leds |= PLC_HMI_PAR_TIME_DOT;
+        break;
+    default:
+        plc_hmi_sys.leds &= ~PLC_HMI_PAR_TIME_DOT;
+        break;
+    }
+
     if (hmi.cur_show)
     {
         plc_hmi_sys.leds |= PLC_HMI_PAR_NUM_DOT;
@@ -611,17 +622,6 @@ static void plc_hmi_view(void)
     ptype = hmi.mdl->ptype[cur_par];
 
     hmi.buf[0] = PLC_HMI_GET_PAR_REP(hmi.cur_par);
-
-    switch (ptype)
-    {
-    case PLC_HMI_MMDD:
-    case PLC_HMI_HHMM:
-        hmi.mdl->leds |= PLC_HMI_PAR_TIME_DOT;
-        break;
-    default:
-        hmi.mdl->leds &= ~PLC_HMI_PAR_TIME_DOT;
-        break;
-    }
 
     if (PLC_HMI_STATE_VIEW == hmi.state)
     {

@@ -46,10 +46,9 @@
 #define PLC_JMP_RST_PORT   GPIOD
 #define PLC_JMP_RST_PIN    GPIO10
 
-///TODO: Add debug jumper!
-//#define PLC_JMP_DBG_PERIPH RCC_GPIOB
-//#define PLC_JMP_DBG_PORT   GPIOB
-//#define PLC_JMP_DBG_PIN    GPIO9
+#define PLC_JMP_DBG_PERIPH RCC_GPIOD
+#define PLC_JMP_DBG_PORT   GPIOD
+#define PLC_JMP_DBG_PIN    GPIO3
 /*
 *  Boot pin
 */

@@ -30,13 +30,15 @@ void plc_jmpr_init(void)
     rcc_periph_clock_enable(PLC_JMP_RST_PERIPH);
     gpio_mode_setup(PLC_JMP_RST_PORT, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN , PLC_JMP_RST_PIN);
     gpio_clear(PLC_JMP_RST_PORT, PLC_JMP_RST_PIN); //Pull down!
-    /*!TODO: Add debug jumper!!!*/
+
+    rcc_periph_clock_enable(PLC_JMP_DBG_PERIPH);
+    gpio_mode_setup(PLC_JMP_DBG_PORT, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP , PLC_JMP_DBG_PIN);
+    gpio_set(PLC_JMP_DBG_PORT, PLC_JMP_DBG_PIN);
 }
 
 bool plc_dbg_jmpr_get(void)
 {
-    ///Write your code here!!!
-    return false;
+    return !gpio_get(PLC_JMP_DBG_PORT, PLC_JMP_DBG_PIN);
 }
 
 volatile bool reset_jmp = false;
@@ -48,10 +50,6 @@ bool plc_rst_jmpr_get(void)
 
 void plc_boot_init(void)
 {
-    //Boot pin config
-    //rcc_periph_clock_enable( RCC_AFIO );
-//    AFIO_MAPR |= AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON;
-
     rcc_periph_clock_enable( PLC_BOOT_PERIPH );
     gpio_mode_setup(PLC_BOOT_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PLC_BOOT_PIN);
     gpio_set_output_options(PLC_BOOT_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, PLC_BOOT_PIN);

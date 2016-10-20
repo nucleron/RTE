@@ -19,24 +19,20 @@
 #include <plc_hw.h>
 
 #define PLC_BKP_SIZE 2048 //2k bytes
-
 //Use RTC backup registers for validation
-#define PLC_BKP_BANK1_VER1   MMIO32(BACKUP_REGS_BASE + PLC_BKP_VER1_OFFSET)
-#define PLC_BKP_BANK1_VER2   MMIO32(BACKUP_REGS_BASE + PLC_BKP_VER2_OFFSET)
-
-#define PLC_BKP_BANK2_VER1   MMIO32(BACKUP_REGS_BASE + PLC_BKP_BANK2_VER1_OFFSET)
-#define PLC_BKP_BANK2_VER2   MMIO32(BACKUP_REGS_BASE + PLC_BKP_BANK2_VER2_OFFSET)
+#define PLC_BKP_VER_1   MMIO32(BACKUP_REGS_BASE + PLC_BKP_VER1_OFFSET)
+#define PLC_BKP_VER_2   MMIO32(BACKUP_REGS_BASE + PLC_BKP_VER2_OFFSET)
 
 #define PLC_BKP_BRIGHT       MMIO32(BACKUP_REGS_BASE + PLC_BKP_BRIGHT_OFFSET)
 
 #define PLC_BKP_BANK1_START (uint32_t *)(BKPSRAM_BASE)
 #define PLC_BKP_BANK2_START (uint32_t *)(BKPSRAM_BASE+PLC_BKP_SIZE)
 
-#define BANK1_VALID() ((PLC_BKP_BANK1_VER1)==(PLC_BKP_BANK1_VER2))
-#define BANK2_VALID() ((PLC_BKP_BANK2_VER1)==(PLC_BKP_BANK2_VER2))
-
 static uint32_t * plc_backup_reg_bank1 = PLC_BKP_BANK1_START;
 static uint32_t * plc_backup_reg_bank2 = PLC_BKP_BANK2_START;
+
+static const void * ver1 = &PLC_BKP_VER_1;
+static const void * ver2 = &PLC_BKP_VER_2;
 
 void plc_backup_init(void)
 {
@@ -70,16 +66,17 @@ uint8_t plc_backup_load_brightness(void)
     return PLC_BKP_BRIGHT;
 }
 
+#define PLC_BKP_INVAL_MSK 0xFFFFFFFE
 void plc_backup_invalidate(void)
 {
     BACKUP_UNLOCK();
-    if(PLC_BKP_BANK1_VER1>=PLC_BKP_BANK2_VER1) //invalidate oldest bank
+    if(PLC_BKP_VER_1>PLC_BKP_VER_2) //invalidate oldest bank
     {
-        PLC_BKP_BANK2_VER1 = PLC_BKP_BANK1_VER1+1;
+        PLC_BKP_VER_2 &= PLC_BKP_INVAL_MSK;
     }
     else
     {
-        PLC_BKP_BANK1_VER1 = PLC_BKP_BANK2_VER1+1;
+        PLC_BKP_VER_1 &= PLC_BKP_INVAL_MSK;
     }
     BACKUP_LOCK();
 }
@@ -88,11 +85,8 @@ void plc_backup_reset(void) //used to reset
 {
     BACKUP_UNLOCK();
 
-    PLC_BKP_BANK1_VER1 = 0;
-    PLC_BKP_BANK2_VER1 = 0;
-
-    PLC_BKP_BANK1_VER2 = 0xFF;
-    PLC_BKP_BANK2_VER2 = 0xFF;
+    PLC_BKP_VER_1 = 0;
+    PLC_BKP_VER_2 = 0;
 
     BACKUP_LOCK();
 }
@@ -103,13 +97,13 @@ void plc_backup_validate(void)
 
     BACKUP_UNLOCK();
 
-    if(PLC_BKP_BANK1_VER1>=PLC_BKP_BANK2_VER1) //validate latest bank
+    if(PLC_BKP_VER_1<=PLC_BKP_VER_2) //Validate latest bank
     {
-        PLC_BKP_BANK1_VER2 = PLC_BKP_BANK1_VER1;
+        PLC_BKP_VER_1 += 3;
     }
     else
     {
-        PLC_BKP_BANK2_VER2 = PLC_BKP_BANK2_VER1;
+        PLC_BKP_VER_2 += 3;
     }
 
     BACKUP_LOCK();
@@ -117,8 +111,15 @@ void plc_backup_validate(void)
 
 int plc_backup_check(void)
 {
-    if( BANK1_VALID() || BANK2_VALID() ) //At least one
-        return 1; //Success, now may remind
+    if (PLC_BKP_VER_1 & 0x1)
+    {
+        return 1;
+    }
+
+    if (PLC_BKP_VER_2 & 0x1)
+    {
+        return 1;
+    }
 
     return 0; //Both banks are invalid, nothing to remind
 }
@@ -127,22 +128,24 @@ int plc_backup_check(void)
 
 void plc_backup_remind(unsigned int offset, unsigned int count, void *p)
 {
-    uint32_t* source;
     uint32_t i;
-    if( BANK1_VALID() && BANK2_VALID()) //we must choose the latest bank if both are valid
+    uint32_t* source = plc_backup_reg_bank1;
+
+    if (PLC_BKP_VER_1 > PLC_BKP_VER_2)
     {
-        if(PLC_BKP_BANK2_VER2 > PLC_BKP_BANK1_VER2)
-            source = plc_backup_reg_bank2;
-        else
+        //Try to remind from bank 1
+        if (PLC_BKP_VER_1 & 0x1)
+        {
             source = plc_backup_reg_bank1;
+        }
     }
-    else if(BANK2_VALID()) //#2 is the only valid bank
+    else
     {
-        source = plc_backup_reg_bank2;
-    }
-    else //should not get here if no banks are valid, so using #1
-    {
-        source = plc_backup_reg_bank1;
+        //Try to remind from bank 2
+        if (PLC_BKP_VER_2 & 0x1)
+        {
+            source = plc_backup_reg_bank2;
+        }
     }
 
     if(offset + count < PLC_BKP_SIZE)
@@ -156,7 +159,7 @@ void plc_backup_retain(unsigned int offset, unsigned int count, void *p)
     uint32_t* storage;
     if(offset + count < PLC_BKP_SIZE)
     {
-        if(PLC_BKP_BANK1_VER1>=PLC_BKP_BANK2_VER1) //store to latest bank
+        if(PLC_BKP_VER_1<=PLC_BKP_VER_2) //store to latest bank
         {
             storage = plc_backup_reg_bank1;
         }
