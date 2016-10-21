@@ -54,7 +54,7 @@ void plc_irq_stub(void)
     irq %= 16;
 
     rcc_periph_clock_enable(RCC_PWR);
-//    rcc_periph_clock_enable(RCC_BKP);
+    //rcc_periph_clock_enable(RCC_BKP);
 
     rtc_unlock();
 

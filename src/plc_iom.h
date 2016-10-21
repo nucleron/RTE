@@ -69,17 +69,17 @@ extern uint8_t mid_from_pid( uint16_t proto );
 #define PLC_IOM_LOCAL_SET      PLC_IOM_CONCAT2(LOCAL_PROTO,_set)
 
 #define PLC_IOM_METH_DECLS(proto)                                             \
-extern void     PLC_IOM_CONCAT2(proto,_init)   (void);                        \
-extern bool     PLC_IOM_CONCAT2(proto,_test_hw)(void);                        \
-extern bool     PLC_IOM_CONCAT2(proto,_check)  (uint16_t lid);                \
-extern void     PLC_IOM_CONCAT2(proto,_begin)  (uint16_t lid);                \
-extern void     PLC_IOM_CONCAT2(proto,_end)    (uint16_t lid);                \
-extern uint32_t PLC_IOM_CONCAT2(proto,_sched)  (uint16_t lid, uint32_t tick); \
-extern void     PLC_IOM_CONCAT2(proto,_start)  (void);                        \
-extern void     PLC_IOM_CONCAT2(proto,_poll)   (uint32_t tick);               \
-extern void     PLC_IOM_CONCAT2(proto,_stop)   (void);                        \
-extern uint32_t PLC_IOM_CONCAT2(proto,_weigth) (uint16_t lid);                \
-extern uint32_t PLC_IOM_CONCAT2(proto,_get)    (uint16_t lid);                \
+extern void     PLC_IOM_CONCAT2(proto,_init)   (void)                        ;\
+extern bool     PLC_IOM_CONCAT2(proto,_test_hw)(void)                        ;\
+extern bool     PLC_IOM_CONCAT2(proto,_check)  (uint16_t lid)                ;\
+extern void     PLC_IOM_CONCAT2(proto,_begin)  (uint16_t lid)                ;\
+extern void     PLC_IOM_CONCAT2(proto,_end)    (uint16_t lid)                ;\
+extern uint32_t PLC_IOM_CONCAT2(proto,_sched)  (uint16_t lid, uint32_t tick) ;\
+extern void     PLC_IOM_CONCAT2(proto,_start)  (void)                        ;\
+extern void     PLC_IOM_CONCAT2(proto,_poll)   (uint32_t tick)               ;\
+extern void     PLC_IOM_CONCAT2(proto,_stop)   (void)                        ;\
+extern uint32_t PLC_IOM_CONCAT2(proto,_weigth) (uint16_t lid)                ;\
+extern uint32_t PLC_IOM_CONCAT2(proto,_get)    (uint16_t lid)                ;\
 extern uint32_t PLC_IOM_CONCAT2(proto,_set)    (uint16_t lid)
 
 typedef struct _plc_iom_t plc_iom_t;
@@ -113,6 +113,8 @@ extern const uint32_t plc_iom_err_sz_sz;
 extern const char     plc_iom_err_sz[];
 
 #define PLC_LOG_ERROR(a) plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)(a), sizeof(a))
+#define PLC_LOG_WARN(a)  plc_curr_app->log_msg_post(LOG_WARNING,  (char *)(a), sizeof(a))
+
 #define PLC_LOG_ERR_SZ() plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)(plc_iom_err_sz), plc_iom_err_sz_sz)
 
 #endif // _PLC_IOM_H_

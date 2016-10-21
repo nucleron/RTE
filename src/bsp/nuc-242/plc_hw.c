@@ -104,7 +104,7 @@ const char plc_dl_err_msg[] = "Deadline violation detected, PLC is stoped!";
 void plc_heart_beat_poll(void)
 {
     uint32_t blink_thr;
-    if( plc_hw_status > 0 )
+    if( plc_diag_status > 0 )
     {
         blink_thr = 500;
     }
@@ -115,7 +115,7 @@ void plc_heart_beat_poll(void)
 
     if( PLC_TIMER(blink_tmr) > (blink_thr>>1) )
     {
-        if (plc_hw_status  & PLC_HW_ERR_CRITICAL)
+        if (plc_diag_status  & PLC_DIAG_ERR_CRITICAL)
         {
             gpio_set( PLC_LED_STR_PORT, PLC_LED_STR_PIN );
         }
@@ -124,7 +124,7 @@ void plc_heart_beat_poll(void)
             gpio_set( PLC_LED_STG_PORT, PLC_LED_STG_PIN );
         }
         //if(  *(uint8_t *)BKPSRAM_BASE == 1 )
-        if (plc_hw_status  & PLC_HW_ERR_HSE)
+        if (plc_diag_status  & PLC_DIAG_ERR_HSE)
         {
             if( hse_post_flag )
             {
@@ -134,7 +134,7 @@ void plc_heart_beat_poll(void)
             gpio_set( PLC_LED_STR_PORT, PLC_LED_STR_PIN );
         }
         //if( *( (uint8_t *)BKPSRAM_BASE + 1) == 1 )
-        if (plc_hw_status  & PLC_HW_ERR_LSE)
+        if (plc_diag_status  & PLC_DIAG_ERR_LSE)
         {
             if( lse_post_flag )
             {
@@ -144,7 +144,7 @@ void plc_heart_beat_poll(void)
             gpio_set( PLC_LED_STR_PORT, PLC_LED_STR_PIN );
         }
 
-        if (plc_hw_status  & PLC_HW_ERR_DEADLINE)
+        if (plc_diag_status  & PLC_DIAG_ERR_DEADLINE)
         {
             if( dl_post_flag )
             {

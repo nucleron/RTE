@@ -345,7 +345,6 @@ extern void plc_diag_reset(void);
 #define PLC_RTE_VER_MINOR 0
 #define PLC_RTE_VER_PATCH 0
 
-///TODO: Fix this in RC0
 #define PLC_HW_ID      2470
 
 /**

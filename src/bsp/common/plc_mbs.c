@@ -10,6 +10,7 @@
 
 #include <plc_config.h>
 #include <plc_abi.h>
+#include <plc_diag.h>
 #include <plc_rtc.h>
 #include <plc_hw.h>
 #include <plc_iom.h>
@@ -86,7 +87,7 @@ static uint16_t mb_hr_get( uint16_t reg )
     switch (reg)
     {
     case MB_REG_HWST:
-        return (uint16_t)plc_hw_status;
+        return (uint16_t)plc_diag_status;
 
     case MB_REG_DIN:
         tmp = 0;

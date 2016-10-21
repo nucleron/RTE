@@ -13,17 +13,16 @@
 #include <plc_config.h>
 
 #include <plc_abi.h>
-#include <plc_iom.h>
-#include <plc_dbg.h>
-#include <plc_hw.h>
-#include <plc_clock.h>
-#include <plc_wait_tmr.h>
+#include <plc_app_default.h>
 #include <plc_backup.h>
+#include <plc_clock.h>
+#include <plc_dbg.h>
+#include <plc_diag.h>
+#include <plc_hw.h>
+#include <plc_iom.h>
 #include <plc_rtc.h>
 #include <plc_tick.h>
-#include <plc_app_default.h>
-
-volatile uint32_t plc_hw_status = 0;
+#include <plc_wait_tmr.h>
 
 bool plc_dbg_mode = false;
 unsigned char plc_state = PLC_STATE_STOPED;
@@ -93,17 +92,19 @@ int main(void)
             }
             else
             {
-                plc_hw_status |= PLC_HW_ERR_LOCATION; //Message is allready posted!
+                plc_diag_status |= PLC_DIAG_ERR_LOCATION; //Message is allready posted!
             }
         }
         else
         {
-            plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_app_err_msg, sizeof(plc_app_err_msg));
+            plc_diag_status |= PLC_DIAG_ERR_INVALID;
+            PLC_LOG_ERROR(plc_app_err_msg);
         }
     }
     else
     {
-        plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_hw_err_msg, sizeof(plc_hw_err_msg));
+        plc_diag_status |= PLC_DIAG_ERR_HW_OTHER;
+        PLC_LOG_ERROR(plc_hw_err_msg);
     }
 
     dbg_init();

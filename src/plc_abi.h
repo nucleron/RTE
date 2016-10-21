@@ -1,7 +1,7 @@
 /*
  * Copyright Nucleron R&D LLC 2016
- * 
- * This file is licensed under the terms of NOSL, 
+ *
+ * This file is licensed under the terms of NOSL,
  * see License.txt for details.
  */
 
@@ -63,6 +63,8 @@ typedef struct
     uint32_t rte_ver_major;
     uint32_t rte_ver_minor;
     uint32_t rte_ver_patch;
+    //Hardware ID
+    uint32_t hw_id;
     //IO manager data
     plc_loc_tbl_t * l_tab; //Location table
     uint32_t      * w_tab; //Weigth table
@@ -115,5 +117,14 @@ typedef struct
 plc_rte_abi_t;
 
 extern plc_app_abi_t * plc_curr_app;
+
+/*
+*  Logging
+*/
+#define LOG_LEVELS 4
+#define LOG_CRITICAL 0
+#define LOG_WARNING 1
+#define LOG_INFO 2
+#define LOG_DEBUG 3
 
 #endif // _PLC_ABI_H_

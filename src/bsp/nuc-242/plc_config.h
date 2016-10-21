@@ -210,18 +210,11 @@ extern void plc_diag_reset(void);
 /*
 *  PLC RTE Version
 */
-#define PLC_RTE_VER_MAJOR 3
+#define PLC_RTE_VER_MAJOR 4
 #define PLC_RTE_VER_MINOR 0
 #define PLC_RTE_VER_PATCH 0
-/*
-*  Logging
-*/
-#define LOG_LEVELS 4
-#define LOG_CRITICAL 0
-#define LOG_WARNING 1
-#define LOG_INFO 2
-#define LOG_DEBUG 3
 
+#define PLC_HW_ID       242
 /**
 * TODO: Add simple printf for error logging!!!
 */

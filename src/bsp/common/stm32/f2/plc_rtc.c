@@ -21,10 +21,12 @@
 #include <libopencm3/stm32/pwr.h>
 #include <libopencm3/stm32/rtc.h>
 
-#include <plc_rtc.h>
-#include <plc_backup.h>
-#include <plc_hw.h>
 #include <plc_config.h>
+#include <plc_backup.h>
+#include <plc_diag.h>
+#include <plc_rtc.h>
+#include <plc_hw.h>
+
 
 #define PLC_RTC_DIV_VAL 0x7FFF
 #define PLC_BKP_RTC_IS_OK   MMIO32(RTC_BKP_BASE + PLC_BKP_RTC_IS_OK_OFFSET)
@@ -146,7 +148,7 @@ void plc_rtc_init( tm* time )
 
     if(!(RCC_BDCR  & RCC_BDCR_LSERDY))
     {
-        plc_hw_status |= PLC_HW_ERR_LSE;
+        plc_diag_status |= PLC_DIAG_ERR_LSE;
         BACKUP_LOCK();
         return;
     }
@@ -167,7 +169,7 @@ void plc_rtc_init( tm* time )
 
     if( !(RTC_ISR & RTC_ISR_INITF) ) //timeout occured
     {
-        plc_hw_status |= PLC_HW_ERR_LSE;
+        plc_diag_status |= PLC_DIAG_ERR_LSE;
 
         RTC_ISR &= ~RTC_ISR_INIT;
         rtc_lock();
@@ -208,7 +210,7 @@ void plc_rtc_init( tm* time )
     return;
     /* LSE error occured */
 lse_error:
-    //plc_hw_status |= PLC_HW_ERR_LSE; //FIXME
+    //plc_diag_status |= PLC_DIAG_ERR_LSE; //FIXME
     rtc_lock();
 }
 
@@ -216,7 +218,7 @@ void plc_rtc_dt_set( tm* time )
 {
     uint32_t i,tmp=0;
 
-    if (plc_hw_status & PLC_HW_ERR_LSE)
+    if (plc_diag_status & PLC_DIAG_ERR_LSE)
     {
         return;
     }
@@ -269,7 +271,7 @@ void plc_rtc_dt_set( tm* time )
     return;
     /* LSE error occured */
 lse_error:
-    plc_hw_status |= PLC_HW_ERR_LSE;
+    plc_diag_status |= PLC_DIAG_ERR_LSE;
     rtc_lock();
     BACKUP_LOCK();
 }

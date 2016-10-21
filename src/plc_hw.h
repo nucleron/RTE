@@ -11,16 +11,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define PLC_HW_ERR_HSE 0x1
-#define PLC_HW_ERR_LSE 0x2
-
-#define PLC_HW_ERR_CRITICAL 0xFC //Critical errors
-
-#define PLC_HW_ERR_DEADLINE 0x4
-#define PLC_HW_ERR_USER     0x8  //User programm abort
-#define PLC_HW_ERR_LOCATION 0x10 //location check efrror
-
-extern volatile uint32_t plc_hw_status;
 void plc_jmpr_init(void);
 bool plc_dbg_jmpr_get(void);
 bool plc_rst_jmpr_get(void);

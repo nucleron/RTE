@@ -2,28 +2,30 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="nuc-243-rte" />
+		<Option title="nuc-242-rte" />
 		<Option pch_mode="2" />
 		<Option compiler="armnoneeabigcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/nuc-243-rte.elf" prefix_auto="1" extension_auto="0" />
+				<Option output="bin/Debug/nuc-242-rte.elf" prefix_auto="1" extension_auto="0" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="armnoneeabigcc" />
 				<Compiler>
-					<Add option="-Os" />
 					<Add option="-g" />
-					<Add option="-Og" />
 				</Compiler>
+				<ExtraCommands>
+					<Add after="arm-none-eabi-objcopy -O ihex ${TARGET_OUTPUT_FILE} ${TARGET_OUTPUT_FILE}.hex" />
+					<Mode after="always" />
+				</ExtraCommands>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/nuc-243-rte.elf" prefix_auto="1" extension_auto="0" />
+				<Option output="bin/Release/nuc-242-rte.elf" prefix_auto="1" extension_auto="0" />
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="armnoneeabigcc" />
 				<Compiler>
-					<Add option="-Os" />
+					<Add option="-O2" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -32,20 +34,20 @@
 		</Build>
 		<Compiler>
 			<Add option="-mthumb" />
-			<Add option="-mcpu=cortex-m3" />
+			<Add option="-Os" />
 			<Add option="-std=gnu90" />
+			<Add option="-mcpu=cortex-m3" />
 			<Add option="-fmessage-length=0" />
 			<Add option="-fno-builtin" />
 			<Add option="-fno-strict-aliasing" />
 			<Add option="-ffunction-sections" />
 			<Add option="-fdata-sections" />
-			<Add option="-DSTM32F2" />
+			<Add option="-DSTM32F1" />
 			<Add option="-DNDEBUG" />
 			<Add directory="../../src" />
+			<Add directory="../../src/bsp/nuc-242" />
 			<Add directory="../../src/bsp/common/stm32" />
-			<Add directory="../../src/bsp/common/stm32/f2" />
-			<Add directory="../../src/bsp/common/stm32/f2/fmb_port" />
-			<Add directory="../../src/bsp/nuc-243" />
+			<Add directory="../../src/bsp/common/stm32/f1/fmb_port" />
 			<Add directory="../../../libopencm3/include" />
 			<Add directory="../../../matiec/lib/C" />
 			<Add directory="../../../freemodbus-v1.5.0/modbus/include" />
@@ -59,8 +61,8 @@
 			<Add option="-Xlinker" />
 			<Add option='-Map=&quot;${TARGET_OUTPUT_FILE}&quot;.map' />
 			<Add option="-Wl,--gc-sections,-lgcc" />
-			<Add option='-T &quot;../../src/bsp/nuc-243/stm32f205xC-rte.ld&quot;' />
-			<Add library="../../../libopencm3/lib/libopencm3_stm32f2.a" />
+			<Add option='-T &quot;../../src/bsp/nuc-242/stm32f103xC-rte.ld&quot;' />
+			<Add library="../../../libopencm3/lib/libopencm3_stm32f1.a" />
 		</Linker>
 		<ExtraCommands>
 			<Add after="arm-none-eabi-size ${TARGET_OUTPUT_FILE}" />
@@ -75,61 +77,54 @@
 		<Unit filename="../../src/bsp/common/plc_tick.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/f2/fmb_port/port.h" />
-		<Unit filename="../../src/bsp/common/stm32/f2/fmb_port/portevent.c">
+		<Unit filename="../../src/bsp/common/stm32/f1/fmb_port/port.h" />
+		<Unit filename="../../src/bsp/common/stm32/f1/fmb_port/portevent.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/f2/fmb_port/portother.c">
+		<Unit filename="../../src/bsp/common/stm32/f1/fmb_port/portother.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/f2/fmb_port/portserial.c">
+		<Unit filename="../../src/bsp/common/stm32/f1/fmb_port/portserial.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/f2/fmb_port/porttimer.c">
+		<Unit filename="../../src/bsp/common/stm32/f1/fmb_port/porttimer.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/f2/mbconfig.h" />
-		<Unit filename="../../src/bsp/common/stm32/f2/plc_backup.c">
+		<Unit filename="../../src/bsp/common/stm32/f1/mbconfig.h" />
+		<Unit filename="../../src/bsp/common/stm32/f1/plc_backup.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/f2/plc_clock.c">
+		<Unit filename="../../src/bsp/common/stm32/f1/plc_clock.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/f2/plc_gpio.c">
+		<Unit filename="../../src/bsp/common/stm32/f1/plc_gpio.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/f2/plc_isr_stubs.c">
+		<Unit filename="../../src/bsp/common/stm32/f1/plc_rtc.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/f2/plc_rtc.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/f2/plc_serial.c">
+		<Unit filename="../../src/bsp/common/stm32/f1/plc_serial.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../src/bsp/common/stm32/plc_diag.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/plc_gpio.h" />
-		<Unit filename="../../src/bsp/common/stm32/plc_hmi.c">
+		<Unit filename="../../src/bsp/common/stm32/plc_wait_tmr.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/plc_hmi.h" />
-		<Unit filename="../../src/bsp/nuc-243/hmi_7seg_conf.h" />
-		<Unit filename="../../src/bsp/nuc-243/plc_config.h" />
-		<Unit filename="../../src/bsp/nuc-243/plc_hmi_sys.c">
+		<Unit filename="../../src/bsp/nuc-242/plc_config.h" />
+		<Unit filename="../../src/bsp/nuc-242/plc_hmi.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/nuc-243/plc_hw.c">
+		<Unit filename="../../src/bsp/nuc-242/plc_hw.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/nuc-243/plc_iom_reg.c">
+		<Unit filename="../../src/bsp/nuc-242/plc_iom_reg.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/nuc-243/plc_wait_tmr.c">
+		<Unit filename="../../src/bsp/nuc-242/plc_isr_stubs.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/nuc-243/stm32f205xC-rte.ld" />
 		<Unit filename="../../src/dbnc_flt.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -129,6 +129,11 @@ bool plc_app_is_valid(void)
     {
         return false;
     }
+    //HW ID
+    if (PLC_APP->hw_id != PLC_HW_ID)
+    {
+        return false;
+    }
     //Check RTE version compatibility
     if (PLC_APP->rte_ver_major != PLC_RTE_VER_MAJOR)
     {

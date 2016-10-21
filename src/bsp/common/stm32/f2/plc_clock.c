@@ -28,6 +28,7 @@
 #include <libopencm3/cm3/scb.h>
 
 #include <plc_config.h>
+#include <plc_diag.h>
 #include <plc_clock.h>
 #include <plc_hw.h>
 
@@ -191,7 +192,7 @@ void plc_clock_setup(void)
     pll_setup( &cfg_hsi );
     pll_is_dirty = false;
     /* This is an error, but we can do some work... */
-    plc_hw_status |= PLC_HW_ERR_HSE;
+    plc_diag_status |= PLC_DIAG_ERR_HSE;
 }
 
 void nmi_handler(void)
@@ -210,7 +211,7 @@ void nmi_handler(void)
             /* We are already on HSI, so we need only PLL setup. */
             pll_setup( &cfg_hsi );
             /* This is an error, but we can do some work... */
-            plc_hw_status |= PLC_HW_ERR_HSE;
+            plc_diag_status |= PLC_DIAG_ERR_HSE;
         }
     }
 }

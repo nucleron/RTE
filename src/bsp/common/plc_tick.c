@@ -12,6 +12,7 @@
 #include <plc_config.h>
 #include <plc_abi.h>
 #include <plc_dbg.h>
+#include <plc_diag.h>
 #include <plc_tick.h>
 #include <frac_div.h>
 #include <plc_hw.h>
@@ -54,7 +55,7 @@ volatile bool plc_tick_flag = false;
 extern void plc_irq_stub(void);
 
 extern bool plc_dbg_mode;
-extern volatile uint32_t plc_hw_status;
+extern volatile uint32_t plc_diag_status;
 
 static bool dl_post_flag = true;
 
@@ -64,7 +65,7 @@ void plc_heart_beat_init(void)
 
 void plc_heart_beat_poll(void)
 {
-    if (plc_hw_status  & PLC_HW_ERR_DEADLINE)
+    if (plc_diag_status  & PLC_DIAG_ERR_DEADLINE)
     {
         if( dl_post_flag )
         {
@@ -82,7 +83,7 @@ void sys_tick_handler(void)
         if (plc_dbg_mode)
         {
             //In debug mode we stop the program
-            plc_hw_status |= PLC_HW_ERR_DEADLINE;
+            plc_diag_status |= PLC_DIAG_ERR_DEADLINE;
         }
         else
         {

@@ -12,18 +12,16 @@
 #include <libopencm3/stm32/gpio.h>
 
 #include <plc_config.h>
+#include <plc_gpio.h>
 #include <plc_abi.h>
 #include <plc_dbg.h>
-#include <plc_diag.h>
-#include <plc_iom.h>
-#include <plc_gpio.h>
-#include <plc_hw.h>
 #include <plc_rtc.h>
+#include <plc_hw.h>
+#include <plc_iom.h>
 #include <plc_wait_tmr.h>
 
-volatile uint32_t plc_diag_status = 0;
 
-static const plc_gpio_t led_hb[] =
+static const plc_gpio_t led_hb[PLC_DO_NUM] =
 {
     PLC_GPIO_REC(LED_STG),
     PLC_GPIO_REC(LED_STR)
@@ -43,36 +41,31 @@ typedef struct
     uint32_t msz;
 } diag_cfg_t;
 
-static const char plc_crt_err_msg[] = "Critical failure!";
-static const char plc_hse_err_msg[] = "HSE oscilator failed!";
-static const char plc_lse_err_msg[] = "LSE oscilator failed!";
-static const char plc_app_err_msg[] = "Aplication posted error";
-static const char plc_dl_err_msg[] =  "Deadline violation detected, PLC is stoped!";
+const char plc_crt_err_msg[] = "Critical failure!";
+const char plc_hse_err_msg[] = "HSE oscilator failed!";
+const char plc_lse_err_msg[] = "LSE oscilator failed!";
+const char plc_dl_err_msg[] =  "Deadline violation detected, PLC is stoped!";
 
 #define DIAG_POLL_REC(prio, msk, thr, msg) {prio, msk, thr, (char *)(msg), sizeof(msg)}
 
 static const diag_cfg_t diag_poll_cfg[]=
 {
-    DIAG_POLL_REC(1,PLC_DIAG_ERR_HSE       ,500, plc_hse_err_msg),
-    DIAG_POLL_REC(2,PLC_DIAG_ERR_LSE       ,500, plc_lse_err_msg),
-    DIAG_POLL_REC(2,PLC_DIAG_ERR_APP_WARN  ,250, plc_app_err_msg),
-    DIAG_POLL_REC(0,PLC_DIAG_ERR_DEADLINE  ,250, plc_dl_err_msg ),
-    DIAG_POLL_REC(0,PLC_DIAG_ERR_OTHER_CRIT,250, plc_crt_err_msg)
+    DIAG_POLL_REC(1,PLC_HW_ERR_HSE     ,500, plc_hse_err_msg),
+    DIAG_POLL_REC(2,PLC_HW_ERR_LSE     ,500, plc_lse_err_msg),
+    DIAG_POLL_REC(0,PLC_HW_ERR_DEADLINE,250, plc_dl_err_msg ),
+    DIAG_POLL_REC(0,PLC_HW_ERR_CRITICAL,250, plc_crt_err_msg)
 };
 
 static bool diag_post_flg[sizeof(diag_poll_cfg)/sizeof(diag_cfg_t)];
-static void clr_post_flg(void)
+
+#define LOCAL_PROTO plc_diag
+void PLC_IOM_LOCAL_INIT(void)
 {
     uint8_t i;
     for(i=0; i<sizeof(diag_post_flg); i++)
     {
         diag_post_flg[i] = true;
     }
-}
-#define LOCAL_PROTO plc_diag
-void PLC_IOM_LOCAL_INIT(void)
-{
-    clr_post_flg();
     blink_thr = 500;
     PLC_GPIO_GR_CFG_OUT(led_hb);
 }
@@ -81,23 +74,15 @@ bool PLC_IOM_LOCAL_TEST_HW(void)
     return true;
 }
 
-#define PLC_DIAG_I_HSE 0
-#define PLC_DIAG_I_LSE 1
-
-#define PLC_DIAG_I_NUM 2
-
-#define PLC_DIAG_Q_DBGM 0  //
-#define PLC_DIAG_Q_CRIT 1
-#define PLC_DIAG_Q_WARN 2
-
-#define PLC_DIAG_Q_NUM 3
+#define PLC_DIAG_ADDR_HSE 0
+#define PLC_DIAG_ADDR_LSE 1
 
 #define PLC_DIAG_ADDR_NUM 2
 
 static const char plc_diag_err_asz[]     = "Diag location adress must be one number!";
 static const char plc_diag_err_tp[]      = "Diag protocol supports only input locations!";
-static const char plc_diag_err_addr_i[]  = "Diag I location adress must be in 0 or 1!";
-static const char plc_diag_err_addr_q[]  = "Diag Q location adress must be in 0..2!";
+static const char plc_diag_err_addr_i[]    = "Diag location adress must be in 0 or 1!";
+static const char plc_diag_err_addr_q[]    = "Diag location adress must be in 0 or 1!";
 
 static bool abort_present = false;
 
@@ -119,7 +104,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     if (PLC_LT_Q == PLC_APP->l_tab[i]->v_type)
     {
         //Debug mode and Abort locations
-        if(PLC_DIAG_Q_NUM <= PLC_APP->l_tab[i]->a_data[0])
+        if(1 < PLC_APP->l_tab[i]->a_data[0])
         {
             PLC_LOG_ERROR(plc_diag_err_addr_q);
             return false;
@@ -127,7 +112,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     }
     else
     {
-        if (PLC_DIAG_I_NUM <= PLC_APP->l_tab[i]->a_data[0])
+        if (PLC_DIAG_ADDR_NUM <= PLC_APP->l_tab[i]->a_data[0])
         {
             PLC_LOG_ERROR(plc_diag_err_addr_i);
             return false;
@@ -152,8 +137,6 @@ uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
 void PLC_IOM_LOCAL_START(void)
 {
     PLC_CLEAR_TIMER(blink_tmr);
-    clr_post_flg();
-    plc_diag_status &= ~(PLC_DIAG_ERR_APP_WARN|PLC_DIAG_ERR_APP_CRIT); //Clear software errors
 }
 
 void PLC_IOM_LOCAL_POLL(uint32_t tick)
@@ -188,7 +171,7 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
             err_prio = 10;
             for (i=0; i< sizeof(diag_post_flg); i++)
             {
-                if ((plc_diag_status & diag_poll_cfg[i].msk) && (diag_poll_cfg[i].prio < err_prio))
+                if ((plc_hw_status & diag_poll_cfg[i].msk) && (diag_poll_cfg[i].prio < err_prio))
                 {
                     err_prio = diag_poll_cfg[i].prio;
                     blink_thr = diag_poll_cfg[i].thr;
@@ -222,12 +205,12 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
 
     switch(plc_curr_app->l_tab[i]->a_data[0])
     {
-    case PLC_DIAG_I_HSE:
-        tmp = (0 != plc_diag_status  & PLC_DIAG_ERR_HSE);
+    case PLC_DIAG_ADDR_HSE:
+        tmp = (0 != plc_hw_status  & PLC_HW_ERR_HSE);
         break;
 
-    case PLC_DIAG_I_LSE:
-        tmp = (0 != plc_diag_status  & PLC_DIAG_ERR_LSE);
+    case PLC_DIAG_ADDR_LSE:
+        tmp = (0 != plc_hw_status  & PLC_HW_ERR_LSE);
         break;
 
     default:
@@ -247,25 +230,18 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 {
     switch (PLC_APP->l_tab[i]->a_data[0])
     {
-    case PLC_DIAG_Q_DBGM://Enter debug mode
+    case 0://Enter debug mode
         if(*(bool *)(plc_curr_app->l_tab[i]->v_buf))
         {
             plc_dbg_mode = true;
         }
         break;
-    case PLC_DIAG_Q_CRIT://Abort
+    case 1://Abort
         if(*(bool *)(plc_curr_app->l_tab[i]->v_buf))
         {
             PLC_LOG_ERROR(plc_diag_abort_msg);
-            plc_diag_status |= PLC_DIAG_ERR_APP_CRIT;
+            plc_hw_status |= PLC_HW_ERR_USER;
             plc_app_stop();
-        }
-        break;
-    case PLC_DIAG_Q_WARN://Warning
-        if(*(bool *)(plc_curr_app->l_tab[i]->v_buf))
-        {
-            //No message, user must do it in PLC program.
-            plc_diag_status |= PLC_DIAG_ERR_APP_WARN;
         }
         break;
     default:

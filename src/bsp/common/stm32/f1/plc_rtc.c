@@ -21,9 +21,10 @@
 #include <libopencm3/stm32/pwr.h>
 #include <libopencm3/stm32/rtc.h>
 
+#include <plc_config.h>
+#include <plc_diag.h>
 #include <plc_rtc.h>
 #include <plc_hw.h>
-#include <plc_config.h>
 
 #define PLC_RTC_DIV_VAL 0x7FFF
 
@@ -180,7 +181,7 @@ void plc_rtc_init( tm* time )
     return;
     /* LSE error occured */
 lse_error:
-    plc_hw_status |= PLC_HW_ERR_LSE;
+    plc_diag_status |= PLC_DIAG_ERR_LSE;
     pwr_enable_backup_domain_write_protect();
 }
 
@@ -188,7 +189,7 @@ void plc_rtc_dt_set( tm* time )
 {
     uint32_t i;
 
-    if (plc_hw_status & PLC_HW_ERR_LSE)
+    if (plc_diag_status & PLC_DIAG_ERR_LSE)
     {
         return;
     }
@@ -226,7 +227,7 @@ void plc_rtc_dt_set( tm* time )
     return;
     /* LSE error occured */
 lse_error:
-    plc_hw_status |= PLC_HW_ERR_LSE;
+    plc_diag_status |= PLC_DIAG_ERR_LSE;
     pwr_enable_backup_domain_write_protect();
 }
 
