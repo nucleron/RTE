@@ -63,6 +63,11 @@ extern void dbg_serial_init(void);
 
 #define PUT_DATA         18
 
+#define GET_RTC_DATA     21
+
+#define GET_CUSTOM_LEN   22
+#define GET_CUSTOM_DATA  23
+
 
 //Commands
 #define DBG_CMD_START    0x61
@@ -79,6 +84,10 @@ extern void dbg_serial_init(void);
 #define DBG_CMD_CLR_LM    0x69
 
 #define DBG_CMD_IDLE      0x6a
+
+#define DBG_CMD_SET_RTC   0x6b
+
+#define DBG_CMD_CUSTOM    0x6c //Custom cmd
 
 //Timer threshold
 #define PLC_DBG_TIMER_THR 500
@@ -115,12 +124,23 @@ typedef struct
     unsigned long nsec;
 } get_lm_t;
 
+typedef struct
+{
+    unsigned char year;
+    unsigned char mon;
+    unsigned char day;
+    unsigned char hour;
+    unsigned char min;
+    unsigned char sec;
+} set_rtc_t;
+
 typedef union
 {
-    get_id_t get_id;
+    get_id_t   get_id;
     set_val_t  set_val;
     get_val_t  get_val;
-    get_lm_t get_log_msg;
+    get_lm_t   get_log_msg;
+    set_rtc_t  set_rtc;
 } tr_vars_t;
 
 typedef struct

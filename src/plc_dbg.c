@@ -5,11 +5,15 @@
  * see License.txt for details.
  */
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include <plc_config.h>
 
 #include <plc_dbg.h>
 
 #include <plc_backup.h>
+#include <plc_rtc.h>
 #include <plc_wait_tmr.h>
 #include <plc_hw.h>
 
@@ -21,7 +25,7 @@ void dbg_fifo_flush( dbg_fifo_t * fifo )
     fifo->write = 0;
 }
 
-int dbg_fifo_write_byte(dbg_fifo_t * fifo, unsigned char d)
+int dbg_fifo_write_byte(dbg_fifo_t * fifo, uint8_t d)
 {
     if (DBG_FIFO_SIZE > fifo->bytes)
     {
@@ -36,7 +40,7 @@ int dbg_fifo_write_byte(dbg_fifo_t * fifo, unsigned char d)
     }
 }
 
-int dbg_fifo_write(dbg_fifo_t * fifo, unsigned char *d, unsigned short n)
+int dbg_fifo_write(dbg_fifo_t * fifo, uint8_t *d, unsigned short n)
 {
     int res;
     res = 0;
@@ -55,7 +59,7 @@ int dbg_fifo_write(dbg_fifo_t * fifo, unsigned char *d, unsigned short n)
     return res; //Number of written bytes
 }
 
-int dbg_fifo_read_byte(dbg_fifo_t * fifo, unsigned char *d)
+int dbg_fifo_read_byte(dbg_fifo_t * fifo, uint8_t *d)
 {
     if (0 != fifo->bytes)
     {
@@ -70,7 +74,7 @@ int dbg_fifo_read_byte(dbg_fifo_t * fifo, unsigned char *d)
     }
 }
 
-int dbg_fifo_read( dbg_fifo_t * fifo, unsigned char *d, unsigned short n)
+int dbg_fifo_read( dbg_fifo_t * fifo, uint8_t *d, unsigned short n)
 {
     int res;
     res = 0;
@@ -123,6 +127,14 @@ void dbg_init(void)
     plc_dbg_ctrl.timer = 0;
     plc_dbg_ctrl.data_hook = (void(*)(void))0;
 }
+
+static void default_custom_handler(uint8_t * data, uint8_t dsize)
+{
+    (void)data;
+    (void)dsize;
+}
+
+extern void dbg_custom_handler(uint8_t * data, uint8_t dsize) __attribute__((weak,alias("default_custom_handler")));
 
 void dbg_handler(void)
 {
@@ -225,7 +237,7 @@ void dbg_handler(void)
             plc_curr_app->dbg_vars_reset();
             //Get 4 byte data length, little endian
             plc_dbg_ctrl.tmp_len = 4;
-            plc_dbg_ctrl.tmp = (unsigned char *)&plc_dbg_ctrl.data_len;
+            plc_dbg_ctrl.tmp = (uint8_t *)&plc_dbg_ctrl.data_len;
         }
         break;
 
@@ -234,16 +246,16 @@ void dbg_handler(void)
             plc_dbg_ctrl.state = PUT_ID_LEN;
             //Transfer 4 byte data length, little endian
             plc_dbg_ctrl.tmp_len = 4;
-            plc_dbg_ctrl.tmp = (unsigned char *)&plc_dbg_ctrl.data_len;
+            plc_dbg_ctrl.tmp = (uint8_t *)&plc_dbg_ctrl.data_len;
             //Than Transfer 32 bytes of data
             plc_dbg_ctrl.data_len = 32;
-            plc_dbg_ctrl.data = (unsigned char *)plc_curr_app->id;
+            plc_dbg_ctrl.data = (uint8_t *)plc_curr_app->id;
         }
         break;
 
         case DBG_CMD_GET_LC:
         {
-            unsigned char i;
+            uint8_t i;
             for (i = 0; i < 4; i++)
             {
                 plc_dbg_ctrl.tr_buf.log_cnt[i] = plc_curr_app->log_cnt_get(i);
@@ -251,10 +263,10 @@ void dbg_handler(void)
             plc_dbg_ctrl.state = PUT_LC_LEN;
             //Transfer 4 byte data length, little endian
             plc_dbg_ctrl.tmp_len = 4;
-            plc_dbg_ctrl.tmp = (unsigned char *)&plc_dbg_ctrl.data_len;
+            plc_dbg_ctrl.tmp = (uint8_t *)&plc_dbg_ctrl.data_len;
             //Than Transfer 32 bytes of data
             plc_dbg_ctrl.data_len = 16;
-            plc_dbg_ctrl.data = (unsigned char *)&plc_dbg_ctrl.tr_buf.log_cnt[0];
+            plc_dbg_ctrl.data = (uint8_t *)&plc_dbg_ctrl.tr_buf.log_cnt[0];
         }
         break;
 
@@ -278,10 +290,106 @@ void dbg_handler(void)
         }
         break;
 
+        case DBG_CMD_SET_RTC:
+        {
+            plc_dbg_ctrl.state = GET_RTC_DATA;
+            plc_dbg_ctrl.data_len = 6;
+            plc_dbg_ctrl.data = (uint8_t *)&plc_dbg_ctrl.tr.set_rtc;
+        }
+        break;
+
+        case DBG_CMD_CUSTOM:
+        {
+            plc_dbg_ctrl.state = GET_CUSTOM_LEN;
+
+            //Get 4 byte data length, little endian
+            plc_dbg_ctrl.tmp_len = 4;
+            plc_dbg_ctrl.tmp = (uint8_t *)&plc_dbg_ctrl.data_len;
+        }
+        break;
+
         }
     }
     break;
     //==========================================================================================
+    case GET_RTC_DATA:
+    {
+        PLC_CLEAR_TIMER (plc_dbg_ctrl.timer);
+
+        if (plc_dbg_ctrl.data_len)
+        {
+            int read_res;
+            //Must read before timeout!
+            read_res = dbg_serial_read(plc_dbg_ctrl.data, plc_dbg_ctrl.data_len);
+            plc_dbg_ctrl.data     += read_res;
+            plc_dbg_ctrl.data_len -= read_res;
+        }
+        else
+        {
+            tm new_time;
+            //Set RTC
+            new_time.tm_year = plc_dbg_ctrl.tr.set_rtc.year;
+            new_time.tm_mon  = plc_dbg_ctrl.tr.set_rtc.mon;
+            new_time.tm_day  = plc_dbg_ctrl.tr.set_rtc.day;
+            new_time.tm_hour = plc_dbg_ctrl.tr.set_rtc.hour;
+            new_time.tm_min  = plc_dbg_ctrl.tr.set_rtc.min;
+            new_time.tm_sec  = plc_dbg_ctrl.tr.set_rtc.sec;
+            plc_rtc_dt_set(&new_time);
+
+            plc_dbg_ctrl.state = GET_CMD;
+        }
+    }
+    break;
+
+    case GET_CUSTOM_LEN:
+    {
+        PLC_CLEAR_TIMER (plc_dbg_ctrl.timer);
+
+        if (plc_dbg_ctrl.tmp_len)
+        {
+            int write_res;
+            write_res = dbg_serial_write(plc_dbg_ctrl.tmp, plc_dbg_ctrl.tmp_len);
+            plc_dbg_ctrl.tmp     += write_res;
+            plc_dbg_ctrl.tmp_len -= (uint8_t)write_res;
+        }
+        else
+        {
+            if (0 < plc_dbg_ctrl.data_len)
+            {
+                //When length transfered transfer data
+                plc_dbg_ctrl.state = GET_CUSTOM_DATA;
+                plc_dbg_ctrl.tmp_len = plc_dbg_ctrl.data_len; //Save tmp len
+                plc_dbg_ctrl.data = (uint8_t *)&plc_dbg_ctrl.tr_buf.data[0];
+            }
+            else
+            {
+                plc_dbg_ctrl.state = GET_CMD;
+            }
+        }
+    }
+    break;
+
+    case GET_CUSTOM_DATA:
+    {
+        PLC_CLEAR_TIMER (plc_dbg_ctrl.timer);
+
+        if (plc_dbg_ctrl.data_len)
+        {
+            int read_res;
+            //Must read before timeout!
+            read_res = dbg_serial_read(plc_dbg_ctrl.data, plc_dbg_ctrl.data_len);
+            plc_dbg_ctrl.data     += read_res;
+            plc_dbg_ctrl.data_len -= read_res;
+        }
+        else
+        {
+            //Process custom command
+            dbg_custom_handler((uint8_t *)&plc_dbg_ctrl.tr_buf.data[0], plc_dbg_ctrl.tmp_len);
+            plc_dbg_ctrl.state = GET_CMD;
+        }
+    }
+    break;
+
     case GET_DEBUG_DATA:
     {
         PLC_CLEAR_TIMER (plc_dbg_ctrl.timer);
@@ -298,7 +406,7 @@ void dbg_handler(void)
         plc_dbg_ctrl.state = PUT_DEBUG_LEN;
 
         plc_dbg_ctrl.tmp_len = 4;
-        plc_dbg_ctrl.tmp = (unsigned char *)&plc_dbg_ctrl.data_len;
+        plc_dbg_ctrl.tmp = (uint8_t *)&plc_dbg_ctrl.data_len;
     }
     break;
 
@@ -311,7 +419,7 @@ void dbg_handler(void)
             int write_res;
             write_res = dbg_serial_write(plc_dbg_ctrl.tmp, plc_dbg_ctrl.tmp_len);
             plc_dbg_ctrl.tmp += write_res;
-            plc_dbg_ctrl.tmp_len -= (unsigned char)write_res;
+            plc_dbg_ctrl.tmp_len -= (uint8_t)write_res;
         }
         else
         {
@@ -320,7 +428,7 @@ void dbg_handler(void)
                 //When length transfered transfer data
                 plc_dbg_ctrl.state = PUT_DEBUG_TICK;
                 plc_dbg_ctrl.tmp_len = 4;
-                plc_dbg_ctrl.tmp = (unsigned char *)&plc_dbg_ctrl.tr.get_val.tick;
+                plc_dbg_ctrl.tmp = (uint8_t *)&plc_dbg_ctrl.tr.get_val.tick;
             }
             else
             {
@@ -339,7 +447,7 @@ void dbg_handler(void)
             int write_res;
             write_res = dbg_serial_write(plc_dbg_ctrl.tmp, plc_dbg_ctrl.tmp_len);
             plc_dbg_ctrl.tmp += write_res;
-            plc_dbg_ctrl.tmp_len -= (unsigned char)write_res;
+            plc_dbg_ctrl.tmp_len -= (uint8_t)write_res;
             plc_dbg_ctrl.data_len -= write_res;
         }
         else
@@ -368,7 +476,7 @@ void dbg_handler(void)
             {
                 plc_dbg_ctrl.state = GET_VAR_IDX;
                 plc_dbg_ctrl.tmp_len = 4;
-                plc_dbg_ctrl.tmp = (unsigned char *)&plc_dbg_ctrl.tr.set_val.var_idx;
+                plc_dbg_ctrl.tmp = (uint8_t *)&plc_dbg_ctrl.tr.set_val.var_idx;
             }
             else
             {
@@ -421,13 +529,13 @@ void dbg_handler(void)
                 {
                     plc_dbg_ctrl.state = GET_VAR_IDX;
                     plc_dbg_ctrl.tmp_len = 4;
-                    plc_dbg_ctrl.tmp = (unsigned char *)&plc_dbg_ctrl.tr.set_val.var_idx;
+                    plc_dbg_ctrl.tmp = (uint8_t *)&plc_dbg_ctrl.tr.set_val.var_idx;
                 }
             }
             else
             {
                 plc_dbg_ctrl.state = GET_FORCE_DATA;
-                plc_dbg_ctrl.data = (unsigned char *)&plc_dbg_ctrl.tr_buf.data[0];
+                plc_dbg_ctrl.data = (uint8_t *)&plc_dbg_ctrl.tr_buf.data[0];
             }
         }
     }
@@ -441,7 +549,7 @@ void dbg_handler(void)
             //Must read before timeout!
             read_res = dbg_serial_read(plc_dbg_ctrl.data, plc_dbg_ctrl.tmp_len);
             plc_dbg_ctrl.data        += read_res;
-            plc_dbg_ctrl.tmp_len     -= (unsigned char)read_res;
+            plc_dbg_ctrl.tmp_len     -= (uint8_t)read_res;
             plc_dbg_ctrl.data_len    -= read_res;
             //Panic on error
         }
@@ -460,7 +568,7 @@ void dbg_handler(void)
             {
                 plc_dbg_ctrl.state = GET_VAR_IDX;
                 plc_dbg_ctrl.tmp_len = 4;
-                plc_dbg_ctrl.tmp = (unsigned char *)&plc_dbg_ctrl.tr.set_val.var_idx;
+                plc_dbg_ctrl.tmp = (uint8_t *)&plc_dbg_ctrl.tr.set_val.var_idx;
             }
         }
     }
@@ -477,7 +585,7 @@ void dbg_handler(void)
             int write_res;
             write_res = dbg_serial_write(plc_dbg_ctrl.tmp, plc_dbg_ctrl.tmp_len);
             plc_dbg_ctrl.tmp += write_res;
-            plc_dbg_ctrl.tmp_len -= (unsigned char)write_res;
+            plc_dbg_ctrl.tmp_len -= (uint8_t)write_res;
         }
         else
         {
@@ -495,7 +603,7 @@ void dbg_handler(void)
 
             plc_dbg_ctrl.state = GET_MSG_ID;
             plc_dbg_ctrl.tmp_len = 4;
-            plc_dbg_ctrl.tmp = (unsigned char *)&plc_dbg_ctrl.tr.get_log_msg.msg_id;
+            plc_dbg_ctrl.tmp = (uint8_t *)&plc_dbg_ctrl.tr.get_log_msg.msg_id;
         }
     }
     break;
@@ -528,10 +636,10 @@ void dbg_handler(void)
                                     );
 
             plc_dbg_ctrl.data_len += 12; // Tick+Sec+NSec+Data
-            plc_dbg_ctrl.data = (unsigned char *)&plc_dbg_ctrl.tr_buf.log_msg[0];
+            plc_dbg_ctrl.data = (uint8_t *)&plc_dbg_ctrl.tr_buf.log_msg[0];
 
             plc_dbg_ctrl.tmp_len = 4;
-            plc_dbg_ctrl.tmp = (unsigned char *)&plc_dbg_ctrl.data_len;
+            plc_dbg_ctrl.tmp = (uint8_t *)&plc_dbg_ctrl.data_len;
         }
     }
     break;
@@ -545,7 +653,7 @@ void dbg_handler(void)
             int write_res;
             write_res = dbg_serial_write(plc_dbg_ctrl.tmp, plc_dbg_ctrl.tmp_len);
             plc_dbg_ctrl.tmp += write_res;
-            plc_dbg_ctrl.tmp_len -= (unsigned char)write_res;
+            plc_dbg_ctrl.tmp_len -= (uint8_t)write_res;
         }
         else
         {
@@ -553,7 +661,7 @@ void dbg_handler(void)
             plc_dbg_ctrl.state = PUT_MSG_TICK;
 
             plc_dbg_ctrl.tmp_len = 4;
-            plc_dbg_ctrl.tmp = (unsigned char *)&plc_dbg_ctrl.tr.get_log_msg.tick;
+            plc_dbg_ctrl.tmp = (uint8_t *)&plc_dbg_ctrl.tr.get_log_msg.tick;
         }
     }
     break;
@@ -567,7 +675,7 @@ void dbg_handler(void)
             int write_res;
             write_res = dbg_serial_write(plc_dbg_ctrl.tmp, plc_dbg_ctrl.tmp_len);
             plc_dbg_ctrl.tmp += write_res;
-            plc_dbg_ctrl.tmp_len -= (unsigned char)write_res;
+            plc_dbg_ctrl.tmp_len -= (uint8_t)write_res;
             plc_dbg_ctrl.data_len -= write_res;
         }
         else
@@ -576,7 +684,7 @@ void dbg_handler(void)
             plc_dbg_ctrl.state = PUT_MSG_SEC;
 
             plc_dbg_ctrl.tmp_len = 4;
-            plc_dbg_ctrl.tmp = (unsigned char *)&plc_dbg_ctrl.tr.get_log_msg.sec;
+            plc_dbg_ctrl.tmp = (uint8_t *)&plc_dbg_ctrl.tr.get_log_msg.sec;
         }
     }
     break;
@@ -590,7 +698,7 @@ void dbg_handler(void)
             int write_res;
             write_res = dbg_serial_write(plc_dbg_ctrl.tmp, plc_dbg_ctrl.tmp_len);
             plc_dbg_ctrl.tmp += write_res;
-            plc_dbg_ctrl.tmp_len -= (unsigned char)write_res;
+            plc_dbg_ctrl.tmp_len -= (uint8_t)write_res;
             plc_dbg_ctrl.data_len -= write_res;
         }
         else
@@ -599,7 +707,7 @@ void dbg_handler(void)
             plc_dbg_ctrl.state = PUT_MSG_NSEC;
 
             plc_dbg_ctrl.tmp_len = 4;
-            plc_dbg_ctrl.tmp = (unsigned char *)&plc_dbg_ctrl.tr.get_log_msg.nsec;
+            plc_dbg_ctrl.tmp = (uint8_t *)&plc_dbg_ctrl.tr.get_log_msg.nsec;
         }
     }
     break;
@@ -613,7 +721,7 @@ void dbg_handler(void)
             int write_res;
             write_res = dbg_serial_write (plc_dbg_ctrl.tmp, plc_dbg_ctrl.tmp_len);
             plc_dbg_ctrl.tmp += write_res;
-            plc_dbg_ctrl.tmp_len -= (unsigned char)write_res;
+            plc_dbg_ctrl.tmp_len -= (uint8_t)write_res;
             plc_dbg_ctrl.data_len -= write_res;
         }
         else
