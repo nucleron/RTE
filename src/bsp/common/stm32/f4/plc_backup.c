@@ -1,7 +1,7 @@
 /*
  * Copyright Nucleron R&D LLC 2016
- * 
- * This file is licensed under the terms of NOSL, 
+ *
+ * This file is licensed under the terms of NOSL,
  * see License.txt for details.
  */
 
@@ -32,7 +32,7 @@
 //watches RTC_BKP_BASE 0x40002850
 //  PLC_BKP_START 0x40024000
 
-#define PLC_BKP_REG_NUM 10
+#define PLC_BKP_REG_NUM 4
 #define PLC_BKP_SIZE (PLC_BKP_REG_NUM*4ul)
 static uint32_t plc_backup_buff[PLC_BKP_REG_NUM];
 static uint32_t * plc_backup_reg = PLC_BKP_START;

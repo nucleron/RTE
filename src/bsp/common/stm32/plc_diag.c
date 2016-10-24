@@ -32,32 +32,41 @@ static const plc_gpio_t led_hb[] =
 static uint32_t blink_thr;
 static uint32_t blink_tmr;
 static bool err_test_flg = true;
-static uint8_t err_prio = 10;
+
 
 typedef struct
 {
-    uint8_t  prio;
+    uint8_t  level;
     uint32_t msk;
     uint32_t thr;
     char*    msg;
     uint32_t msz;
 } diag_cfg_t;
 
+#define PLC_DIAG_LEVEL_CRI 0 //Critical error stop everything
+#define PLC_DIAG_LEVEL_WRN 1 //Warning
+#define PLC_DIAG_LEVEL_INF 2 //Info
+#define PLC_DIAG_LEVEL_NRM 3 //Normal work
+static uint8_t err_level = PLC_DIAG_LEVEL_NRM;
+
+
+static const char plc_dl_err_msg[] =  "Deadline violation detected, PLC is stoped!";
 static const char plc_crt_err_msg[] = "Critical failure!";
 static const char plc_hse_err_msg[] = "HSE oscilator failed!";
 static const char plc_lse_err_msg[] = "LSE oscilator failed!";
-static const char plc_app_err_msg[] = "Aplication posted error";
-static const char plc_dl_err_msg[] =  "Deadline violation detected, PLC is stoped!";
+static const char plc_app_wrn_msg[] = "Aplication posted warning";
+static const char plc_app_inf_msg[] = "Aplication posted info";
 
-#define DIAG_POLL_REC(prio, msk, thr, msg) {prio, msk, thr, (char *)(msg), sizeof(msg)}
+#define DIAG_POLL_REC(level, msk, thr, msg) {level, msk, thr, (char *)(msg), sizeof(msg)}
 
 static const diag_cfg_t diag_poll_cfg[]=
 {
-    DIAG_POLL_REC(1,PLC_DIAG_ERR_HSE       ,500, plc_hse_err_msg),
-    DIAG_POLL_REC(2,PLC_DIAG_ERR_LSE       ,500, plc_lse_err_msg),
-    DIAG_POLL_REC(2,PLC_DIAG_ERR_APP_WARN  ,250, plc_app_err_msg),
-    DIAG_POLL_REC(0,PLC_DIAG_ERR_DEADLINE  ,250, plc_dl_err_msg ),
-    DIAG_POLL_REC(0,PLC_DIAG_ERR_OTHER_CRIT,250, plc_crt_err_msg)
+    DIAG_POLL_REC(PLC_DIAG_LEVEL_CRI, PLC_DIAG_ERR_DEADLINE  ,250, plc_dl_err_msg ),
+    DIAG_POLL_REC(PLC_DIAG_LEVEL_CRI, PLC_DIAG_ERR_OTHER_CRIT,250, plc_crt_err_msg),
+    DIAG_POLL_REC(PLC_DIAG_LEVEL_WRN, PLC_DIAG_ERR_HSE       ,125, plc_hse_err_msg),
+    DIAG_POLL_REC(PLC_DIAG_LEVEL_WRN, PLC_DIAG_ERR_LSE       ,250, plc_lse_err_msg),
+    DIAG_POLL_REC(PLC_DIAG_LEVEL_WRN, PLC_DIAG_ERR_APP_WARN  ,500, plc_app_wrn_msg),
+    DIAG_POLL_REC(PLC_DIAG_LEVEL_INF, PLC_DIAG_ERR_APP_INFO  ,250, plc_app_inf_msg),
 };
 
 static bool diag_post_flg[sizeof(diag_poll_cfg)/sizeof(diag_cfg_t)];
@@ -89,15 +98,16 @@ bool PLC_IOM_LOCAL_TEST_HW(void)
 #define PLC_DIAG_Q_DBGM 0  //
 #define PLC_DIAG_Q_CRIT 1
 #define PLC_DIAG_Q_WARN 2
+#define PLC_DIAG_Q_INFO 3
 
-#define PLC_DIAG_Q_NUM 3
+#define PLC_DIAG_Q_NUM 4
 
 #define PLC_DIAG_ADDR_NUM 2
 
 static const char plc_diag_err_asz[]     = "Diag location adress must be one number!";
 static const char plc_diag_err_tp[]      = "Diag protocol supports only input locations!";
 static const char plc_diag_err_addr_i[]  = "Diag I location adress must be in 0 or 1!";
-static const char plc_diag_err_addr_q[]  = "Diag Q location adress must be in 0..2!";
+static const char plc_diag_err_addr_q[]  = "Diag Q location adress must be in 0..3!";
 
 static bool abort_present = false;
 
@@ -153,7 +163,7 @@ void PLC_IOM_LOCAL_START(void)
 {
     PLC_CLEAR_TIMER(blink_tmr);
     clr_post_flg();
-    plc_diag_status &= ~(PLC_DIAG_ERR_APP_WARN|PLC_DIAG_ERR_APP_CRIT); //Clear software errors
+    plc_diag_status &= ~(PLC_DIAG_ERR_APP_INFO|PLC_DIAG_ERR_APP_WARN|PLC_DIAG_ERR_APP_CRIT); //Clear software errors
 }
 
 void PLC_IOM_LOCAL_POLL(uint32_t tick)
@@ -162,12 +172,13 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
     if (PLC_TIMER(blink_tmr) > (blink_thr>>1))
     {
         err_test_flg = true;
-        switch(err_prio)
+        switch(err_level)
         {
-        case 10:
+        case PLC_DIAG_LEVEL_NRM:
+        case PLC_DIAG_LEVEL_INF:
             gpio_set( PLC_LED_STG_PORT, PLC_LED_STG_PIN );
             break;
-        case 0:
+        case PLC_DIAG_LEVEL_CRI:
             gpio_set( PLC_LED_STR_PORT, PLC_LED_STR_PIN );
             break;
         default:
@@ -185,19 +196,38 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
             err_test_flg = false;
 
             blink_thr = 1000;
-            err_prio = 10;
+            err_level = PLC_DIAG_LEVEL_NRM;
             for (i=0; i< sizeof(diag_post_flg); i++)
             {
-                if ((plc_diag_status & diag_poll_cfg[i].msk) && (diag_poll_cfg[i].prio < err_prio))
+                if ((plc_diag_status & diag_poll_cfg[i].msk) && (diag_poll_cfg[i].level < err_level))
                 {
-                    err_prio = diag_poll_cfg[i].prio;
+                    err_level = diag_poll_cfg[i].level;
                     blink_thr = diag_poll_cfg[i].thr;
                     if (diag_post_flg[i])
                     {
+                        uint8_t log_level;
+                        switch(err_level)
+                        {
+                        case PLC_DIAG_LEVEL_CRI:
+                            log_level = LOG_CRITICAL;
+                            break;
+                        case PLC_DIAG_LEVEL_WRN:
+                            log_level = LOG_WARNING;
+                            break;
+                        case PLC_DIAG_LEVEL_INF:
+                            log_level = LOG_INFO;
+                            break;
+                        default:
+                            log_level = LOG_DEBUG;
+                            break;
+                        }
                         diag_post_flg[i] = false;
-                        plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)(diag_poll_cfg[i].msg), diag_poll_cfg[i].msz);
+                        plc_curr_app->log_msg_post(log_level, (char *)(diag_poll_cfg[i].msg), diag_poll_cfg[i].msz);
                     }
-
+                }
+                else
+                {
+                    diag_post_flg[i] = true;
                 }
             }
         }
@@ -267,6 +297,24 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
             //No message, user must do it in PLC program.
             plc_diag_status |= PLC_DIAG_ERR_APP_WARN;
         }
+        else
+        {
+            //No message, user must do it in PLC program.
+            plc_diag_status &= ~PLC_DIAG_ERR_APP_WARN;
+        }
+        break;
+    case PLC_DIAG_Q_INFO://Warning
+        if(*(bool *)(plc_curr_app->l_tab[i]->v_buf))
+        {
+            //No message, user must do it in PLC program.
+            plc_diag_status |= PLC_DIAG_ERR_APP_INFO;
+        }
+        else
+        {
+            //No message, user must do it in PLC program.
+            plc_diag_status &= ~PLC_DIAG_ERR_APP_INFO;
+        }
+
         break;
     default:
         break;

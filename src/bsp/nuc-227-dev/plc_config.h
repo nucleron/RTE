@@ -19,6 +19,7 @@
 *  PLC clocks
 */
 #define PLC_HSE_CONFIG rcc_hse_16mhz_3v3
+#define PLC_RCC_AHB_FREQ 168
 
 /*
 *  Debug USART
@@ -47,13 +48,13 @@
 /*
 *  PLC LEDS
 */
-#define PLC_LED1_PERIPH RCC_GPIOB
-#define PLC_LED1_PORT GPIOB
-#define PLC_LED1_PIN GPIO12
+#define PLC_LED_STG_PERIPH RCC_GPIOB
+#define PLC_LED_STG_PORT GPIOB
+#define PLC_LED_STG_PIN GPIO12
 
-#define PLC_LED2_PERIPH RCC_GPIOB
-#define PLC_LED2_PORT GPIOB
-#define PLC_LED2_PIN GPIO13
+#define PLC_LED_STR_PERIPH RCC_GPIOB
+#define PLC_LED_STR_PORT GPIOB
+#define PLC_LED_STR_PIN GPIO13
 
 #define PLC_LED3_PERIPH RCC_GPIOB
 #define PLC_LED3_PORT GPIOB
@@ -131,7 +132,23 @@ extern void plc_heart_beat(void);
 #define PLC_BKP_VER1_OFFSET      0
 #define PLC_BKP_VER2_OFFSET      4
 #define PLC_BKP_RTC_IS_OK_OFFSET 8
-#define PLC_BKP_REG_OFFSET       12
+#define PLC_BKP_REG_OFFSET       0x24
+
+#define PLC_BKP_IRQ1_OFFSET      0xC
+#define PLC_BKP_IRQ2_OFFSET      0x10
+#define PLC_BKP_IRQ3_OFFSET      0x14
+#define PLC_BKP_IRQ4_OFFSET      0x18
+#define PLC_BKP_IRQ5_OFFSET      0x1C
+#define PLC_BKP_IRQ6_OFFSET      0x20
+
+#define BACKUP_REGS_BASE    RTC_BKP_BASE
+//#define PLC_BKP_REG_OFFSET       0x50
+//#define PLC_BKP_REG_NUM 19
+
+/*Diag info*/
+#define PLC_DIAG_IRQS ((uint32_t *)(BACKUP_REGS_BASE + PLC_BKP_IRQ1_OFFSET))
+#define PLC_DIAG_INUM (96)
+
 
 /*
 *  PLC app abi
@@ -145,6 +162,7 @@ extern void plc_heart_beat(void);
 #define PLC_RTE_VER_MINOR 0
 #define PLC_RTE_VER_PATCH 0
 
+#define PLC_HW_ID 227
 /*
 *  Logging
 */

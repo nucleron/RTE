@@ -1,7 +1,7 @@
 /*
  * Copyright Nucleron R&D LLC 2016
- * 
- * This file is licensed under the terms of NOSL, 
+ *
+ * This file is licensed under the terms of NOSL,
  * see License.txt for details.
  */
 
@@ -51,7 +51,7 @@ void plc_rtc_init( tm* time )
 
     if( !(RTC_ISR & RTC_ISR_INITF) )
     {
-        plc_hw_status |= PLC_HW_ERR_LSE;
+        plc_diag_status |= PLC_HW_ERR_LSE;
 
         RTC_ISR &= ~RTC_ISR_INIT;
         pwr_enable_backup_domain_write_protect();

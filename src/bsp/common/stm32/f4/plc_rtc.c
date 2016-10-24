@@ -1,7 +1,7 @@
 /*
  * Copyright Nucleron R&D LLC 2016
- * 
- * This file is licensed under the terms of NOSL, 
+ *
+ * This file is licensed under the terms of NOSL,
  * see License.txt for details.
  */
 
@@ -9,9 +9,12 @@
 #include <libopencm3/stm32/pwr.h>
 #include <libopencm3/stm32/rtc.h>
 
+#include <plc_config.h>
+
+#include <plc_diag.h>
 #include <plc_rtc.h>
 #include <plc_hw.h>
-#include <plc_config.h>
+
 
 #define PLC_BKP_RTC_IS_OK   MMIO32(RTC_BKP_BASE + PLC_BKP_RTC_IS_OK_OFFSET)
 
@@ -51,7 +54,7 @@ void plc_rtc_init( tm* time )
 
     if( !(RTC_ISR & RTC_ISR_INITF) )
     {
-        plc_hw_status |= PLC_HW_ERR_LSE;
+        plc_diag_status |= PLC_DIAG_ERR_LSE;
 
         RTC_ISR &= ~RTC_ISR_INIT;
         pwr_enable_backup_domain_write_protect();

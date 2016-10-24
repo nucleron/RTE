@@ -60,83 +60,6 @@ void plc_boot_mode_enter(void)
     scb_reset_system();
 }
 
-
-//Led blink timer
-static uint32_t blink_tmr;
-void plc_heart_beat_init(void)
-{
-    ///LEDs
-    PLC_CLEAR_TIMER( blink_tmr );
-    //LED1
-    rcc_periph_clock_enable( PLC_LED1_PERIPH );
-    gpio_mode_setup(PLC_LED1_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PLC_LED1_PIN);
-    gpio_set_output_options(PLC_LED1_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, PLC_LED1_PIN);
-    gpio_clear( PLC_LED1_PORT, PLC_LED1_PIN );
-    //LED2
-    rcc_periph_clock_enable( PLC_LED2_PERIPH );
-    gpio_mode_setup(PLC_LED2_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PLC_LED2_PIN);
-    gpio_set_output_options(PLC_LED2_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, PLC_LED2_PIN);
-    gpio_clear( PLC_LED2_PORT, PLC_LED2_PIN );
-    //LED3
-    rcc_periph_clock_enable( PLC_LED3_PERIPH );
-    gpio_mode_setup(PLC_LED3_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PLC_LED3_PIN);
-    gpio_set_output_options(PLC_LED3_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, PLC_LED3_PIN);
-    gpio_clear( PLC_LED3_PORT, PLC_LED3_PIN );
-}
-
-extern uint32_t plc_backup_satus;
-
-static bool hse_post_flag = true;
-const char plc_hse_err_msg[] = "HSE oscilator failed!";
-static bool lse_post_flag = true;
-const char plc_lse_err_msg[] = "LSE oscilator failed!";
-
-void plc_heart_beat_poll(void)
-{
-    uint32_t blink_thr;
-    if( plc_hw_status > 0 )
-    {
-        blink_thr = 500;
-    }
-    else
-    {
-        blink_thr = 1000;
-    }
-
-    if( PLC_TIMER(blink_tmr) > (blink_thr>>1) )
-    {
-        gpio_set( PLC_LED1_PORT, PLC_LED1_PIN );
-        //if(  *(uint8_t *)BKPSRAM_BASE == 1 )
-        if(plc_hw_status  & PLC_HW_ERR_HSE)
-        {
-            if( hse_post_flag )
-            {
-                hse_post_flag = false;
-                plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_hse_err_msg, sizeof(plc_hse_err_msg));
-            }
-            gpio_set( PLC_LED2_PORT, PLC_LED2_PIN );
-        }
-        //if( *( (uint8_t *)BKPSRAM_BASE + 1) == 1 )
-        if(plc_hw_status  & PLC_HW_ERR_LSE)
-        {
-            if( lse_post_flag )
-            {
-                lse_post_flag = false;
-                plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_lse_err_msg, sizeof(plc_lse_err_msg));
-            }
-            gpio_set( PLC_LED3_PORT, PLC_LED3_PIN );
-        }
-    }
-
-    if( PLC_TIMER(blink_tmr) > blink_thr )
-    {
-        PLC_CLEAR_TIMER(blink_tmr);
-        gpio_clear( PLC_LED1_PORT, PLC_LED1_PIN );
-        gpio_clear( PLC_LED2_PORT, PLC_LED2_PIN );
-        gpio_clear( PLC_LED3_PORT, PLC_LED3_PIN );
-    }
-}
-
 bool plc_get_din(uint32_t i)
 {
     switch( i )
@@ -461,9 +384,13 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     return 0;
 }
 #undef LOCAL_PROTO
+
+PLC_IOM_METH_DECLS(plc_diag);
+
 const plc_io_metods_t plc_iom_registry[] =
 {
-    PLC_IOM_RECORD(dio),
+    PLC_IOM_RECORD(plc_diag),
+    PLC_IOM_RECORD(dio)
 };
 //Must be declared after plc_iom_registry
 PLC_IOM_REG_SZ_DECL;
@@ -473,6 +400,8 @@ uint8_t mid_from_pid( uint16_t proto )
     switch(proto)
     {
     case 0:
+        return 1;
+    case 1:
         return 0;
     default:
         return PLC_IOM_MID_ERROR;

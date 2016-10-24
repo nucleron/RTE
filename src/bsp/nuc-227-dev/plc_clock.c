@@ -114,7 +114,7 @@ void plc_clock_setup(void)
     rcc_pll_setup( RCC_CFGR_SW_HSI, &rcc_hse_16mhz_3v3[RCC_CLOCK_3V3_168MHZ] );
     pll_is_dirty = false;
     /* This is an error, but we can do some work... */
-    plc_hw_status |= PLC_HW_ERR_HSE;
+    plc_diag_status |= PLC_HW_ERR_HSE;
 }
 
 void nmi_handler(void)
@@ -133,7 +133,7 @@ void nmi_handler(void)
             /* We are already on HSI, so we need only PLL setup. */
             rcc_pll_setup( RCC_HSI, &rcc_hse_16mhz_3v3[RCC_CLOCK_3V3_168MHZ] );
             /* This is an error, but we can do some work... */
-            plc_hw_status |= PLC_HW_ERR_HSE;
+            plc_diag_status |= PLC_HW_ERR_HSE;
         }
     }
 }
