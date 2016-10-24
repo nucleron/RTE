@@ -37,23 +37,25 @@ void plc_wait_tmr_init(void)
 }
 
 volatile uint32_t plc_sys_timer = 0;
+volatile uint32_t plc_wait_cnt  = 0;
+
+
 
 void PLC_WAIT_TMR_ISR(void)
 {
-    static int divider=0;
+
     if (timer_get_flag(PLC_WAIT_TMR, TIM_SR_UIF))
     {
 
         /* Clear compare interrupt flag. */
         timer_clear_flag(PLC_WAIT_TMR, TIM_SR_UIF);
-        divider++;
+        plc_wait_cnt++;
         //dynamic_7seg_poll();
         plc_hmi_vout_poll();
-        if(divider>=10)
+        if (0 == plc_wait_cnt%10)
         {
             plc_sys_timer++;
             plc_iom_tick();
-            divider=0;
         }
     }
 }

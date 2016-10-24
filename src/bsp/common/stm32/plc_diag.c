@@ -8,6 +8,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <libopencm3/cm3/dwt.h>
+
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 
@@ -79,8 +81,15 @@ static void clr_post_flg(void)
     }
 }
 #define LOCAL_PROTO plc_diag
+
+static bool plc_has_wdt = false;
+
+static bool plc_wcct_pivot_present = false;
+volatile uint64_t plc_diag_wcct = 0; //Worst case cycle time
+
 void PLC_IOM_LOCAL_INIT(void)
 {
+    plc_has_wdt = dwt_enable_cycle_counter();
     clr_post_flg();
     blink_thr = 500;
     PLC_GPIO_GR_CFG_OUT(led_hb);
@@ -108,39 +117,63 @@ static const char plc_diag_err_asz[]     = "Diag location adress must be one num
 static const char plc_diag_err_tp[]      = "Diag protocol supports only input locations!";
 static const char plc_diag_err_addr_i[]  = "Diag I location adress must be in 0 or 1!";
 static const char plc_diag_err_addr_q[]  = "Diag Q location adress must be in 0..3!";
+static const char plc_diag_err_addr_m[]  = "WCCT location adress must be 0!";
 
 static bool abort_present = false;
 
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
-    uint32_t addr;
-    if (PLC_LSZ_X != PLC_APP->l_tab[i]->v_size)
+    if (PLC_LT_M == PLC_APP->l_tab[i]->v_type)
     {
-        PLC_LOG_ERR_SZ();
-        return false;
-    }
-
-    if (1 != PLC_APP->l_tab[i]->a_size)
-    {
-        PLC_LOG_ERROR(plc_diag_err_asz);
-        return false;
-    }
-
-    if (PLC_LT_Q == PLC_APP->l_tab[i]->v_type)
-    {
-        //Debug mode and Abort locations
-        if(PLC_DIAG_Q_NUM <= PLC_APP->l_tab[i]->a_data[0])
+        //WCCT location
+        if (PLC_LSZ_D != PLC_APP->l_tab[i]->v_size)
         {
-            PLC_LOG_ERROR(plc_diag_err_addr_q);
+            PLC_LOG_ERR_SZ();
+            return false;
+        }
+
+        if (1 != PLC_APP->l_tab[i]->a_size)
+        {
+            PLC_LOG_ERROR(plc_diag_err_asz);
+            return false;
+        }
+
+        if(1 <= PLC_APP->l_tab[i]->a_data[0])
+        {
+            PLC_LOG_ERROR(plc_diag_err_addr_m);
             return false;
         }
     }
     else
     {
-        if (PLC_DIAG_I_NUM <= PLC_APP->l_tab[i]->a_data[0])
+        if (PLC_LSZ_X != PLC_APP->l_tab[i]->v_size)
         {
-            PLC_LOG_ERROR(plc_diag_err_addr_i);
+            PLC_LOG_ERR_SZ();
             return false;
+        }
+
+        if (1 != PLC_APP->l_tab[i]->a_size)
+        {
+            PLC_LOG_ERROR(plc_diag_err_asz);
+            return false;
+        }
+
+        if (PLC_LT_Q == PLC_APP->l_tab[i]->v_type)
+        {
+            //Debug mode and Abort locations
+            if(PLC_DIAG_Q_NUM <= PLC_APP->l_tab[i]->a_data[0])
+            {
+                PLC_LOG_ERROR(plc_diag_err_addr_q);
+                return false;
+            }
+        }
+        else
+        {
+            if (PLC_DIAG_I_NUM <= PLC_APP->l_tab[i]->a_data[0])
+            {
+                PLC_LOG_ERROR(plc_diag_err_addr_i);
+                return false;
+            }
         }
     }
 
@@ -168,7 +201,27 @@ void PLC_IOM_LOCAL_START(void)
 
 void PLC_IOM_LOCAL_POLL(uint32_t tick)
 {
+    //WCCT measurement.
+    if (plc_has_wdt)
+    {
+        static uint32_t pivot = 0;
+        uint32_t point;
+        uint32_t cycle_time;
+
+        point =  dwt_read_cycle_counter();
+        cycle_time = (point - pivot)/PLC_RCC_AHB_FREQ; //CT in us
+
+        if(plc_wcct_pivot_present && (plc_diag_wcct < cycle_time))
+        {
+            plc_diag_wcct = cycle_time;
+        }
+
+        pivot = point;
+        plc_wcct_pivot_present = true;
+    }
+    //WCCT measurement.
     (void)tick;
+
     if (PLC_TIMER(blink_tmr) > (blink_thr>>1))
     {
         err_test_flg = true;
@@ -248,24 +301,30 @@ uint32_t PLC_IOM_LOCAL_WEIGTH(uint16_t i)
 
 uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
 {
-    bool tmp;
-
-    switch(plc_curr_app->l_tab[i]->a_data[0])
+    if (PLC_LT_M == PLC_APP->l_tab[i]->v_type)
     {
-    case PLC_DIAG_I_HSE:
-        tmp = (0 != plc_diag_status  & PLC_DIAG_ERR_HSE);
-        break;
-
-    case PLC_DIAG_I_LSE:
-        tmp = (0 != plc_diag_status  & PLC_DIAG_ERR_LSE);
-        break;
-
-    default:
-        tmp = false;
+        *(uint32_t *)(plc_curr_app->l_tab[i]->v_buf) = plc_diag_wcct;
     }
+    else
+    {
+        bool tmp;
 
-    *(bool *)(plc_curr_app->l_tab[i]->v_buf) = tmp;
+        switch(plc_curr_app->l_tab[i]->a_data[0])
+        {
+        case PLC_DIAG_I_HSE:
+            tmp = (0 != plc_diag_status  & PLC_DIAG_ERR_HSE);
+            break;
 
+        case PLC_DIAG_I_LSE:
+            tmp = (0 != plc_diag_status  & PLC_DIAG_ERR_LSE);
+            break;
+
+        default:
+            tmp = false;
+        }
+
+        *(bool *)(plc_curr_app->l_tab[i]->v_buf) = tmp;
+    }
     return 0;
 }
 
@@ -275,6 +334,12 @@ extern bool plc_dbg_mode;
 
 uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 {
+    if (PLC_LT_M == PLC_APP->l_tab[i]->v_type)
+    {
+        //WCCT location
+        return 0;
+    }
+
     switch (PLC_APP->l_tab[i]->a_data[0])
     {
     case PLC_DIAG_Q_DBGM://Enter debug mode
@@ -322,3 +387,4 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     return 0;
 }
 #undef LOCAL_PROTO
+
