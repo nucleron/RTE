@@ -505,7 +505,7 @@ void adc_setup(void)
 void _plc_ain_init(void)
 {
     int i;
-        // Питание аналоговых портов
+    // Питание аналоговых портов
     PLC_GPIO_GR_CFG_OUT(pwr_ai0);
     PLC_GPIO_GR_CLEAR  (pwr_ai0);
 
@@ -519,22 +519,22 @@ void _plc_ain_init(void)
     PLC_GPIO_GR_CFG_OUT(non1);
     PLC_GPIO_GR_CLEAR  (non1);
 
-     // Аналоговые порты
-     static const plc_gpio_t ain_pin[] =
-     {
-         PLC_GPIO_REC(REF2V5),
-         PLC_GPIO_REC(ADC18),
-         PLC_GPIO_REC(AIN0),
-         PLC_GPIO_REC(AIN1),
-         PLC_GPIO_REC(AIN2),
-         PLC_GPIO_REC(AIN3)
-     };
+    // Аналоговые порты
+    static const plc_gpio_t ain_pin[] =
+    {
+        PLC_GPIO_REC(REF2V5),
+        PLC_GPIO_REC(ADC18),
+        PLC_GPIO_REC(AIN0),
+        PLC_GPIO_REC(AIN1),
+        PLC_GPIO_REC(AIN2),
+        PLC_GPIO_REC(AIN3)
+    };
 
-     for(i=0; i<sizeof(ain_pin)/sizeof(plc_gpio_t); i++)
-     {
-         rcc_periph_clock_enable(ain_pin[i].periph);
-         gpio_mode_setup(ain_pin[i].port, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, ain_pin[i].pin);
-     }
+    for(i=0; i<sizeof(ain_pin)/sizeof(plc_gpio_t); i++)
+    {
+        rcc_periph_clock_enable(ain_pin[i].periph);
+        gpio_mode_setup(ain_pin[i].port, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, ain_pin[i].pin);
+    }
 
     /*
     rcc_periph_clock_enable(PLC_REF2V5_PERIPH);
@@ -571,8 +571,97 @@ bool PLC_IOM_LOCAL_TEST_HW(void)
 {
     return true;
 }
-bool PLC_IOM_LOCAL_CHECK(uint16_t lid)
+
+static const char plc_ain_err_asz[]    = "Analog output adress must be two numbers!";
+static const char plc_ain_err_mem[]    = "Analog input does not support memory locations!";
+static const char plc_ain_err_chn[]    = "Analog input chanel number must be in 0..3!";
+
+static const char plc_ain_err_ix[]     = "Analog input: this location must be input!";
+static const char plc_ain_err_ix9[]    = "Analog input: this location must have 8 at address end!";
+
+static const char plc_ain_err_qb[]     = "Analog input: this location must be output!";
+static const char plc_ain_err_qbx[]    = "Analog input: this location must have 1,2 or 3 at address end!";
+
+static const char plc_ain_err_qwx[]     = "Analog input: this location must have 4,5 or 6 at address end!";
+static const char plc_ain_err_iw7[]     = "Analog input: this location must have 7 at address end!";
+
+bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
+    if (PLC_LT_M == PLC_APP->l_tab[i]->v_type)
+    {
+        PLC_LOG_ERROR(plc_ain_err_mem);
+        return false;
+    }
+
+    if (2 != PLC_APP->l_tab[i]->a_size)
+    {
+        PLC_LOG_ERROR(plc_ain_err_asz);
+        return false;
+    }
+
+    if (5 <= PLC_APP->l_tab[i]->a_data[0])
+    {
+        PLC_LOG_ERROR(plc_ain_err_chn);
+        return false;
+    }
+
+    switch (PLC_APP->l_tab[i]->v_size)
+    {
+    case PLC_LSZ_X:
+        if (PLC_LT_I != PLC_APP->l_tab[i]->v_type)
+        {
+            PLC_LOG_ERROR(plc_ain_err_ix);
+            return false;
+        }
+        if (8 != PLC_APP->l_tab[i]->a_data[1])
+        {
+            PLC_LOG_ERROR(plc_ain_err_ix9);
+            return false;
+        }
+        break;
+    case PLC_LSZ_B:
+        if (PLC_LT_Q != PLC_APP->l_tab[i]->v_type)
+        {
+            PLC_LOG_ERROR(plc_ain_err_qb);
+            return false;
+        }
+        if (3 < PLC_APP->l_tab[i]->a_data[1])
+        {
+            PLC_LOG_ERROR(plc_ain_err_qbx);
+            return false;
+        }
+        break;
+    case PLC_LSZ_W:
+        if (PLC_LT_Q == PLC_APP->l_tab[i]->v_type)
+        {
+            //%QW6.chn.4..6
+            if (6 < PLC_APP->l_tab[i]->a_data[1])
+            {
+                PLC_LOG_ERROR(plc_ain_err_qwx);
+                return false;
+            }
+
+            if (4 > PLC_APP->l_tab[i]->a_data[1])
+            {
+                PLC_LOG_ERROR(plc_ain_err_qwx);
+                return false;
+            }
+        }
+        else
+        {
+            //%IW.chn.7
+            if (7 != PLC_APP->l_tab[i]->a_data[1])
+            {
+                PLC_LOG_ERROR(plc_ain_err_qwx);
+                return false;
+            }
+        }
+        break;
+    default:
+        PLC_LOG_ERR_SZ();
+        return false;
+    }
+
     return true;
 }
 void PLC_IOM_LOCAL_BEGIN(uint16_t lid)
@@ -639,13 +728,134 @@ uint32_t PLC_IOM_LOCAL_WEIGTH(uint16_t lid)
     return PLC_APP->l_tab[lid]->a_data[0];
 }
 
-uint32_t PLC_IOM_LOCAL_GET(uint16_t lid)
+///TODO: Add calibration!!!
+
+uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
 {
+    uint8_t chn;
+    //Chanel number
+    chn = PLC_APP->l_tab[i]->a_data[0];
+
+    switch (PLC_APP->l_tab[i]->a_data[1])
+    {
+    case 7:
+    {
+        *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf) = analog_input[chn].signal_level;
+        break;
+    }
+    case 8:
+    {
+        *(bool *)(plc_curr_app->l_tab[i]->v_buf) = analog_input[chn].signal_schmitt;
+        break;
+    }
+    default:
+        break;
+    }
     return 0;
 }
 
-uint32_t PLC_IOM_LOCAL_SET(uint16_t lid)
+uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 {
+    uint8_t chn;
+    //Chanel number
+    chn = PLC_APP->l_tab[i]->a_data[0];
+
+    switch (PLC_APP->l_tab[i]->a_data[1])
+    {
+    case 1:
+    {
+        uint8_t tmp;
+        uint8_t chn;
+        tmp = *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf);
+        if (PLC_AIN_MODE_4K < tmp)
+        {
+            tmp = PLC_AIN_MODE_4K;
+        }
+        //Set chanel processing mode
+        analog_input[chn].mode = tmp;
+        //Configure pins
+        _plc_ain_cfg(chn,tmp);
+        break;
+    }
+    case 2:
+    {
+        uint8_t tmp;
+        tmp = *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf);
+        if (3 > tmp)
+        {
+            tmp = 3;
+        }
+        if (NOISE_FLT_BUFSZ < tmp)
+        {
+            tmp = NOISE_FLT_BUFSZ;
+        }
+        //Set chanel processing mode
+        analog_input[chn].median.depth = tmp;
+        break;
+    }
+    case 3:
+    {
+        uint8_t tmp;
+        tmp = *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf);
+        if (3 > tmp)
+        {
+            tmp = 3;
+        }
+        if (NOISE_FLT_BUFSZ < tmp)
+        {
+            tmp = NOISE_FLT_BUFSZ;
+        }
+        //Set chanel processing mode
+        analog_input[chn].ave.depth = tmp;
+        break;
+    }
+    case 4:
+    {
+        uint16_t tmp;
+        tmp = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+        if (1 > tmp)
+        {
+            tmp = 1;
+        }
+        //Set chanel processing mode
+        analog_input[chn].polling_period = tmp;
+        break;
+    }
+    case 5:
+    {
+        uint16_t tmp;
+        tmp = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+        if (1 > tmp)
+        {
+            tmp = 1;
+        }
+        if (analog_input[chn].threshold_high <= tmp)
+        {
+            tmp = analog_input[chn].threshold_high - 1;
+        }
+        //Smidt trig thr low
+        analog_input[chn].threshold_low = tmp;
+        break;
+    }
+    case 6:
+    {
+        uint16_t tmp;
+        tmp = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+        if (1 > tmp)
+        {
+            tmp = 1;
+        }
+        if (analog_input[chn].threshold_low >= tmp)
+        {
+            tmp = analog_input[chn].threshold_low + 1;
+        }
+        //Smidt trig thr high
+        analog_input[chn].threshold_high = tmp;
+        break;
+    }
+    default:
+        break;
+    }
     return 0;
 }
 #undef LOCAL_PROTO

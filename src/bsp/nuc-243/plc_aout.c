@@ -17,7 +17,7 @@ static const plc_gpio_t dac[] =
     PLC_GPIO_REC(DAC_SYN1)
 };
 
-void _plc_aout_init(void)
+static inline void _plc_aout_init(void)
 {
     // Управление ЦАП
     PLC_GPIO_GR_CFG_OUT(dac);
@@ -55,7 +55,7 @@ void _plc_aout_dac_poll(void)
     {
         gpio_clear(PLC_DAC_SYN0_PORT, PLC_DAC_SYN0_PIN);
 
-        if ( (plc_aout_dataA >> (0x000F-(((plc_aout_clk&0x001F)>>1)&0x000F)))&0x0001) ///Black magic!
+        if ((plc_aout_dataA >> (0x000F-(((plc_aout_clk&0x001F)>>1)&0x000F)))&0x0001) ///Black magic!
         {
             gpio_set(PLC_DAC_DIN_PORT, PLC_DAC_DIN_PIN);
         }
@@ -95,14 +95,46 @@ void PLC_IOM_LOCAL_INIT(void)
 {
     _plc_aout_init();
 }
+
+
+
 bool PLC_IOM_LOCAL_TEST_HW(void)
 {
     return true;
 }
-bool PLC_IOM_LOCAL_CHECK(uint16_t lid)
+
+static const char plc_aout_err_asz[]     = "Analog output adress must be one number!";
+static const char plc_aout_err_tp[]      = "Analog output does not support input locations!";
+static const char plc_aout_err_addr[]    = "Analog output adress must be in 0 or 1!";
+
+bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
+    if (PLC_LSZ_W != PLC_APP->l_tab[i]->v_size)
+    {
+        PLC_LOG_ERR_SZ();
+        return false;
+    }
+
+    if (PLC_LT_Q != PLC_APP->l_tab[i]->v_type)
+    {
+        PLC_LOG_ERROR(plc_aout_err_tp);
+        return false;
+    }
+
+    if (1 != PLC_APP->l_tab[i]->a_size)
+    {
+        PLC_LOG_ERROR(plc_aout_err_asz);
+        return false;
+    }
+
+    if (2 <= PLC_APP->l_tab[i]->a_data[0])
+    {
+        PLC_LOG_ERROR(plc_aout_err_addr);
+        return false;
+    }
     return true;
 }
+
 void PLC_IOM_LOCAL_BEGIN(uint16_t lid)
 {
 }
@@ -126,6 +158,8 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
 
 void PLC_IOM_LOCAL_STOP(void)
 {
+    plc_aout_dataA = 0;
+    plc_aout_dataB = 0;
 }
 
 uint32_t PLC_IOM_LOCAL_WEIGTH(uint16_t lid)
@@ -138,8 +172,18 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t lid)
     return 0;
 }
 
-uint32_t PLC_IOM_LOCAL_SET(uint16_t lid)
+///TODO: add calibration!!!
+uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 {
+    switch(plc_curr_app->l_tab[i]->a_data[0])
+    {
+    case 0:
+        plc_aout_dataA = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+    case 1:
+        plc_aout_dataB = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+    default:
+        break;
+    }
     return 0;
 }
 #undef LOCAL_PROTO

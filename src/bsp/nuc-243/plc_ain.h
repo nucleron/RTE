@@ -18,8 +18,8 @@ typedef struct
     uint16_t _100r_coef;   //
     uint16_t _4k_coef;      //
 
-    uint8_t polling_counter;                 // счёт милисекунд периодичности
-    uint8_t polling_period;                  // период опроса канала в мс
+    uint16_t polling_counter;                 // счёт милисекунд периодичности
+    uint16_t polling_period;                  // период опроса канала в мс
 
     uint8_t flag;                            // флаг обработки результатов, на это время низзя изменять данные в прерывании
     uint8_t mode;                            // режим работы порта, см. _plc_ain_cfg()

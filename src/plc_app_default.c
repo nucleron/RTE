@@ -1,7 +1,7 @@
 /*
  * Copyright Nucleron R&D LLC 2016
- * 
- * This file is licensed under the terms of NOSL, 
+ *
+ * This file is licensed under the terms of NOSL,
  * see License.txt for details.
  */
 
@@ -18,7 +18,7 @@
 #include <plc_config.h>
 
 static unsigned long __tick = 0;
-#define LOG_BUFFER_SIZE (1<<10) /*1Ko*/
+#define LOG_BUFFER_SIZE (1<<9) /*512bytes*/
 //#define LOG_BUFFER_ATTRS __attribute__ ((section(".plc_log_buf_sec")))
 
 static void PLC_GetTime( IEC_TIME *curent_time )
