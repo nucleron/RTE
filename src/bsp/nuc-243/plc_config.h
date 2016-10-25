@@ -103,7 +103,7 @@
 /*
 * PLC Inputs
 */
-#define PLC_DI_NUM    12
+#define PLC_DI_NUM    8
 
 #define PLC_I0_PERIPH RCC_GPIOE
 #define PLC_I0_PORT   GPIOE
@@ -137,26 +137,10 @@
 #define PLC_I7_PORT   GPIOB
 #define PLC_I7_PIN    GPIO7
 
-#define PLC_I8_PERIPH RCC_GPIOC
-#define PLC_I8_PORT   GPIOC
-#define PLC_I8_PIN    GPIO4
-
-#define PLC_I9_PERIPH RCC_GPIOC
-#define PLC_I9_PORT   GPIOC
-#define PLC_I9_PIN    GPIO5
-
-#define PLC_I10_PERIPH RCC_GPIOB
-#define PLC_I10_PORT   GPIOB
-#define PLC_I10_PIN    GPIO0
-
-#define PLC_I11_PERIPH RCC_GPIOB
-#define PLC_I11_PORT   GPIOB
-#define PLC_I11_PIN    GPIO1
-
 /*
 * PLC Outputs
 */
-#define PLC_DO_NUM    8
+#define PLC_DO_NUM    6
 
 #define PLC_O0_PERIPH RCC_GPIOB
 #define PLC_O0_PORT   GPIOB
@@ -181,14 +165,6 @@
 #define PLC_O5_PERIPH RCC_GPIOC
 #define PLC_O5_PORT   GPIOC
 #define PLC_O5_PIN    GPIO7
-
-#define PLC_O6_PERIPH RCC_GPIOD
-#define PLC_O6_PORT   GPIOD
-#define PLC_O6_PIN    GPIO1
-
-#define PLC_O7_PERIPH RCC_GPIOD
-#define PLC_O7_PORT   GPIOD
-#define PLC_O7_PIN    GPIO2
 
 
 /*
@@ -337,7 +313,7 @@ extern void plc_diag_reset(void);
 /*
 *  PLC app abi
 */
-#define PLC_APP ((plc_app_abi_t *)0x08008000)
+#define PLC_APP ((plc_app_abi_t *)0x08010000)
 /*
 *  PLC RTE Version
 */
@@ -345,8 +321,7 @@ extern void plc_diag_reset(void);
 #define PLC_RTE_VER_MINOR 0
 #define PLC_RTE_VER_PATCH 0
 
-///TODO: Fix this in RC0
-#define PLC_HW_ID      2470
+#define PLC_HW_ID      243
 
 /**
 * TODO: Add simple printf for error logging!!!

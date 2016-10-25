@@ -22,7 +22,7 @@
 
 MEMORY
 {
-  flash (rx)  : ORIGIN = 0x08008000, LENGTH = 224K
+  flash (rx)  : ORIGIN = 0x08010000, LENGTH = 192K
   ram (rwx)   : ORIGIN = 0x20002000, LENGTH = 84K
   ccm (rwx)   : ORIGIN = 0x10000000, LENGTH = 64K
 }

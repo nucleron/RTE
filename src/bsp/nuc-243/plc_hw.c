@@ -78,11 +78,7 @@ static const plc_gpio_t din[PLC_DI_NUM] =
     PLC_GPIO_REC(I4),
     PLC_GPIO_REC(I5),
     PLC_GPIO_REC(I6),
-    PLC_GPIO_REC(I7),
-    PLC_GPIO_REC(I8),
-    PLC_GPIO_REC(I9),
-    PLC_GPIO_REC(I10),
-    PLC_GPIO_REC(I11),
+    PLC_GPIO_REC(I7)
 };
 
 static const plc_gpio_t dout[PLC_DO_NUM] =
@@ -92,9 +88,7 @@ static const plc_gpio_t dout[PLC_DO_NUM] =
     PLC_GPIO_REC(O2),
     PLC_GPIO_REC(O3),
     PLC_GPIO_REC(O4),
-    PLC_GPIO_REC(O5),
-    PLC_GPIO_REC(O6),
-    PLC_GPIO_REC(O7)
+    PLC_GPIO_REC(O5)
 };
 
 bool plc_get_din(uint32_t i)
