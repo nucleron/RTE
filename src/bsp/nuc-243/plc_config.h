@@ -5,7 +5,7 @@
 #ifndef _PLC_CONFIG_H_
 #define _PLC_CONFIG_H_
 /*
-*  NUC-242 configuration!
+*  NUC-243 configuration!
 */
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/cm3/cortex.h>
@@ -166,6 +166,161 @@
 #define PLC_O5_PORT   GPIOC
 #define PLC_O5_PIN    GPIO7
 
+// Analog inputs
+#define ADC_CHANNEL_REF2v5  ADC_CHANNEL2
+#define ADC_CHANNEL_18v     ADC_CHANNEL7
+#define ADC_CHANNEL_AIN0    ADC_CHANNEL14
+#define ADC_CHANNEL_AIN1    ADC_CHANNEL15
+#define ADC_CHANNEL_AIN2    ADC_CHANNEL8
+#define ADC_CHANNEL_AIN3    ADC_CHANNEL9
+
+#define U_REF_2V5           2500  // мВ
+#define U_SENS_AT_0         6975  // 0.0 мВ
+#define U_SENS_MV_C         25    // 0.0 мВ / С
+
+#define PLC_DEFAULT_MEDIAN_DEPH         5 // ИСПОЛЬЗУЕМО элементов массива медианного фильтра
+#define PLC_DEFAULT_MEDIAN_IDX          0 // текущий элемент массива
+#define PLC_MIN_MEDIAN_DEPH             3 // МИНИМАЛЬНО  элементов массива медианного фильтра
+#define PLC_DEFAULT_MEDIAN_VAL          0
+
+#define PLC_DEFAULT_AVE_DEPH            4 // ИСПОЛЬЗУЕМО элементов массива усредняющего фильтра
+#define PLC_DEFAULT_AVE_IDX             0 // текущий элемент массива
+#define PLC_MIN_AVE_DEPH                1 // МИНИМАЛЬНО элементов массива усредняющего фильтра
+#define PLC_DEFAULT_AVE_VAL             0
+
+#define PLC_DEFAULT_POLL_CNT             0
+#define PLC_DEFAULT_POLL_PERIOD          1 // периодичность запуска измерения, мс
+
+#define PLC_DEFAULT_THR_LOW              4000
+#define PLC_DEFAULT_THR_HIGH                 6000
+#define PLC_DEFAULT_ADC_VAL              0
+#define PLC_DEFAULT_CMP_VAL              false
+#define PLC_DEFAULT_ADC_FLG              0
+#define PLC_DEFAULT_ADC_MODE             1
+
+#define PLC_DEFAULT_COEF_10V             41952
+#define PLC_DEFAULT_COEF_20MA            41769
+#define PLC_DEFAULT_COEF_100R            218
+#define PLC_DEFAULT_COEF_4K              3141
+
+#define PLC_DEFAULT_SUM                  2 // количество данных для усреднения
+#define PLC_DEFAULT_CNTR                 0 // счётчик количества усреднений
+#define PLC_DEFAULT_DATA_IN              0 // сбор данных для усредения
+#define PLC_DEFAULT_OUT                  0 // актуальные усреднённые данные
+#define PLC_DEFAULT_CALC                 0 // пересчитанное в величины
+
+// Питание аналоговых портов
+
+#define PLC_PWR_AI00_PERIPH  RCC_GPIOD
+#define PLC_PWR_AI00_PORT    GPIOD
+#define PLC_PWR_AI00_PIN     GPIO8
+
+#define PLC_PWR_AI10_PERIPH  RCC_GPIOD
+#define PLC_PWR_AI10_PORT    GPIOD
+#define PLC_PWR_AI10_PIN     GPIO9
+
+#define PLC_PWR_AI01_PERIPH  RCC_GPIOB
+#define PLC_PWR_AI01_PORT    GPIOB
+#define PLC_PWR_AI01_PIN     GPIO14
+
+#define PLC_PWR_AI11_PERIPH  RCC_GPIOB
+#define PLC_PWR_AI11_PORT    GPIOB
+#define PLC_PWR_AI11_PIN     GPIO15
+
+#define PLC_PWR_AI02_PERIPH  RCC_GPIOB
+#define PLC_PWR_AI02_PORT    GPIOB
+#define PLC_PWR_AI02_PIN     GPIO12
+
+#define PLC_PWR_AI12_PERIPH  RCC_GPIOB
+#define PLC_PWR_AI12_PORT    GPIOB
+#define PLC_PWR_AI12_PIN     GPIO13
+
+#define PLC_PWR_AI03_PERIPH  RCC_GPIOB
+#define PLC_PWR_AI03_PORT    GPIOB
+#define PLC_PWR_AI03_PIN     GPIO10
+
+#define PLC_PWR_AI13_PERIPH  RCC_GPIOB
+#define PLC_PWR_AI13_PORT    GPIOB
+#define PLC_PWR_AI13_PIN     GPIO11
+
+// Управление шунтами аналоговых входов
+#define PLC_NON00_PERIPH    RCC_GPIOD
+#define PLC_NON00_PORT      GPIOD
+#define PLC_NON00_PIN       GPIO15
+
+#define PLC_NON10_PERIPH    RCC_GPIOD
+#define PLC_NON10_PORT      GPIOD
+#define PLC_NON10_PIN       GPIO14
+
+#define PLC_NON01_PERIPH    RCC_GPIOA
+#define PLC_NON01_PORT      GPIOA
+#define PLC_NON01_PIN       GPIO8
+
+#define PLC_NON11_PERIPH    RCC_GPIOC
+#define PLC_NON11_PORT      GPIOC
+#define PLC_NON11_PIN       GPIO9
+
+#define PLC_NON02_PERIPH    RCC_GPIOC
+#define PLC_NON02_PORT      GPIOC
+#define PLC_NON02_PIN       GPIO8
+
+#define PLC_NON12_PERIPH    RCC_GPIOD
+#define PLC_NON12_PORT      GPIOD
+#define PLC_NON12_PIN       GPIO13
+
+#define PLC_NON03_PERIPH    RCC_GPIOD
+#define PLC_NON03_PORT      GPIOD
+#define PLC_NON03_PIN       GPIO12
+
+#define PLC_NON13_PERIPH    RCC_GPIOD
+#define PLC_NON13_PORT      GPIOD
+#define PLC_NON13_PIN       GPIO11
+
+// Аналоговые входы
+
+#define PLC_AIN0_PERIPH     RCC_GPIOC
+#define PLC_AIN0_PORT       GPIOC
+#define PLC_AIN0_PIN        GPIO4
+
+#define PLC_AIN1_PERIPH     RCC_GPIOC
+#define PLC_AIN1_PORT       GPIOC
+#define PLC_AIN1_PIN        GPIO5
+
+#define PLC_AIN2_PERIPH     RCC_GPIOB
+#define PLC_AIN2_PORT       GPIOB
+#define PLC_AIN2_PIN        GPIO0
+
+#define PLC_AIN3_PERIPH     RCC_GPIOB
+#define PLC_AIN3_PORT       GPIOB
+#define PLC_AIN3_PIN        GPIO1
+
+// Входы АЦП
+
+#define PLC_REF2V5_PERIPH   RCC_GPIOA
+#define PLC_REF2V5_PORT     GPIOA
+#define PLC_REF2V5_PIN      GPIO2
+
+#define PLC_ADC18_PERIPH    RCC_GPIOA
+#define PLC_ADC18_PORT      GPIOA
+#define PLC_ADC18_PIN       GPIO7
+
+// Analog outputs
+
+#define PLC_DAC_CLK_PERIPH      RCC_GPIOC
+#define PLC_DAC_CLK_PORT        GPIOC
+#define PLC_DAC_CLK_PIN         GPIO12
+
+#define PLC_DAC_DIN_PERIPH      RCC_GPIOD
+#define PLC_DAC_DIN_PORT        GPIOD
+#define PLC_DAC_DIN_PIN         GPIO0
+
+#define PLC_DAC_SYN0_PERIPH     RCC_GPIOD
+#define PLC_DAC_SYN0_PORT       GPIOD
+#define PLC_DAC_SYN0_PIN        GPIO1
+
+#define PLC_DAC_SYN1_PERIPH     RCC_GPIOD
+#define PLC_DAC_SYN1_PORT       GPIOD
+#define PLC_DAC_SYN1_PIN        GPIO2
 
 /*
 *HMI

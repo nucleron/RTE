@@ -17,8 +17,6 @@
 #include <plc_wait_tmr.h>
 #include <plc_iom.h>
 
-extern void plc_hmi_vout_poll(void);
-
 void plc_wait_tmr_init(void)
 {
     //Wait timer config, basic timers TIM6 and TIM7 may be used
@@ -39,7 +37,9 @@ void plc_wait_tmr_init(void)
 volatile uint32_t plc_sys_timer = 0;
 volatile uint32_t plc_wait_cnt  = 0;
 
-
+extern void plc_hmi_vout_poll(void);
+extern void _plc_ain_adc_poll(void);
+extern void _plc_aout_dac_poll(void);
 
 void PLC_WAIT_TMR_ISR(void)
 {
@@ -50,8 +50,11 @@ void PLC_WAIT_TMR_ISR(void)
         /* Clear compare interrupt flag. */
         timer_clear_flag(PLC_WAIT_TMR, TIM_SR_UIF);
         plc_wait_cnt++;
-        //dynamic_7seg_poll();
+
         plc_hmi_vout_poll();
+        _plc_ain_adc_poll();
+        _plc_aout_dac_poll();
+
         if (0 == plc_wait_cnt%10)
         {
             plc_sys_timer++;

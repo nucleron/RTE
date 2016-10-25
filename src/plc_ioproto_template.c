@@ -19,7 +19,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t lid)
 {
     return false;
 }
-void PLC_IOM_LOCAL_START(uint16_t lid)
+void PLC_IOM_LOCAL_BEGIN(uint16_t lid)
 {
 }
 void PLC_IOM_LOCAL_END(uint16_t lid)
