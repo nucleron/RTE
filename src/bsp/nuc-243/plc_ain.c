@@ -11,6 +11,7 @@
 #include <plc_ain.h>
 #include <plc_gpio.h>
 #include <plc_iom.h>
+#include <plc_tick.h>
 
 // *** int ADC для AI ***
 ai_data_t  analog_input[4];      // четыре комплекта для конфигурации аналоговых входов
@@ -536,28 +537,7 @@ void _plc_ain_init(void)
         gpio_mode_setup(ain_pin[i].port, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, ain_pin[i].pin);
     }
 
-    /*
-    rcc_periph_clock_enable(PLC_REF2V5_PERIPH);
-    gpio_mode_setup(PLC_REF2V5_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, PLC_REF2V5_PIN);
-
-    rcc_periph_clock_enable(PLC_ADC18_PERIPH);
-    gpio_mode_setup(PLC_ADC18_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, PLC_ADC18_PIN);
-
-    rcc_periph_clock_enable(PLC_AIN0_PERIPH);
-    gpio_mode_setup(PLC_AIN0_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, PLC_AIN0_PIN);
-
-    rcc_periph_clock_enable(PLC_AIN1_PERIPH);
-    gpio_mode_setup(PLC_AIN1_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, PLC_AIN1_PIN);
-
-    rcc_periph_clock_enable(PLC_AIN2_PERIPH);
-    gpio_mode_setup(PLC_AIN2_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, PLC_AIN2_PIN);
-
-    rcc_periph_clock_enable(PLC_AIN3_PERIPH);
-    gpio_mode_setup(PLC_AIN3_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, PLC_AIN3_PIN);
-    //*/
-
     adc_setup();
-
     ai_setup();
 }
 
@@ -582,8 +562,8 @@ static const char plc_ain_err_ix9[]    = "Analog input: this location must have 
 static const char plc_ain_err_qb[]     = "Analog input: this location must be output!";
 static const char plc_ain_err_qbx[]    = "Analog input: this location must have 1,2 or 3 at address end!";
 
-static const char plc_ain_err_qwx[]     = "Analog input: this location must have 4,5 or 6 at address end!";
-static const char plc_ain_err_iw7[]     = "Analog input: this location must have 7 at address end!";
+static const char plc_ain_err_qwx[]    = "Analog input: this location must have 4,5 or 6 at address end!";
+static const char plc_ain_err_iw7[]    = "Analog input: this location must have 7 at address end!";
 
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
@@ -672,40 +652,20 @@ void PLC_IOM_LOCAL_END(uint16_t lid)
 {
 }
 
+
+
 void PLC_IOM_LOCAL_START(void)
 {
-    // ДЛЯ ОТЛАДКИ: конфигурация АЦП для AI
+    int i;
+    for (i=0; i<4; i++)
+    {
+        static const other_analog_cfg[4] = {8,8,8,0};
+        other_analog[i].sum             = other_analog_cfg[i];
 
-    analog_input[0].polling_period  = 1;
-    analog_input[1].polling_period  = 1;
-    analog_input[2].polling_period  = 1;
-    analog_input[3].polling_period  = 1;
-
-    other_analog[0].sum = 1;
-    other_analog[1].sum = 1;
-    other_analog[2].sum = 1;
-    other_analog[3].sum = 0;
-
-    analog_input[0].mode = 1;
-    analog_input[1].mode = 2;
-    analog_input[2].mode = 3;
-    analog_input[3].mode = 4;
-
-    /*
-     Конфигурация аналоговых портов
-     port - номер порта: 0...3,
-     mode - режим работы:
-     4 - шунты отключены, измерение сопротивления 0...4000R, порт "a",
-     3 - шунты отключены, измерение сопротивления 0...100R, порт "a",
-     2 - шунт 127 Ом, 4...20 мА, порт "a",
-     1 - шунт 21.5 кОм, 0...10 В, порт "b",
-     0 - шунты отключены, стабилизаторы тока отключены.
-     */
-
-    _plc_ain_cfg(0,analog_input[0].mode);
-    _plc_ain_cfg(1,analog_input[1].mode);
-    _plc_ain_cfg(2,analog_input[2].mode);
-    _plc_ain_cfg(3,analog_input[3].mode);
+        analog_input[i].polling_period  = (plc_tick_time/1000000);
+        analog_input[i].mode            = PLC_AIN_MODE_OFF;
+        _plc_ain_cfg(i,PLC_AIN_MODE_OFF);
+    }
 }
 
 uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
@@ -721,6 +681,12 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
 
 void PLC_IOM_LOCAL_STOP(void)
 {
+    int i;
+    for (i=0; i<4; i++)
+    {
+        analog_input[i].mode = PLC_AIN_MODE_OFF;
+        _plc_ain_cfg(i,PLC_AIN_MODE_OFF);
+    }
 }
 
 uint32_t PLC_IOM_LOCAL_WEIGTH(uint16_t lid)
@@ -765,8 +731,11 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     case 1:
     {
         uint8_t tmp;
-        uint8_t chn;
         tmp = *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf);
+        if( 0 == analog_input[chn].mode - tmp )
+        {
+            break;
+        }
         if (PLC_AIN_MODE_4K < tmp)
         {
             tmp = PLC_AIN_MODE_4K;
@@ -816,6 +785,10 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         if (1 > tmp)
         {
             tmp = 1;
+        }
+        if (tmp < (plc_tick_time/1000000))
+        {
+            tmp = plc_tick_time/1000000;
         }
         //Set chanel processing mode
         analog_input[chn].polling_period = tmp;

@@ -192,7 +192,7 @@
 #define PLC_DEFAULT_POLL_PERIOD          1 // периодичность запуска измерения, мс
 
 #define PLC_DEFAULT_THR_LOW              4000
-#define PLC_DEFAULT_THR_HIGH                 6000
+#define PLC_DEFAULT_THR_HIGH             6000
 #define PLC_DEFAULT_ADC_VAL              0
 #define PLC_DEFAULT_CMP_VAL              false
 #define PLC_DEFAULT_ADC_FLG              0
@@ -202,6 +202,12 @@
 #define PLC_DEFAULT_COEF_20MA            41769
 #define PLC_DEFAULT_COEF_100R            218
 #define PLC_DEFAULT_COEF_4K              3141
+
+///TODO: Compute rigth values!!!
+#define PLC_COEF_DELTA_10V             20000 ///!!!
+#define PLC_COEF_DELTA_20MA            20000 ///!!!
+#define PLC_COEF_DELTA_100R            100   ///!!!
+#define PLC_COEF_DELTA_4K              1500  ///!!!
 
 #define PLC_DEFAULT_SUM                  2 // количество данных для усреднения
 #define PLC_DEFAULT_CNTR                 0 // счётчик количества усреднений
@@ -433,20 +439,12 @@ GR LED
 /*
 *  Backup domain things
 */
+#define BACKUP_REGS_BASE         RTC_BASE + 0x50
 
-#define BACKUP_UNLOCK() PWR_CR |= PWR_CR_DBP
-#define BACKUP_LOCK() PWR_CR &= ~PWR_CR_DBP
-
-///TODO: correct these!
 #define PLC_BKP_VER1_OFFSET      0x0
 #define PLC_BKP_VER2_OFFSET      0x4
-
-#define PLC_BKP_BANK2_VER1_OFFSET      0x24
-#define PLC_BKP_BANK2_VER2_OFFSET      0x28
-#define PLC_BKP_BRIGHT_OFFSET          0x2C
-
 #define PLC_BKP_RTC_IS_OK_OFFSET 0x8
-/// IRQ_stub info!
+
 #define PLC_BKP_IRQ1_OFFSET      0xC
 #define PLC_BKP_IRQ2_OFFSET      0x10
 #define PLC_BKP_IRQ3_OFFSET      0x14
@@ -454,13 +452,25 @@ GR LED
 #define PLC_BKP_IRQ5_OFFSET      0x1C
 #define PLC_BKP_IRQ6_OFFSET      0x20
 
-#define BACKUP_REGS_BASE    RTC_BASE + 0x50
-//#define PLC_BKP_REG_OFFSET       0x50
-#define PLC_BKP_REG_NUM 19
+#define PLC_BKP_BRIGHT_OFFSET    0x24
+
+#define PLC_BKP_CLB0_OFFSET      0x28 //AIN0
+#define PLC_BKP_CLB1_OFFSET      0x2C //AIN0
+#define PLC_BKP_CLB2_OFFSET      0x30 //AIN1
+#define PLC_BKP_CLB3_OFFSET      0x34 //AIN1
+#define PLC_BKP_CLB4_OFFSET      0x38 //AIN2
+#define PLC_BKP_CLB5_OFFSET      0x3C //AIN2
+#define PLC_BKP_CLB6_OFFSET      0x40 //AIN3
+#define PLC_BKP_CLB7_OFFSET      0x44 //AIN4
+#define PLC_BKP_CLB8_OFFSET      0x48 //AOUT0
+#define PLC_BKP_CLB9_OFFSET      0x4C //AOUT1
 
 /*Diag info*/
 #define PLC_DIAG_IRQS ((uint32_t *)(BACKUP_REGS_BASE + PLC_BKP_IRQ1_OFFSET))
 #define PLC_DIAG_INUM (96)
+
+/*Calib info*/
+#define PLC_CLB_REGS ((uint32_t *)(BACKUP_REGS_BASE + PLC_BKP_CLB0_OFFSET))
 
 extern void plc_diag_reset(void);
 #define PLC_RESET_HOOK() plc_diag_reset()

@@ -32,6 +32,9 @@
 #define PLC_BKP_RTC_IS_OK   MMIO32(RTC_BKP_BASE + PLC_BKP_RTC_IS_OK_OFFSET)
 
 
+#define BACKUP_UNLOCK() PWR_CR |= PWR_CR_DBP
+#define BACKUP_LOCK() PWR_CR &= ~PWR_CR_DBP
+
 
 void plc_rtc_time_get( IEC_TIME *current_time );
 

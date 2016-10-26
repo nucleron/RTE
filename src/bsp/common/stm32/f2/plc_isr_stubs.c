@@ -17,19 +17,22 @@
 
 #include <plc_config.h>
 
+#define BACKUP_UNLOCK() PWR_CR |= PWR_CR_DBP
+#define BACKUP_LOCK() PWR_CR &= ~PWR_CR_DBP
+
 void plc_diag_reset(void)
 {
     uint32_t i;
-
     rcc_periph_clock_enable(RCC_PWR);
-//    rcc_periph_clock_enable(RCC_BKP);
 
+    BACKUP_UNLOCK();
     rtc_unlock();
     for (i=0; i<6; i++)
     {
         PLC_DIAG_IRQS[i] = 0;
     }
     rtc_lock();
+    BACKUP_LOCK();
 }
 
 static uint32_t read_irq(void)
@@ -54,13 +57,13 @@ void plc_irq_stub(void)
     irq %= 16;
 
     rcc_periph_clock_enable(RCC_PWR);
-    //rcc_periph_clock_enable(RCC_BKP);
-
+    BACKUP_UNLOCK();
     rtc_unlock();
 
     PLC_DIAG_IRQS[i] |= (1ul<<irq);
 
     rtc_lock();
+    BACKUP_LOCK();
 
     scb_reset_system();
 }

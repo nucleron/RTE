@@ -65,10 +65,6 @@ extern void dbg_serial_init(void);
 
 #define GET_RTC_DATA     21
 
-#define GET_CUSTOM_LEN   22
-#define GET_CUSTOM_DATA  23
-
-
 //Commands
 #define DBG_CMD_START    0x61
 #define DBG_CMD_STOP     0x62
@@ -86,8 +82,6 @@ extern void dbg_serial_init(void);
 #define DBG_CMD_IDLE      0x6a
 
 #define DBG_CMD_SET_RTC   0x6b
-
-#define DBG_CMD_CUSTOM    0x6c //Custom cmd
 
 //Timer threshold
 #define PLC_DBG_TIMER_THR 500
@@ -169,16 +163,16 @@ extern uint8_t plc_state;
 
 static inline plc_app_start(void)
 {
-    plc_iom_start();
     plc_curr_app->start(0,0);
+    plc_iom_start();
     plc_state = PLC_STATE_STARTED;
 }
 
 static inline plc_app_stop(void)
 {
     plc_state = PLC_STATE_STOPED;
-    plc_curr_app->stop();
     plc_iom_stop();
+    plc_curr_app->stop();
 }
 
 extern void dbg_init(void);

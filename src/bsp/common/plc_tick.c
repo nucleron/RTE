@@ -50,6 +50,8 @@ static frac_div_t systick_ctrl;
 #define TICK_STATE_LOW  2
 static uint32_t tick_state = TICK_STATE_HIGH;
 
+uint64_t plc_tick_time = TICK_MIN_PER;
+
 volatile bool plc_tick_flag = false;
 
 extern void plc_irq_stub(void);
@@ -116,6 +118,8 @@ void plc_tick_setup( uint64_t tick_next, uint64_t tick_period )
     {
         tick_period = TICK_MIN_PER;
     }
+
+    plc_tick_time = tick_period;
 
     if (TICK_THR_PER > tick_period)
     {

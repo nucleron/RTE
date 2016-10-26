@@ -128,14 +128,6 @@ void dbg_init(void)
     plc_dbg_ctrl.data_hook = (void(*)(void))0;
 }
 
-static void default_custom_handler(uint8_t * data, uint8_t dsize)
-{
-    (void)data;
-    (void)dsize;
-}
-
-extern void dbg_custom_handler(uint8_t * data, uint8_t dsize) __attribute__((weak,alias("default_custom_handler")));
-
 void dbg_handler(void)
 {
     //Check timer, break connection on timeout
@@ -297,17 +289,6 @@ void dbg_handler(void)
             plc_dbg_ctrl.data = (uint8_t *)&plc_dbg_ctrl.tr.set_rtc;
         }
         break;
-
-        case DBG_CMD_CUSTOM:
-        {
-            plc_dbg_ctrl.state = GET_CUSTOM_LEN;
-
-            //Get 4 byte data length, little endian
-            plc_dbg_ctrl.tmp_len = 4;
-            plc_dbg_ctrl.tmp = (uint8_t *)&plc_dbg_ctrl.data_len;
-        }
-        break;
-
         }
     }
     break;
@@ -336,55 +317,6 @@ void dbg_handler(void)
             new_time.tm_sec  = plc_dbg_ctrl.tr.set_rtc.sec;
             plc_rtc_dt_set(&new_time);
 
-            plc_dbg_ctrl.state = GET_CMD;
-        }
-    }
-    break;
-
-    case GET_CUSTOM_LEN:
-    {
-        PLC_CLEAR_TIMER (plc_dbg_ctrl.timer);
-
-        if (plc_dbg_ctrl.tmp_len)
-        {
-            int write_res;
-            write_res = dbg_serial_write(plc_dbg_ctrl.tmp, plc_dbg_ctrl.tmp_len);
-            plc_dbg_ctrl.tmp     += write_res;
-            plc_dbg_ctrl.tmp_len -= (uint8_t)write_res;
-        }
-        else
-        {
-            if (0 < plc_dbg_ctrl.data_len)
-            {
-                //When length transfered transfer data
-                plc_dbg_ctrl.state = GET_CUSTOM_DATA;
-                plc_dbg_ctrl.tmp_len = plc_dbg_ctrl.data_len; //Save tmp len
-                plc_dbg_ctrl.data = (uint8_t *)&plc_dbg_ctrl.tr_buf.data[0];
-            }
-            else
-            {
-                plc_dbg_ctrl.state = GET_CMD;
-            }
-        }
-    }
-    break;
-
-    case GET_CUSTOM_DATA:
-    {
-        PLC_CLEAR_TIMER (plc_dbg_ctrl.timer);
-
-        if (plc_dbg_ctrl.data_len)
-        {
-            int read_res;
-            //Must read before timeout!
-            read_res = dbg_serial_read(plc_dbg_ctrl.data, plc_dbg_ctrl.data_len);
-            plc_dbg_ctrl.data     += read_res;
-            plc_dbg_ctrl.data_len -= read_res;
-        }
-        else
-        {
-            //Process custom command
-            dbg_custom_handler((uint8_t *)&plc_dbg_ctrl.tr_buf.data[0], plc_dbg_ctrl.tmp_len);
             plc_dbg_ctrl.state = GET_CMD;
         }
     }

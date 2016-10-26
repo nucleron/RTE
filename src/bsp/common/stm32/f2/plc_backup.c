@@ -28,6 +28,9 @@
 #define PLC_BKP_BANK1_START (uint32_t *)(BKPSRAM_BASE)
 #define PLC_BKP_BANK2_START (uint32_t *)(BKPSRAM_BASE+PLC_BKP_SIZE)
 
+#define BACKUP_UNLOCK() PWR_CR |= PWR_CR_DBP
+#define BACKUP_LOCK() PWR_CR &= ~PWR_CR_DBP
+
 void plc_backup_init(void)
 {
     uint32_t i;
