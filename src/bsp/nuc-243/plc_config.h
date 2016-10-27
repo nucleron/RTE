@@ -311,6 +311,10 @@
 #define PLC_ADC18_PIN       GPIO7
 
 // Analog outputs
+#define PLC_DEFAULT_COEF_OUT    10000
+///TODO: compute rigth value!
+#define PLC_COEF_DELTA_OUT      100
+
 
 #define PLC_DAC_CLK_PERIPH      RCC_GPIOC
 #define PLC_DAC_CLK_PORT        GPIOC
@@ -462,8 +466,8 @@ GR LED
 #define PLC_BKP_CLB5_OFFSET      0x3C //AIN2
 #define PLC_BKP_CLB6_OFFSET      0x40 //AIN3
 #define PLC_BKP_CLB7_OFFSET      0x44 //AIN4
-#define PLC_BKP_CLB8_OFFSET      0x48 //AOUT0
-#define PLC_BKP_CLB9_OFFSET      0x4C //AOUT1
+#define PLC_BKP_AOUT_OFFSET      0x48 //AOUT0/1
+#define PLC_BKP_CLB_VER_OFFSET   0x4C //Valid flag/version
 
 /*Diag info*/
 #define PLC_DIAG_IRQS ((uint32_t *)(BACKUP_REGS_BASE + PLC_BKP_IRQ1_OFFSET))
@@ -471,6 +475,9 @@ GR LED
 
 /*Calib info*/
 #define PLC_CLB_REGS ((uint32_t *)(BACKUP_REGS_BASE + PLC_BKP_CLB0_OFFSET))
+#define PLC_AOUT_REG ((uint32_t *)(BACKUP_REGS_BASE + PLC_BKP_AOUT_OFFSET))
+#define PLC_CLB_VER  ((uint32_t *)(BACKUP_REGS_BASE + PLC_BKP_CLB_VER_OFFSET))
+
 
 extern void plc_diag_reset(void);
 #define PLC_RESET_HOOK() plc_diag_reset()

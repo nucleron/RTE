@@ -60,10 +60,10 @@ static void _ai_setup(ai_data_t * self)
     self->flag            = PLC_DEFAULT_ADC_FLG;
     self->mode            = PLC_DEFAULT_ADC_MODE;
 
-    self->_10v_coef       = PLC_DEFAULT_COEF_10V;
-    self->_20ma_coef      = PLC_DEFAULT_COEF_20MA;
-    self->_100r_coef      = PLC_DEFAULT_COEF_100R;
-    self->_4k_coef        = PLC_DEFAULT_COEF_4K;
+    self->clb.coef._10v       = PLC_DEFAULT_COEF_10V;
+    self->clb.coef._20ma      = PLC_DEFAULT_COEF_20MA;
+    self->clb.coef._100r      = PLC_DEFAULT_COEF_100R;
+    self->clb.coef._4k        = PLC_DEFAULT_COEF_4K;
 
     _plc_ain_cfg_chk(self);
 }
@@ -139,7 +139,7 @@ static uint16_t ai_10v_calc(uint16_t data, ai_data_t * ch)
 {
     uint32_t i = (data * other_analog[0].calc * 34);
     // напряжение в мВ
-    return (uint16_t)(i / ch->_10v_coef);
+    return (uint16_t)(i / ch->clb.coef._10v);
 }
 
 // *** ВЫЧИСЛЕНИЕ ТОКА 4...20 мА для AI
@@ -156,14 +156,14 @@ static uint16_t ai_20ma_calc(uint16_t data, ai_data_t * ch)
     Множитель 80 оставляем в формуле, 41769 отправляем в переменную структуры для канала.
     */
     uint32_t i = (data * other_analog[0].calc * 80);  // толстое число, в 32 бита только входит
-    return (uint16_t)(i / ch->_20ma_coef ); // результат в мкА.
+    return (uint16_t)(i / ch->clb.coef._20ma ); // результат в мкА.
 }
 
 // *** ВЫЧИСЛЕНИЕ СОПРОТИВЛЕНИЯ 100 Ом для AI
 static uint16_t ai_100r_calc(uint16_t data, ai_data_t * ch)
 {
     // Расчётный коэф: 218 мОм на разряд АЦП
-    uint32_t i = (data * ch->_100r_coef);
+    uint32_t i = (data * ch->clb.coef._100r);
     // сопротивление в 0,1 Ом. См. "Расчёты" в проекте.
     return (uint16_t)(i / 100);
 }
@@ -172,7 +172,7 @@ static uint16_t ai_100r_calc(uint16_t data, ai_data_t * ch)
 static uint16_t ai_4k_calc(uint16_t data, ai_data_t * ch)
 {
     // Расчётный коэф: 3141 мОм на разряд АЦП
-    uint32_t i = (data * ch->_4k_coef);
+    uint32_t i = (data * ch->clb.coef._4k);
     // сопротивление в омах. См. "Расчёты" в проекте.
     return (uint16_t)(i / 1000);
 }
@@ -652,6 +652,23 @@ void PLC_IOM_LOCAL_END(uint16_t lid)
 {
 }
 
+static ai_clb_t clb_data;
+
+static const ai_clb_t clb_data_min =
+{
+    .coef._10v  = PLC_DEFAULT_COEF_10V  - PLC_COEF_DELTA_10V,
+    .coef._20ma = PLC_DEFAULT_COEF_20MA - PLC_COEF_DELTA_20MA,
+    .coef._100r = PLC_DEFAULT_COEF_100R - PLC_COEF_DELTA_100R,
+    .coef._4k   = PLC_DEFAULT_COEF_4K   - PLC_COEF_DELTA_4K,
+};
+
+static const ai_clb_t clb_data_max =
+{
+    .coef._10v  = PLC_DEFAULT_COEF_10V  + PLC_COEF_DELTA_10V,
+    .coef._20ma = PLC_DEFAULT_COEF_20MA + PLC_COEF_DELTA_20MA,
+    .coef._100r = PLC_DEFAULT_COEF_100R + PLC_COEF_DELTA_100R,
+    .coef._4k   = PLC_DEFAULT_COEF_4K   + PLC_COEF_DELTA_4K,
+};
 
 
 void PLC_IOM_LOCAL_START(void)
@@ -659,12 +676,30 @@ void PLC_IOM_LOCAL_START(void)
     int i;
     for (i=0; i<4; i++)
     {
+        int j;
         static const other_analog_cfg[4] = {8,8,8,0};
         other_analog[i].sum             = other_analog_cfg[i];
 
         analog_input[i].polling_period  = (plc_tick_time/1000000);
         analog_input[i].mode            = PLC_AIN_MODE_OFF;
         _plc_ain_cfg(i,PLC_AIN_MODE_OFF);
+        //Calibration data must be valid
+        if (0 == PLC_CLB_VER & 0x1)
+        {
+            continue;
+        }
+        //Read calib data only uint32_t acces is supported by backup regs
+        clb_data.reg[0] = PLC_CLB_REGS[2*i];
+        clb_data.reg[1] = PLC_CLB_REGS[2*i+1];
+        //Check coef values, defaults are in place
+        for (j=0; j<4; j++)
+        {
+            if ((clb_data_min.cval[j] < clb_data.cval[j]) && \
+                (clb_data_max.cval[j] > clb_data.cval[j]))
+            {
+                analog_input[i].clb.cval[j] = clb_data.cval[j];
+            }
+        }
     }
 }
 

@@ -143,8 +143,28 @@ void PLC_IOM_LOCAL_END(uint16_t lid)
 {
 }
 
+static aout_clb_t clb_data =
+{
+    .val={PLC_DEFAULT_COEF_OUT,PLC_DEFAULT_COEF_OUT}
+};
+
 void PLC_IOM_LOCAL_START(void)
 {
+    int i;
+    //Calibration must be valid
+    if (0 == PLC_CLB_VER & 0x1)
+    {
+        return;
+    }
+    clb_data.reg = *PLC_AOUT_REG;
+    for (i=0; i<2; i++)
+    {
+        if (((PLC_DEFAULT_COEF_OUT-PLC_COEF_DELTA_OUT) < clb_data.val[i]) || \
+            ((PLC_DEFAULT_COEF_OUT+PLC_COEF_DELTA_OUT) > clb_data.val[i]))
+        {
+            clb_data.val[i] = PLC_DEFAULT_COEF_OUT;
+        }
+    }
 }
 
 uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
@@ -175,12 +195,27 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t lid)
 ///TODO: add calibration!!!
 uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 {
-    switch(plc_curr_app->l_tab[i]->a_data[0])
+    int j;
+    uint32_t tmp;
+
+    tmp = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+
+    j = plc_curr_app->l_tab[i]->a_data[0];//j is checked in PLC_IOM_LOCAL_CHECK
+
+    tmp *= clb_data.val[j];
+    tmp /= 10000;
+    //Limit the outout
+    if (tmp > 4000)
+    {
+        tmp = 4000;
+    }
+
+    switch(j)
     {
     case 0:
-        plc_aout_dataA = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+        plc_aout_dataA = (uint16_t)tmp;
     case 1:
-        plc_aout_dataB = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+        plc_aout_dataB = (uint16_t)tmp;
     default:
         break;
     }

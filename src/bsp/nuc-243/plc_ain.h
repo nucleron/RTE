@@ -1,6 +1,21 @@
 #ifndef _PLC_AIN_H_
 #define _PLC_AIN_H_
 
+typedef union
+{
+    struct
+    {
+        uint16_t _10v;    //
+        uint16_t _20ma;   //
+        uint16_t _100r;   //
+        uint16_t _4k;     //
+    }
+    coef;
+    uint32_t reg[2];
+    uint16_t cval[4];
+}
+ai_clb_t;
+
 // Структура с конфигурацией и результатами для AI
 typedef struct
 {
@@ -13,10 +28,7 @@ typedef struct
     uint16_t threshold_high;                 // верхний порог триггера шмидта (в единицах измерения)
     uint16_t signal_level;                   // измеренный сигнал в (в единицах измерения)
 
-    uint16_t _10v_coef;     //
-    uint16_t _20ma_coef;    //
-    uint16_t _100r_coef;   //
-    uint16_t _4k_coef;      //
+    ai_clb_t clb;
 
     uint16_t polling_counter;                 // счёт милисекунд периодичности
     uint16_t polling_period;                  // период опроса канала в мс
