@@ -18,6 +18,10 @@
 #define PLC_HSE_CONFIG cfg_hse_16Mhz
 #define PLC_RCC_AHB_FREQ 120
 /*
+*  PLC tick min period (ns)
+*/
+#define PLC_TICK_MIN_PER    260000ULL
+/*
 *  Debug USART
 */
 #define DBG_USART        USART1

@@ -33,7 +33,9 @@ static bool systick_set_period(uint32_t period, uint32_t ahb, uint8_t clk_source
 }
 
 //Минимальный период в нС.
-#define TICK_MIN_PER    100000ULL
+#ifndef PLC_TICK_MIN_PER
+#define PLC_TICK_MIN_PER    100000ULL
+#endif//PLC_TICK_MIN_PER
 //Пороговый период
 #define TICK_THR_PER 500000000ULL
 //Частота в МГц
@@ -50,7 +52,7 @@ static frac_div_t systick_ctrl;
 #define TICK_STATE_LOW  2
 static uint32_t tick_state = TICK_STATE_HIGH;
 
-uint64_t plc_tick_time = TICK_MIN_PER;
+uint64_t plc_tick_time = PLC_TICK_MIN_PER;
 
 volatile bool plc_tick_flag = false;
 
@@ -114,9 +116,9 @@ void plc_tick_setup( uint64_t tick_next, uint64_t tick_period )
 {
     (void)tick_next;//disable warning
 
-    if (TICK_MIN_PER > tick_period)
+    if (PLC_TICK_MIN_PER > tick_period)
     {
-        tick_period = TICK_MIN_PER;
+        tick_period = PLC_TICK_MIN_PER;
     }
 
     plc_tick_time = tick_period;
