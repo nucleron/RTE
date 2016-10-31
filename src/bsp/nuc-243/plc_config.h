@@ -204,8 +204,8 @@
 
 #define PLC_DEFAULT_COEF_10V             41952
 #define PLC_DEFAULT_COEF_20MA            41769
-#define PLC_DEFAULT_COEF_100R            218
-#define PLC_DEFAULT_COEF_4K              3141
+#define PLC_DEFAULT_COEF_100R            2200  //220 Ohm
+#define PLC_DEFAULT_COEF_4K              4700  //4700 Ohm
 
 ///TODO: Compute rigth values!!!
 #define PLC_COEF_DELTA_10V             20000 ///!!!

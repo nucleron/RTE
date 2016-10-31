@@ -159,22 +159,30 @@ static uint16_t ai_20ma_calc(uint16_t data, ai_data_t * ch)
     return (uint16_t)(i / ch->clb.coef._20ma ); // результат в мкА.
 }
 
+static inline uint16_t ai_R_calc(uint16_t data, uint16_t calib)
+{
+#   define PLC_MAX_ADC 4095ul
+    return (uint16_t)(((uint32_t)calib * (uint32_t)data)/(PLC_MAX_ADC - (uint32_t)data));
+}
+
 // *** ВЫЧИСЛЕНИЕ СОПРОТИВЛЕНИЯ 100 Ом для AI
 static uint16_t ai_100r_calc(uint16_t data, ai_data_t * ch)
 {
-    // Расчётный коэф: 218 мОм на разряд АЦП
-    uint32_t i = (data * ch->clb.coef._100r);
-    // сопротивление в 0,1 Ом. См. "Расчёты" в проекте.
-    return (uint16_t)(i / 100);
+//    // Расчётный коэф: 218 мОм на разряд АЦП
+//    uint32_t i = (data * ch->clb.coef._100r);
+//    // сопротивление в 0,1 Ом. См. "Расчёты" в проекте.
+//    return (uint16_t)(i / 100);
+    return ai_R_calc(data, ch->clb.coef._100r);
 }
 
 // *** ВЫЧИСЛЕНИЕ СОПРОТИВЛЕНИЯ 4 кОм для AI
 static uint16_t ai_4k_calc(uint16_t data, ai_data_t * ch)
 {
-    // Расчётный коэф: 3141 мОм на разряд АЦП
-    uint32_t i = (data * ch->clb.coef._4k);
-    // сопротивление в омах. См. "Расчёты" в проекте.
-    return (uint16_t)(i / 1000);
+//    // Расчётный коэф: 3141 мОм на разряд АЦП
+//    uint32_t i = (data * ch->clb.coef._4k);
+//    // сопротивление в омах. См. "Расчёты" в проекте.
+//    return (uint16_t)(i / 1000);
+    return ai_R_calc(data, ch->clb.coef._4k);
 }
 
 static uint16_t ai_no_calc(uint16_t data, ai_data_t * ch)
@@ -461,21 +469,21 @@ void _plc_ain_cfg(uint32_t port, uint32_t mode)
         plc_gpio_clear(non1   + port);
         break;
     case PLC_AIN_MODE_20MA:
-        plc_gpio_clear(pwr_ai0 + port);
-        plc_gpio_clear(pwr_ai1 + port);
+        plc_gpio_set  (pwr_ai0 + port);
+        plc_gpio_set  (pwr_ai1 + port);
         plc_gpio_set  (non0   + port);
         plc_gpio_clear(non1   + port);
         break;
     case PLC_AIN_MODE_10V:
-        plc_gpio_clear(pwr_ai0 + port);
-        plc_gpio_clear(pwr_ai1 + port);
+        plc_gpio_set  (pwr_ai0 + port);
+        plc_gpio_set  (pwr_ai1 + port);
         plc_gpio_clear(non0   + port);
         plc_gpio_set  (non1   + port);
         break;
     case PLC_AIN_MODE_OFF:
     default:
-        plc_gpio_clear(pwr_ai0 + port);
-        plc_gpio_clear(pwr_ai1 + port);
+        plc_gpio_set  (pwr_ai0 + port);
+        plc_gpio_set  (pwr_ai1 + port);
         plc_gpio_clear(non0   + port);
         plc_gpio_clear(non1   + port);
         break;
@@ -508,10 +516,10 @@ void _plc_ain_init(void)
     int i;
     // Питание аналоговых портов
     PLC_GPIO_GR_CFG_OUT(pwr_ai0);
-    PLC_GPIO_GR_CLEAR  (pwr_ai0);
+    PLC_GPIO_GR_SET    (pwr_ai0);
 
     PLC_GPIO_GR_CFG_OUT(pwr_ai1);
-    PLC_GPIO_GR_CLEAR  (pwr_ai1);
+    PLC_GPIO_GR_SET    (pwr_ai1);
 
     // Управление шунтами аналоговых входов
     PLC_GPIO_GR_CFG_OUT(non0);
