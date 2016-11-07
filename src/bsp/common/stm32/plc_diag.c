@@ -330,8 +330,6 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
 
 static const char plc_diag_abort_msg[] = "PLC execution is aborted by program!";
 
-extern bool plc_dbg_mode;
-
 uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 {
     if (PLC_LT_M == PLC_APP->l_tab[i]->v_type)

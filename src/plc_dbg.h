@@ -160,6 +160,7 @@ typedef struct
 
 extern void plc_boot_mode_enter(void);
 extern uint8_t plc_state;
+extern bool plc_dbg_mode;
 
 static inline plc_app_start(void)
 {

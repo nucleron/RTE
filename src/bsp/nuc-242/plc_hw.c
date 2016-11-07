@@ -61,10 +61,14 @@ void plc_boot_init(void)
 void plc_boot_mode_enter(void)
 {
     uint32_t delay;
+    //Enter dbg mode if not there
+    plc_dbg_mode = true;
+    //Set boot pin
     gpio_clear( PLC_BOOT_PORT, PLC_BOOT_PIN );
-
+    //Wait boot pin voltage to set
     PLC_CLEAR_TIMER( delay );
     while( PLC_TIMER(delay) < 2000 );
+    //May reset the system now
     scb_reset_system();
 }
 
