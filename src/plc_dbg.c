@@ -209,6 +209,8 @@ void dbg_handler(void)
 
         case DBG_CMD_RESET:
         {
+            //Enter dbg mode if not there
+            plc_dbg_mode = true;
             plc_backup_invalidate();
             plc_boot_mode_enter();
         }

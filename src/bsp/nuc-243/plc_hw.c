@@ -59,8 +59,6 @@ void plc_boot_init(void)
 void plc_boot_mode_enter(void)
 {
     uint32_t delay;
-    //Enter dbg mode if not there
-    plc_dbg_mode = true;
     //Set boot pin
     gpio_clear( PLC_BOOT_PORT, PLC_BOOT_PIN );
     //Wait boot pin voltage to set
