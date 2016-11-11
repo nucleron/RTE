@@ -171,6 +171,8 @@
 #define PLC_O5_PIN    GPIO7
 
 // Analog inputs
+#define PLC_AI_NUM    4
+
 #define ADC_CHANNEL_REF2v5  ADC_CHANNEL2
 #define ADC_CHANNEL_18v     ADC_CHANNEL7
 #define ADC_CHANNEL_AIN0    ADC_CHANNEL14
@@ -315,6 +317,8 @@
 #define PLC_ADC18_PIN       GPIO7
 
 // Analog outputs
+#define PLC_AO_NUM    2
+
 #define PLC_DEFAULT_COEF_OUT    10000
 ///TODO: compute rigth value!
 #define PLC_COEF_DELTA_OUT      100

@@ -208,6 +208,10 @@ void plc_rtc_dt_set( tm* time )
     }
     RTC_CRL |= RTC_CRL_CNF;
     /*Set the clock*/
+    if (time->tm_year < 2000)
+    {
+        time->tm_year += 2000;
+    }
     i = dt_to_sec(time);
     RTC_CNTH = (i >> 16) & 0xffff;
     RTC_CNTL =         i & 0xffff;
