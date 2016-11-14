@@ -1,7 +1,7 @@
 /*
  * Copyright Nucleron R&D LLC 2016
- * 
- * This file is licensed under the terms of NOSL, 
+ *
+ * This file is licensed under the terms of YAPL,
  * see License.txt for details.
  */
 #ifndef _NOISE_FLT_H_

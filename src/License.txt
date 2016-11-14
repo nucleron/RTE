@@ -1,5 +1,5 @@
-             Nucleron(R) Open Source License (NOSL) 
-                version 1.1, July 2nd 2016
+             Yet Another Public License (YAPL)
+                version 1.0, November 14th 2016
 
 The covered work is licensed under the folowing terms:
 
@@ -7,14 +7,12 @@ The covered work is licensed under the folowing terms:
 then the covered work is licensed under the terms of LGPLv3 or later.
 
 2. If used with hardware produced by other persons or companies
-which have written permission from the copyright holder to convey 
+which have written permission from the copyright holder to convey
 the covered work and its combinations under the terms of LGPLv3 or later,
 then the covered work is licensed under the terms of LGPLv3 or later.
 
-3. In all other cases the covered work is licensed under the terms 
+3. In all other cases the covered work is licensed under the terms
 of GPLv3 or later.
 
 4. You can find GPLv3 and LGPLv3 in files COPYING.GPL3 and COPYING.LGPL3
 respectively in this directory.
-
-5. Nucleron(R) is the registered trademark of Nucleron R&D LLC.
