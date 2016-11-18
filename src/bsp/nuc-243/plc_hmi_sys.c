@@ -156,7 +156,7 @@ uint16_t hmi_sys_get(uint8_t par)
     case PLC_HMI_SYS_PAR_AIAF:
         return analog_input[ain_chnl].ave.depth;
     case PLC_HMI_SYS_PAR_AISP:
-        return analog_input[ain_chnl].polling_period;
+        return analog_input[ain_chnl].polling_period/10; //0.01sec
 
     case PLC_HMI_SYS_PAR_AO0:
         return plc_aout_dataA;

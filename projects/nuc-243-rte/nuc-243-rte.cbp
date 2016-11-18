@@ -70,9 +70,6 @@
 		<Unit filename="../../src/COPYING.GPL3" />
 		<Unit filename="../../src/COPYING.LGPL3" />
 		<Unit filename="../../src/License.txt" />
-		<Unit filename="../../src/bsp/common/plc_mbs.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="../../src/bsp/common/plc_tick.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -140,6 +137,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../src/bsp/nuc-243/plc_iom_reg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-243/plc_mbs.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../src/bsp/nuc-243/plc_wait_tmr.c">
