@@ -3,6 +3,9 @@
 
 #define PLC_DAC_SYNC_MSK    0x0060
 
+extern uint16_t plc_aout_dataA;
+extern uint16_t plc_aout_dataB;
+
 typedef union
 {
     uint32_t reg;

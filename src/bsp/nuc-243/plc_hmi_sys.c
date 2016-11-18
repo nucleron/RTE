@@ -1,4 +1,17 @@
+/*
+ * Copyright Nucleron R&D LLC 2016
+ *
+ * This file is licensed under the terms of YAPL,
+ * see License.txt for details.
+ */
+#include <stdint.h>
+#include <stdbool.h>
+
+#include <noise_flt.h>
+
 #include <plc_config.h>
+#include <plc_ain.h>
+#include <plc_aout.h>
 #include <plc_hmi.h>
 #include <iec_std_lib.h>
 #include <dbnc_flt.h>
@@ -11,7 +24,9 @@ extern uint32_t mb_baudrate;
 extern uint8_t mb_slave_addr;
 
 extern dbnc_flt_t in_flt[];
-uint8_t in_chnl = 0;
+uint8_t din_chnl = 0;
+
+uint8_t ain_chnl = 0;
 
 extern plc_hmi_dm_t plc_hmi_sys;
 
@@ -24,10 +39,19 @@ extern plc_hmi_dm_t plc_hmi_sys;
 #define PLC_HMI_SYS_PAR_DI   4
 #define PLC_HMI_SYS_PAR_DQ   5
 
-#define PLC_HMI_SYS_PAR_CN   6
+#define PLC_HMI_SYS_PAR_DICN 6
 #define PLC_HMI_SYS_PAR_ONF  7
 #define PLC_HMI_SYS_PAR_OFFF 8
 
+#define PLC_HMI_SYS_PAR_AICN 9   //Analog input sellect
+#define PLC_HMI_SYS_PAR_AISL 10  //Analog input signal level
+#define PLC_HMI_SYS_PAR_AIMD 11  //Analog input mode
+#define PLC_HMI_SYS_PAR_AIMF 12  //Analog input median filter depth
+#define PLC_HMI_SYS_PAR_AIAF 13  //Analog input average filter depth
+#define PLC_HMI_SYS_PAR_AISP 14  //Analog input sampling period
+
+#define PLC_HMI_SYS_PAR_AO0 15   //Analog output 0
+#define PLC_HMI_SYS_PAR_AO1 16   //Analog output 0
 
 #define PLC_HMI_SYS_PAR_MBSS 20
 #define PLC_HMI_SYS_PAR_MBSA 21
@@ -46,9 +70,17 @@ const plc_hmi_par_t plc_hmi_sys_ptype[] =
     PLC_HMI_RO_UINT, //DI  on filter
     PLC_HMI_RO_UINT, //DI off filter
 
+    PLC_HMI_UINT,    //AI chanel
+    PLC_HMI_RO_UINT, //AI sig level
+    PLC_HMI_RO_UINT, //AI mode
+    PLC_HMI_RO_UINT, //AI median depth
+    PLC_HMI_RO_UINT, //AI average depth
+    PLC_HMI_RO_UINT, //AI period
+
+    PLC_HMI_RO_UINT, //AO 0 val
+    PLC_HMI_RO_UINT, //AO 1 val
+
     PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,
-    PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,
-    PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,
 
     PLC_HMI_RO_UINT, //MBS speed
     PLC_HMI_RO_UINT, //MBS addr
@@ -106,12 +138,30 @@ uint16_t hmi_sys_get(uint8_t par)
         }
         return 0;
 
-    case PLC_HMI_SYS_PAR_CN:
-        return in_chnl;
+    case PLC_HMI_SYS_PAR_DICN:
+        return din_chnl;
     case PLC_HMI_SYS_PAR_ONF:
-        return in_flt[in_chnl].thr_on;
+        return in_flt[din_chnl].thr_on;
     case PLC_HMI_SYS_PAR_OFFF:
-        return in_flt[in_chnl].thr_off;
+        return in_flt[din_chnl].thr_off;
+
+    case PLC_HMI_SYS_PAR_AICN:
+        return ain_chnl;
+    case PLC_HMI_SYS_PAR_AISL:
+        return analog_input[ain_chnl].signal_level;
+    case PLC_HMI_SYS_PAR_AIMD:
+        return analog_input[ain_chnl].mode;
+    case PLC_HMI_SYS_PAR_AIMF:
+        return analog_input[ain_chnl].median.depth;
+    case PLC_HMI_SYS_PAR_AIAF:
+        return analog_input[ain_chnl].ave.depth;
+    case PLC_HMI_SYS_PAR_AISP:
+        return analog_input[ain_chnl].polling_period;
+
+    case PLC_HMI_SYS_PAR_AO0:
+        return plc_aout_dataA;
+    case PLC_HMI_SYS_PAR_AO1:
+        return plc_aout_dataB;
 
     case PLC_HMI_SYS_PAR_MBSS:
         return mb_baudrate/100;
@@ -198,8 +248,15 @@ uint16_t hmi_sys_chk(uint8_t par, uint16_t val)
         }
         break;
 
-    case PLC_HMI_SYS_PAR_CN:
+    case PLC_HMI_SYS_PAR_DICN:
         if (val >= PLC_DI_NUM )
+        {
+            return 0;
+        }
+        break;
+
+    case PLC_HMI_SYS_PAR_AICN:
+        if (val >= PLC_AI_NUM )
         {
             return 0;
         }
@@ -237,8 +294,12 @@ void     hmi_sys_set(uint8_t par, uint16_t val)
         plc_backup_save_brightness(plc_hmi_bri);
         break;
 
-    case PLC_HMI_SYS_PAR_CN:
-        in_chnl = MIN(val,(PLC_DI_NUM-1));
+    case PLC_HMI_SYS_PAR_DICN:
+        din_chnl = MIN(val,(PLC_DI_NUM-1));
+        break;
+
+    case PLC_HMI_SYS_PAR_AICN:
+        ain_chnl = MIN(val,(PLC_AI_NUM-1));
         break;
     }
 }

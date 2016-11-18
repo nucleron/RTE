@@ -1,3 +1,10 @@
+/*
+ * Copyright Nucleron R&D LLC 2016
+ *
+ * This file is licensed under the terms of YAPL,
+ * see License.txt for details.
+ */
+
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 
