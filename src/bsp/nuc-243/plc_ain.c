@@ -464,14 +464,14 @@ void _plc_ain_cfg(uint32_t port, uint32_t mode)
     switch (mode)
     {
     case PLC_AIN_MODE_4K:
-        plc_gpio_set  (pwr_ai0 + port);
-        plc_gpio_clear(pwr_ai1 + port);
+        plc_gpio_clear(pwr_ai0 + port);
+        plc_gpio_set  (pwr_ai1 + port);
         plc_gpio_clear(non0   + port);
         plc_gpio_clear(non1   + port);
         break;
     case PLC_AIN_MODE_100R:
-        plc_gpio_clear(pwr_ai0 + port);
-        plc_gpio_set  (pwr_ai1 + port);
+        plc_gpio_set  (pwr_ai0 + port);
+        plc_gpio_clear(pwr_ai1 + port);
         plc_gpio_clear(non0   + port);
         plc_gpio_clear(non1   + port);
         break;

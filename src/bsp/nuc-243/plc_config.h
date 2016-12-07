@@ -46,9 +46,9 @@
 /*
 *  Jumpers
 */
-#define PLC_JMP_RST_PERIPH RCC_GPIOD
-#define PLC_JMP_RST_PORT   GPIOD
-#define PLC_JMP_RST_PIN    GPIO10
+#define PLC_JMP_RST_PERIPH RCC_GPIOB
+#define PLC_JMP_RST_PORT   GPIOB
+#define PLC_JMP_RST_PIN    GPIO14
 
 #define PLC_JMP_DBG_PERIPH RCC_GPIOD
 #define PLC_JMP_DBG_PORT   GPIOD
@@ -154,8 +154,8 @@
 #define PLC_O1_PORT   GPIOB
 #define PLC_O1_PIN    GPIO5
 
-#define PLC_O2_PERIPH RCC_GPIOB
-#define PLC_O2_PORT   GPIOB
+#define PLC_O2_PERIPH RCC_GPIOD
+#define PLC_O2_PORT   GPIOD
 #define PLC_O2_PIN    GPIO4
 
 #define PLC_O3_PERIPH RCC_GPIOB
@@ -164,11 +164,11 @@
 
 #define PLC_O4_PERIPH RCC_GPIOC
 #define PLC_O4_PORT   GPIOC
-#define PLC_O4_PIN    GPIO6
+#define PLC_O4_PIN    GPIO9
 
-#define PLC_O5_PERIPH RCC_GPIOC
-#define PLC_O5_PORT   GPIOC
-#define PLC_O5_PIN    GPIO7
+#define PLC_O5_PERIPH RCC_GPIOA
+#define PLC_O5_PORT   GPIOA
+#define PLC_O5_PIN    GPIO8
 
 // Analog inputs
 #define PLC_AI_NUM    4
@@ -206,8 +206,8 @@
 
 #define PLC_DEFAULT_COEF_10V             41952
 #define PLC_DEFAULT_COEF_20MA            41769
-#define PLC_DEFAULT_COEF_100R            2200  //220 Ohm
-#define PLC_DEFAULT_COEF_4K              4700  //4700 Ohm
+#define PLC_DEFAULT_COEF_100R            2495  //*0.1 Ohm
+#define PLC_DEFAULT_COEF_4K              4020  //*1 Ohm
 
 ///TODO: Compute rigth values!!!
 #define PLC_COEF_DELTA_10V             20000 ///!!!
@@ -223,70 +223,70 @@
 
 // Питание аналоговых портов
 
-#define PLC_PWR_AI00_PERIPH  RCC_GPIOD
-#define PLC_PWR_AI00_PORT    GPIOD
-#define PLC_PWR_AI00_PIN     GPIO8
+#define PLC_PWR_AI00_PERIPH  RCC_GPIOC
+#define PLC_PWR_AI00_PORT    GPIOC
+#define PLC_PWR_AI00_PIN     GPIO7
 
-#define PLC_PWR_AI10_PERIPH  RCC_GPIOD
-#define PLC_PWR_AI10_PORT    GPIOD
-#define PLC_PWR_AI10_PIN     GPIO9
+#define PLC_PWR_AI01_PERIPH  RCC_GPIOD
+#define PLC_PWR_AI01_PORT    GPIOD
+#define PLC_PWR_AI01_PIN     GPIO15
 
-#define PLC_PWR_AI01_PERIPH  RCC_GPIOB
-#define PLC_PWR_AI01_PORT    GPIOB
-#define PLC_PWR_AI01_PIN     GPIO14
+#define PLC_PWR_AI10_PERIPH  RCC_GPIOC
+#define PLC_PWR_AI10_PORT    GPIOC
+#define PLC_PWR_AI10_PIN     GPIO8
 
-#define PLC_PWR_AI11_PERIPH  RCC_GPIOB
-#define PLC_PWR_AI11_PORT    GPIOB
-#define PLC_PWR_AI11_PIN     GPIO15
+#define PLC_PWR_AI11_PERIPH  RCC_GPIOC
+#define PLC_PWR_AI11_PORT    GPIOC
+#define PLC_PWR_AI11_PIN     GPIO6
 
-#define PLC_PWR_AI02_PERIPH  RCC_GPIOB
-#define PLC_PWR_AI02_PORT    GPIOB
-#define PLC_PWR_AI02_PIN     GPIO12
+#define PLC_PWR_AI02_PERIPH  RCC_GPIOD
+#define PLC_PWR_AI02_PORT    GPIOD
+#define PLC_PWR_AI02_PIN     GPIO13
 
-#define PLC_PWR_AI12_PERIPH  RCC_GPIOB
-#define PLC_PWR_AI12_PORT    GPIOB
-#define PLC_PWR_AI12_PIN     GPIO13
+#define PLC_PWR_AI12_PERIPH  RCC_GPIOD
+#define PLC_PWR_AI12_PORT    GPIOD
+#define PLC_PWR_AI12_PIN     GPIO14
 
-#define PLC_PWR_AI03_PERIPH  RCC_GPIOB
-#define PLC_PWR_AI03_PORT    GPIOB
-#define PLC_PWR_AI03_PIN     GPIO10
+#define PLC_PWR_AI03_PERIPH  RCC_GPIOD
+#define PLC_PWR_AI03_PORT    GPIOD
+#define PLC_PWR_AI03_PIN     GPIO11
 
-#define PLC_PWR_AI13_PERIPH  RCC_GPIOB
-#define PLC_PWR_AI13_PORT    GPIOB
-#define PLC_PWR_AI13_PIN     GPIO11
+#define PLC_PWR_AI13_PERIPH  RCC_GPIOD
+#define PLC_PWR_AI13_PORT    GPIOD
+#define PLC_PWR_AI13_PIN     GPIO12
 
 // Управление шунтами аналоговых входов
 #define PLC_NON00_PERIPH    RCC_GPIOD
 #define PLC_NON00_PORT      GPIOD
-#define PLC_NON00_PIN       GPIO15
+#define PLC_NON00_PIN       GPIO10
 
 #define PLC_NON10_PERIPH    RCC_GPIOD
 #define PLC_NON10_PORT      GPIOD
-#define PLC_NON10_PIN       GPIO14
+#define PLC_NON10_PIN       GPIO9
 
-#define PLC_NON01_PERIPH    RCC_GPIOA
-#define PLC_NON01_PORT      GPIOA
+#define PLC_NON01_PERIPH    RCC_GPIOD
+#define PLC_NON01_PORT      GPIOD
 #define PLC_NON01_PIN       GPIO8
 
-#define PLC_NON11_PERIPH    RCC_GPIOC
-#define PLC_NON11_PORT      GPIOC
-#define PLC_NON11_PIN       GPIO9
+#define PLC_NON11_PERIPH    RCC_GPIOB
+#define PLC_NON11_PORT      GPIOB
+#define PLC_NON11_PIN       GPIO15
 
-#define PLC_NON02_PERIPH    RCC_GPIOC
-#define PLC_NON02_PORT      GPIOC
-#define PLC_NON02_PIN       GPIO8
+#define PLC_NON02_PERIPH    RCC_GPIOB
+#define PLC_NON02_PORT      GPIOB
+#define PLC_NON02_PIN       GPIO13
 
-#define PLC_NON12_PERIPH    RCC_GPIOD
-#define PLC_NON12_PORT      GPIOD
-#define PLC_NON12_PIN       GPIO13
+#define PLC_NON12_PERIPH    RCC_GPIOB
+#define PLC_NON12_PORT      GPIOB
+#define PLC_NON12_PIN       GPIO12
 
-#define PLC_NON03_PERIPH    RCC_GPIOD
-#define PLC_NON03_PORT      GPIOD
-#define PLC_NON03_PIN       GPIO12
+#define PLC_NON03_PERIPH    RCC_GPIOB
+#define PLC_NON03_PORT      GPIOB
+#define PLC_NON03_PIN       GPIO11
 
-#define PLC_NON13_PERIPH    RCC_GPIOD
-#define PLC_NON13_PORT      GPIOD
-#define PLC_NON13_PIN       GPIO11
+#define PLC_NON13_PERIPH    RCC_GPIOB
+#define PLC_NON13_PORT      GPIOB
+#define PLC_NON13_PIN       GPIO10
 
 // Аналоговые входы
 
