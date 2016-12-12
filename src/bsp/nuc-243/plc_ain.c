@@ -501,8 +501,9 @@ void adc_setup(void)
 {
     rcc_periph_clock_enable(RCC_ADC1);
 
+    adc_power_off(ADC1);
+    adc_set_clk_prescale(ADC_CCR_ADCPRE_BY8);
     adc_enable_temperature_sensor();
-
     // включить делитель для измерения VBAT
     // включить только на время измерения
     // тут только для примера
@@ -510,9 +511,8 @@ void adc_setup(void)
 
     adc_disable_scan_mode(ADC1);
     adc_set_right_aligned(ADC1);
-
     //adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_3CYC);
-    adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_28CYC);
+    adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_480CYC);
     //adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_480CYC);
 
     adc_power_on(ADC1);

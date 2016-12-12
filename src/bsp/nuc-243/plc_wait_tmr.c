@@ -43,10 +43,8 @@ extern void _plc_aout_dac_poll(void);
 
 void PLC_WAIT_TMR_ISR(void)
 {
-
     if (timer_get_flag(PLC_WAIT_TMR, TIM_SR_UIF))
     {
-
         /* Clear compare interrupt flag. */
         timer_clear_flag(PLC_WAIT_TMR, TIM_SR_UIF);
         plc_wait_cnt++;
