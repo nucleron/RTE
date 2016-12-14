@@ -493,7 +493,7 @@ extern void plc_diag_reset(void);
 /*
 *  PLC app abi
 */
-#define PLC_APP ((plc_app_abi_t *)0x08010000)
+#define PLC_APP ((plc_app_abi_t *)0x08008000)
 /*
 *  PLC RTE Version
 */
