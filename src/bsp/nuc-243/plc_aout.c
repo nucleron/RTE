@@ -109,11 +109,11 @@ bool PLC_IOM_LOCAL_TEST_HW(void)
 {
     return true;
 }
-
+/*
 static const char plc_aout_err_asz[]     = "Analog output adress must be one number!";
 static const char plc_aout_err_tp[]      = "Analog output does not support input locations!";
 static const char plc_aout_err_addr[]    = "Analog output adress must be in 0 or 1!";
-
+*/
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
     if (PLC_LSZ_W != PLC_APP->l_tab[i]->v_size)
@@ -124,19 +124,22 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 
     if (PLC_LT_Q != PLC_APP->l_tab[i]->v_type)
     {
-        PLC_LOG_ERROR(plc_aout_err_tp);
+        //PLC_LOG_ERROR(plc_aout_err_tp);
+        plc_iom_errno_print(PLC_ERRNO_AOUT_TP);
         return false;
     }
 
     if (1 != PLC_APP->l_tab[i]->a_size)
     {
-        PLC_LOG_ERROR(plc_aout_err_asz);
+        //PLC_LOG_ERROR(plc_aout_err_asz);
+        plc_iom_errno_print(PLC_ERRNO_AOUT_ASZ);
         return false;
     }
 
     if (2 <= PLC_APP->l_tab[i]->a_data[0])
     {
-        PLC_LOG_ERROR(plc_aout_err_addr);
+        //PLC_LOG_ERROR(plc_aout_err_addr);
+        plc_iom_errno_print(PLC_ERRNO_AOUT_ADDR);
         return false;
     }
     return true;

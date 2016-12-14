@@ -145,6 +145,13 @@ void plc_iom_check_print(uint16_t i)
     PLC_APP->log_msg_post(LOG_DEBUG, (char *)print_buf, cnt+1);
 }
 
+void plc_iom_errno_print(uint16_t errno)
+{
+    int cnt;
+    cnt = sprintf(print_buf, "Error: %d!", errno);
+    plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)print_buf, cnt+1);
+}
+
 static const char plc_iom_err_proto[]   = "IO protocol is not supported!";
 
 bool plc_iom_check_and_sort(void)

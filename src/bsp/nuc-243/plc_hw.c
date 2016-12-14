@@ -162,7 +162,7 @@ bool PLC_IOM_LOCAL_TEST_HW(void)
 {
     return true;
 }
-
+/*
 const char plc_dio_err_asz[]     = "Digital I/O address must be one number!";
 const char plc_dio_err_asz_flt[] = "Digital input filter address must consist of two numbers!";
 
@@ -172,7 +172,7 @@ const char plc_dio_err_tp_flt[]  = "Digital input filter must have memory type!"
 const char plc_dio_err_ilim[]    = "Digital input must have address 0...7!";
 const char plc_dio_err_flt_lim[] = "Digital input filter must have 0 or 1 address!";
 const char plc_dio_err_olim[]    = "Digital output must have address 0...3!";
-
+*/
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
     uint32_t addr;
@@ -184,7 +184,8 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     case PLC_LSZ_X:
         if (1 != PLC_APP->l_tab[i]->a_size)
         {
-            PLC_LOG_ERROR(plc_dio_err_asz);
+            //PLC_LOG_ERROR(plc_dio_err_asz);
+            plc_iom_errno_print(PLC_ERRNO_DIO_ASZ);
             return false;
         }
         //Check type and address
@@ -193,7 +194,8 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         case PLC_LT_I:
             if (PLC_DI_NUM <= addr)
             {
-                PLC_LOG_ERROR(plc_dio_err_ilim);
+                //PLC_LOG_ERROR(plc_dio_err_ilim);
+                plc_iom_errno_print(PLC_ERRNO_DIO_ILIM);
                 return false;
             }
             else
@@ -209,7 +211,8 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         case PLC_LT_Q:
             if (PLC_DO_NUM <= addr)
             {
-                PLC_LOG_ERROR(plc_dio_err_olim);
+                //PLC_LOG_ERROR(plc_dio_err_olim);
+                plc_iom_errno_print(PLC_ERRNO_DIO_OLIM);
                 return false;
             }
             else
@@ -222,32 +225,36 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     case PLC_LSZ_B:
         if (2 != PLC_APP->l_tab[i]->a_size)
         {
-            PLC_LOG_ERROR(plc_dio_err_asz_flt);
+            //PLC_LOG_ERROR(plc_dio_err_asz_flt);
+            plc_iom_errno_print(PLC_ERRNO_DIO_ASZ_FLT);
             return false;
         }
 
         if (PLC_LT_M != PLC_APP->l_tab[i]->v_type)
         {
-            PLC_LOG_ERROR(plc_dio_err_tp_flt);
+            //PLC_LOG_ERROR(plc_dio_err_tp_flt);
+            plc_iom_errno_print(PLC_ERRNO_DIO_TP_FLT);
             return false;
         }
 
         if (PLC_DI_NUM <= addr)
         {
-            PLC_LOG_ERROR(plc_dio_err_ilim);
+            //PLC_LOG_ERROR(plc_dio_err_ilim);
+            plc_iom_errno_print(PLC_ERRNO_DIO_ILIM);
             return false;
         }
 
         addr = PLC_APP->l_tab[i]->a_data[1];
         if( addr > 1 )
         {
-            PLC_LOG_ERROR(plc_dio_err_flt_lim);
+            //PLC_LOG_ERROR(plc_dio_err_flt_lim);
+            plc_iom_errno_print(PLC_ERRNO_DIO_FLT_LIM);
             return false;
         }
         return true;
 
     default:
-        PLC_LOG_ERROR(plc_iom_err_sz_sz);
+        PLC_LOG_ERR_SZ();
         return false;
     }
 }

@@ -503,7 +503,39 @@ extern void plc_diag_reset(void);
 
 #define PLC_HW_ID      243
 
-/**
-* TODO: Add simple printf for error logging!!!
+/*
+*  PLC RTE error numbers
 */
+/* DIO */
+#define PLC_ERRNO_DIO_ASZ     10
+#define PLC_ERRNO_DIO_ASZ_FLT 11
+#define PLC_ERRNO_DIO_TP      12
+#define PLC_ERRNO_DIO_TP_FLT  13
+#define PLC_ERRNO_DIO_ILIM    14
+#define PLC_ERRNO_DIO_FLT_LIM 15
+#define PLC_ERRNO_DIO_OLIM    16
+/* MBS */
+#define PLC_ERRNO_MBS_ASZ     20
+#define PLC_ERRNO_MBS_TP      21
+#define PLC_ERRNO_MBS_ADDR    22
+#define PLC_ERRNO_MBS_INIT    23
+#define PLC_ERRNO_MBS_TP_INIT 24
+#define PLC_ERRNO_MBS_EX_INIT 25
+/* AOUT */
+#define PLC_ERRNO_AOUT_ASZ  50
+#define PLC_ERRNO_AOUT_TP   51
+#define PLC_ERRNO_AOUT_ADDR 52
+/* AIN */
+#define PLC_ERRNO_AIN_ASZ 60
+#define PLC_ERRNO_AIN_MEM 61
+#define PLC_ERRNO_AIN_CHN 62
+#define PLC_ERRNO_AIN_IX  63
+#define PLC_ERRNO_AIN_IX9 64
+#define PLC_ERRNO_AIN_QB  65
+#define PLC_ERRNO_AIN_QBX 66
+#define PLC_ERRNO_AIN_QWX 67
+#define PLC_ERRNO_AIN_IW7 68
+
+
+
 #endif /* _PLC_CONFIG_H_ */

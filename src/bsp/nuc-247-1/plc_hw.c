@@ -251,7 +251,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         return true;
 
     default:
-        PLC_LOG_ERROR(plc_iom_err_sz_sz);
+        PLC_LOG_ERR_SZ();
         return false;
     }
 }

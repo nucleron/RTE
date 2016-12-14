@@ -566,7 +566,7 @@ bool PLC_IOM_LOCAL_TEST_HW(void)
 {
     return true;
 }
-
+/*
 static const char plc_ain_err_asz[]    = "Analog output adress must be two numbers!";
 static const char plc_ain_err_mem[]    = "Analog input does not support memory locations!";
 static const char plc_ain_err_chn[]    = "Analog input chanel number must be in 0..3!";
@@ -579,24 +579,27 @@ static const char plc_ain_err_qbx[]    = "Analog input: this location must have 
 
 static const char plc_ain_err_qwx[]    = "Analog input: this location must have 4,5 or 6 at address end!";
 static const char plc_ain_err_iw7[]    = "Analog input: this location must have 7 at address end!";
-
+*/
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
     if (PLC_LT_M == PLC_APP->l_tab[i]->v_type)
     {
-        PLC_LOG_ERROR(plc_ain_err_mem);
+        //PLC_LOG_ERROR(plc_ain_err_mem);
+        plc_iom_errno_print(PLC_ERRNO_AIN_MEM);
         return false;
     }
 
     if (2 != PLC_APP->l_tab[i]->a_size)
     {
-        PLC_LOG_ERROR(plc_ain_err_asz);
+        //PLC_LOG_ERROR(plc_ain_err_asz);
+        plc_iom_errno_print(PLC_ERRNO_AIN_ASZ);
         return false;
     }
 
     if (5 <= PLC_APP->l_tab[i]->a_data[0])
     {
-        PLC_LOG_ERROR(plc_ain_err_chn);
+        //PLC_LOG_ERROR(plc_ain_err_chn);
+        plc_iom_errno_print(PLC_ERRNO_AIN_CHN);
         return false;
     }
 
@@ -605,24 +608,28 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     case PLC_LSZ_X:
         if (PLC_LT_I != PLC_APP->l_tab[i]->v_type)
         {
-            PLC_LOG_ERROR(plc_ain_err_ix);
+            //PLC_LOG_ERROR(plc_ain_err_ix);
+            plc_iom_errno_print(PLC_ERRNO_AIN_IX);
             return false;
         }
         if (8 != PLC_APP->l_tab[i]->a_data[1])
         {
-            PLC_LOG_ERROR(plc_ain_err_ix9);
+            //PLC_LOG_ERROR(plc_ain_err_ix9);
+            plc_iom_errno_print(PLC_ERRNO_AIN_IX9);
             return false;
         }
         break;
     case PLC_LSZ_B:
         if (PLC_LT_Q != PLC_APP->l_tab[i]->v_type)
         {
-            PLC_LOG_ERROR(plc_ain_err_qb);
+            //PLC_LOG_ERROR(plc_ain_err_qb);
+            plc_iom_errno_print(PLC_ERRNO_AIN_QB);
             return false;
         }
         if (3 < PLC_APP->l_tab[i]->a_data[1])
         {
-            PLC_LOG_ERROR(plc_ain_err_qbx);
+            //PLC_LOG_ERROR(plc_ain_err_qbx);
+            plc_iom_errno_print(PLC_ERRNO_AIN_QBX);
             return false;
         }
         break;
@@ -632,13 +639,15 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             //%QW6.chn.4..6
             if (6 < PLC_APP->l_tab[i]->a_data[1])
             {
-                PLC_LOG_ERROR(plc_ain_err_qwx);
+                //PLC_LOG_ERROR(plc_ain_err_qwx);
+                plc_iom_errno_print(PLC_ERRNO_AIN_QWX);
                 return false;
             }
 
             if (4 > PLC_APP->l_tab[i]->a_data[1])
             {
-                PLC_LOG_ERROR(plc_ain_err_qwx);
+                //PLC_LOG_ERROR(plc_ain_err_qwx);
+                plc_iom_errno_print(PLC_ERRNO_AIN_QWX);
                 return false;
             }
         }
@@ -647,7 +656,8 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             //%IW.chn.7
             if (7 != PLC_APP->l_tab[i]->a_data[1])
             {
-                PLC_LOG_ERROR(plc_ain_err_qwx);
+                //PLC_LOG_ERROR(plc_ain_err_iw7);
+                plc_iom_errno_print(PLC_ERRNO_AIN_IW7);
                 return false;
             }
         }

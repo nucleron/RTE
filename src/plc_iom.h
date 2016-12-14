@@ -107,14 +107,14 @@ void plc_iom_start(void);
 void plc_iom_poll(void);
 void plc_iom_end(void);
 
-extern void plc_iom_check_print(uint16_t i);
+void plc_iom_check_print(uint16_t i);
+void plc_iom_errno_print(uint16_t errno);
 
 extern const uint32_t plc_iom_err_sz_sz;
 extern const char     plc_iom_err_sz[];
 
 #define PLC_LOG_ERROR(a) plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)(a), sizeof(a))
 #define PLC_LOG_WARN(a)  plc_curr_app->log_msg_post(LOG_WARNING,  (char *)(a), sizeof(a))
-
 #define PLC_LOG_ERR_SZ() plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)(plc_iom_err_sz), plc_iom_err_sz_sz)
 
 #endif // _PLC_IOM_H_
