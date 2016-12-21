@@ -1,7 +1,7 @@
 /*
  * Copyright Nucleron R&D LLC 2016
  *
- * This file is licensed under the terms of YAPL,
+ * This file is licensed under the terms of NOSL,
  * see License.txt for details.
  */
 
@@ -450,6 +450,24 @@ static void par_value_str(char* s, plc_hmi_par_t par_type, uint16_t val)
     case PLC_HMI_RO_UINT:
         sprintf(s,"%4d",val);
         break;
+    case PLC_HMI_SINT:
+    case PLC_HMI_RO_SINT:
+        {
+            int16_t tmp;
+
+            tmp = *(int16_t*)(&val);
+
+            if (tmp>999)
+            {
+                tmp = 999;
+            }
+            if (tmp<-999)
+            {
+                tmp = -999;
+            }
+            sprintf(s, "%4d", (int)tmp);
+        }
+        break;
     case PLC_HMI_HEX:
     case PLC_HMI_RO_HEX:
         sprintf(s,"%4x",val);
@@ -646,6 +664,7 @@ static void plc_hmi_view(void)
             case PLC_HMI_HHMM:
             case PLC_HMI_HEX:
             case PLC_HMI_UINT:
+            case PLC_HMI_SINT:
                 hmi.buf[hmi.cursor] = 0;//blink one digit!
                 break;
             case PLC_HMI_NOT_USED:
@@ -814,6 +833,7 @@ static void plc_hmi_controller(char input)
         case PLC_HMI_HEX:
             mul = 0x10; //Change default multiplier
         case PLC_HMI_UINT:
+        case PLC_HMI_SINT:
         case PLC_HMI_MMDD:
         case PLC_HMI_HHMM:
             for (i = 0; i<HMI_CUR_START-1; i++)
@@ -825,6 +845,12 @@ static void plc_hmi_controller(char input)
             switch (input)
             {
             case PLC_HMI_BTN_UP_L: //Minus
+                if(ptype==PLC_HMI_SINT)
+                {
+                    hmi.tmp -= hmi.delta;
+                    if(hmi.tmp<HMI_MIN_SINT && hmi.tmp>HMI_MAX_SINT)
+                        hmi.tmp = HMI_MAX_SINT;
+                }else
                 if (hmi.tmp < hmi.delta)
                 {
                     hmi.tmp += hmi.delta*(mul-1);
@@ -836,8 +862,13 @@ static void plc_hmi_controller(char input)
                 hmi.tmp = hmi.mdl->par_chk(hmi.cur_par, (uint16_t)hmi.tmp);
                 break;
             case PLC_HMI_BTN_UP_S: //Plus
+
                 hmi.tmp += hmi.delta;
-                if (max_val <= hmi.tmp)
+                if(ptype==PLC_HMI_SINT)
+                {
+                    if(hmi.tmp<HMI_MIN_SINT && hmi.tmp>HMI_MAX_SINT)
+                        hmi.tmp = HMI_MIN_SINT;
+                }else if (max_val <= hmi.tmp)
                 {
                     hmi.tmp %= max_val;
                 }
@@ -984,7 +1015,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
                 case PLC_LSZ_X:
                 {
                     static const plc_hmi_par_t ptype[] = {PLC_HMI_BOOL_TF, PLC_HMI_BOOL_OO, PLC_HMI_RO_BOOL_TF, PLC_HMI_RO_BOOL_OO};
-                    if (ptid < sizeof(ptype))
+                    if (ptid < sizeof(ptype)/sizeof(plc_hmi_par_t))
                     {
                         plc_hmi_app_ptype[addr] = ptype[ptid];
                         return true;
@@ -997,8 +1028,8 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
                 }
                 case PLC_LSZ_W:
                 {
-                    static const plc_hmi_par_t ptype[] = {PLC_HMI_UINT, PLC_HMI_HEX, PLC_HMI_RO_UINT, PLC_HMI_RO_HEX};
-                    if (ptid < sizeof(ptype))
+                    static const plc_hmi_par_t ptype[] = {PLC_HMI_UINT, PLC_HMI_SINT, PLC_HMI_HEX, PLC_HMI_RO_UINT, PLC_HMI_RO_SINT, PLC_HMI_RO_HEX};
+                    if (ptid < sizeof(ptype)/sizeof(plc_hmi_par_t))
                     {
                         plc_hmi_app_ptype[addr] = ptype[ptid];
                         return true;
@@ -1060,6 +1091,8 @@ void PLC_IOM_LOCAL_END(uint16_t lid)
 
 void PLC_IOM_LOCAL_START(void)
 {
+    find_par();
+    plc_hmi_view();
 }
 
 void PLC_IOM_LOCAL_STOP(void)

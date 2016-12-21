@@ -5,6 +5,9 @@
 #define HMI_DIGITS   6
 #define HMI_NBUTTONS 3
 
+#define HMI_MAX_SINT 999
+#define HMI_MIN_SINT 0xFC19 //-999
+
 typedef struct
 {
     uint32_t shift;
@@ -19,6 +22,7 @@ typedef enum
     PLC_HMI_BOOL_TF,
     PLC_HMI_HEX,
     PLC_HMI_UINT,
+    PLC_HMI_SINT,
     PLC_HMI_MMDD,
     PLC_HMI_HHMM,
     PLC_HMI_RO_START,  //Read only types start
@@ -26,6 +30,7 @@ typedef enum
     PLC_HMI_RO_BOOL_TF,
     PLC_HMI_RO_HEX,
     PLC_HMI_RO_UINT,
+    PLC_HMI_RO_SINT,
     PLC_HMI_RO_MMDD,
     PLC_HMI_RO_HHMM,
     PLC_HMI_EMPTY,    //Yes, empty is read only!
