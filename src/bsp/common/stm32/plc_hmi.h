@@ -5,8 +5,8 @@
 #define HMI_DIGITS   6
 #define HMI_NBUTTONS 3
 
-#define HMI_MAX_SINT 999
-#define HMI_MIN_SINT 0xFC19 //-999
+#define HMI_MAX_SINT  999l
+#define HMI_MIN_SINT -999l
 
 typedef struct
 {
@@ -44,17 +44,17 @@ struct _plc_hmi_dm_t
 {
     uint32_t leds;                              //Led satate
     plc_hmi_par_t * ptype;
-    uint16_t (*par_get)(uint8_t);           //parameter get
-    uint16_t (*par_chk)(uint8_t, uint16_t); //parameter check
-    void     (*par_set)(uint8_t, uint16_t); //parameter set
-    char     (*poll)(uint32_t, char);       //Poll hook
-    uint8_t  psize;
+    int32_t (*par_get)(uint8_t);           //parameter get
+    int32_t (*par_chk)(uint8_t, int32_t); //parameter check
+    void    (*par_set)(uint8_t, int32_t); //parameter set
+    char    (*poll)(uint32_t, char);       //Poll hook
+    uint8_t psize;
 };
 
 struct _plc_hmi_t
 {
     plc_hmi_dm_t * mdl; //Current data model
-    uint32_t tmp;             //Temp var for edit mode
+    int32_t tmp;              //Temp var for edit mode
     uint32_t delta;           //Delta in edit mode
     uint8_t cursor;           //Cursor in edit mode
     uint8_t cur_par;          //Current param;
@@ -65,6 +65,10 @@ struct _plc_hmi_t
 
 #define PLC_HMI_STATE_VIEW 0
 #define PLC_HMI_STATE_EDIT 1
+
+int32_t hmi_sys_get(uint8_t par);
+int32_t hmi_sys_chk(uint8_t par, int32_t val);
+void     hmi_sys_set(uint8_t par, int32_t val);
 
 void plc_hmi_kb_init(void);
 char plc_hmi_kb_poll(uint32_t tick);

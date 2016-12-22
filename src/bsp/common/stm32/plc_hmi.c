@@ -434,7 +434,7 @@ static void plc_hmi_convert(char * buff, uint32_t led_val)
 //==================================================================
 //                     Menu related things
 //==================================================================
-static void par_value_str(char* s, plc_hmi_par_t par_type, uint16_t val)
+static void par_value_str(char* s, plc_hmi_par_t par_type, int32_t val)
 {
     switch(par_type)
     {
@@ -453,19 +453,15 @@ static void par_value_str(char* s, plc_hmi_par_t par_type, uint16_t val)
     case PLC_HMI_SINT:
     case PLC_HMI_RO_SINT:
         {
-            int16_t tmp;
-
-            tmp = *(int16_t*)(&val);
-
-            if (tmp>999)
+            if (val>HMI_MAX_SINT)
             {
-                tmp = 999;
+                val = HMI_MAX_SINT;
             }
-            if (tmp<-999)
+            if (val<HMI_MIN_SINT)
             {
-                tmp = -999;
+                val = HMI_MIN_SINT;
             }
-            sprintf(s, "%4d", (int)tmp);
+            sprintf(s, "%4d", (int)val);
         }
         break;
     case PLC_HMI_HEX:
@@ -499,9 +495,6 @@ static const char par_rep[] =
 #define PLC_HMI_GET_PAR_REP(num) ((num>22)?'?':par_rep[num])
 
 static char     hmi_sys_poll(uint32_t tick, char input);
-extern uint16_t hmi_sys_get(uint8_t par);
-extern uint16_t hmi_sys_chk(uint8_t par, uint16_t val);
-extern void     hmi_sys_set(uint8_t par, uint16_t val);
 
 extern const plc_hmi_par_t plc_hmi_sys_ptype[];
 
@@ -519,9 +512,9 @@ plc_hmi_dm_t plc_hmi_sys =
 };
 
 static char     hmi_app_poll(uint32_t tick, char input);
-static uint16_t hmi_app_get(uint8_t par);
-static uint16_t hmi_app_chk(uint8_t par, uint16_t val);
-static void     hmi_app_set(uint8_t par, uint16_t val);
+static int32_t hmi_app_get(uint8_t par);
+static int32_t hmi_app_chk(uint8_t par, int32_t val);
+static void     hmi_app_set(uint8_t par, int32_t val);
 
 #define PLC_HMI_NUM_PARAMS 16
 
@@ -587,18 +580,18 @@ static char hmi_app_poll(uint32_t tick, char input)
     return input;
 }
 
-static uint16_t hmi_app_pdata[16];
+static int32_t hmi_app_pdata[16];
 
-static uint16_t hmi_app_get(uint8_t par)
+static int32_t hmi_app_get(uint8_t par)
 {
     return hmi_app_pdata[par];
 }
-static uint16_t hmi_app_chk(uint8_t par, uint16_t val)
+static int32_t hmi_app_chk(uint8_t par, int32_t val)
 {
     (void)par;
     return val;
 }
-static void     hmi_app_set(uint8_t par, uint16_t val)
+static void     hmi_app_set(uint8_t par, int32_t val)
 {
     hmi_app_pdata[par] = val;
 }
@@ -821,7 +814,7 @@ static void plc_hmi_controller(char input)
                 hmi.tmp = !hmi.tmp;
                 break;
             case PLC_HMI_BTN_OK_S: //OK
-                hmi.mdl->par_set(hmi.cur_par, (uint16_t)hmi.tmp);
+                hmi.mdl->par_set(hmi.cur_par, hmi.tmp);
                 //Now exit edit mode
             case PLC_HMI_BTN_OK_L: //Cansel
                 exit_edit_mode();
@@ -848,10 +841,11 @@ static void plc_hmi_controller(char input)
                 if(ptype==PLC_HMI_SINT)
                 {
                     hmi.tmp -= hmi.delta;
-                    if(hmi.tmp<HMI_MIN_SINT && hmi.tmp>HMI_MAX_SINT)
+                    if (hmi.tmp<HMI_MIN_SINT)
+                    {
                         hmi.tmp = HMI_MAX_SINT;
-                }else
-                if (hmi.tmp < hmi.delta)
+                    }
+                }else if (hmi.tmp < hmi.delta)
                 {
                     hmi.tmp += hmi.delta*(mul-1);
                 }
@@ -859,20 +853,22 @@ static void plc_hmi_controller(char input)
                 {
                     hmi.tmp -= hmi.delta;
                 }
-                hmi.tmp = hmi.mdl->par_chk(hmi.cur_par, (uint16_t)hmi.tmp);
+                hmi.tmp = hmi.mdl->par_chk(hmi.cur_par, hmi.tmp);
                 break;
             case PLC_HMI_BTN_UP_S: //Plus
 
                 hmi.tmp += hmi.delta;
-                if(ptype==PLC_HMI_SINT)
+                if (PLC_HMI_SINT == ptype)
                 {
-                    if(hmi.tmp<HMI_MIN_SINT && hmi.tmp>HMI_MAX_SINT)
+                    if (HMI_MAX_SINT < hmi.tmp)
+                    {
                         hmi.tmp = HMI_MIN_SINT;
+                    }
                 }else if (max_val <= hmi.tmp)
                 {
                     hmi.tmp %= max_val;
                 }
-                hmi.tmp = hmi.mdl->par_chk(hmi.cur_par, (uint16_t)hmi.tmp);
+                hmi.tmp = hmi.mdl->par_chk(hmi.cur_par, hmi.tmp);
                 break;
             case PLC_HMI_BTN_DW_L: //Prev digit
                 hmi.cursor++;
@@ -893,7 +889,7 @@ static void plc_hmi_controller(char input)
                 }
                 break;
             case PLC_HMI_BTN_OK_S: //OK
-                hmi.mdl->par_set(hmi.cur_par, (uint16_t)hmi.tmp);
+                hmi.mdl->par_set(hmi.cur_par, hmi.tmp);
                 //Now exit edit mode
             case PLC_HMI_BTN_OK_L: //Cansel
                 exit_edit_mode();
@@ -1122,16 +1118,26 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
     {
         return 0;
     }
-
     if (plc_curr_app->l_tab[i]->v_type == PLC_LT_M)
     {
-        switch (plc_curr_app->l_tab[i]->v_size)
+        switch (plc_hmi_app_ptype[plc_curr_app->l_tab[i]->a_data[0]])
         {
-        case PLC_LSZ_X:
-            *(bool *)(plc_curr_app->l_tab[i]->v_buf) =  hmi_app_pdata[(plc_curr_app->l_tab[i]->a_data[0])];
+        case PLC_HMI_BOOL_OO:
+        case PLC_HMI_BOOL_TF:
+        case PLC_HMI_RO_BOOL_OO:
+        case PLC_HMI_RO_BOOL_TF:
+            *(bool *)(plc_curr_app->l_tab[i]->v_buf) = (0 != hmi_app_pdata[(plc_curr_app->l_tab[i]->a_data[0])]);
             break;
-        case PLC_LSZ_W:
-            *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf) =  hmi_app_pdata[(plc_curr_app->l_tab[i]->a_data[0])];
+        case PLC_HMI_SINT: case PLC_HMI_RO_SINT:
+            *(int16_t *)(plc_curr_app->l_tab[i]->v_buf) =  (int16_t)hmi_app_pdata[(plc_curr_app->l_tab[i]->a_data[0])];
+            break;
+        case PLC_HMI_UINT:
+        case PLC_HMI_HEX:
+        case PLC_HMI_RO_UINT:
+        case PLC_HMI_RO_HEX:
+            *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf) =  (uint16_t)hmi_app_pdata[(plc_curr_app->l_tab[i]->a_data[0])];
+            break;
+        default:
             break;
         }
     }
@@ -1178,12 +1184,21 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     }
     else if (plc_curr_app->l_tab[i]->v_type == PLC_LT_M)
     {
-        switch(plc_curr_app->l_tab[i]->v_size)
+        switch (plc_hmi_app_ptype[addr])
         {
-        case PLC_LSZ_X:
+        case PLC_HMI_BOOL_OO:
+        case PLC_HMI_BOOL_TF:
+        case PLC_HMI_RO_BOOL_OO:
+        case PLC_HMI_RO_BOOL_TF:
             hmi_app_pdata[addr] = *(bool *)(plc_curr_app->l_tab[i]->v_buf);
             break;
-        case PLC_LSZ_W:
+        case PLC_HMI_SINT: case PLC_HMI_RO_SINT:
+            hmi_app_pdata[addr] = *(int16_t *)(plc_curr_app->l_tab[i]->v_buf);
+            break;
+        case PLC_HMI_UINT:
+        case PLC_HMI_HEX:
+        case PLC_HMI_RO_UINT:
+        case PLC_HMI_RO_HEX:
             hmi_app_pdata[addr] = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
             break;
         default:

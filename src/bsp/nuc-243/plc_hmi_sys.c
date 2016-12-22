@@ -89,7 +89,7 @@ const plc_hmi_par_t plc_hmi_sys_ptype[] =
 };
 const uint8_t plc_hmi_sys_psize = sizeof(plc_hmi_sys_ptype)/sizeof(plc_hmi_par_t);
 
-uint16_t hmi_sys_get(uint8_t par)
+int32_t hmi_sys_get(uint8_t par)
 {
     uint32_t i;
     tm now;
@@ -192,7 +192,7 @@ static void date_check_day(tm *now)
 }
 
 
-uint16_t hmi_sys_chk(uint8_t par, uint16_t val)
+int32_t hmi_sys_chk(uint8_t par, int32_t val)
 {
     tm now;
     if (par <= PLC_HMI_SYS_PAR_HHMM)
@@ -264,7 +264,7 @@ uint16_t hmi_sys_chk(uint8_t par, uint16_t val)
     }
     return val;
 }
-void     hmi_sys_set(uint8_t par, uint16_t val)
+void     hmi_sys_set(uint8_t par, int32_t val)
 {
     tm now;
     if (par <= PLC_HMI_SYS_PAR_HHMM)

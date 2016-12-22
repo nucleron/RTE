@@ -2,8 +2,8 @@
 <CodeBlocks_workspace_file>
 	<Workspace title="Workspace">
 		<Project filename="nuc-242-rte/nuc-242-rte.cbp" />
-		<Project filename="nuc-243-rte/nuc-243-rte.cbp" active="1" />
+		<Project filename="nuc-243-rte/nuc-243-rte.cbp" />
 		<Project filename="nuc-247-0-rte/nuc-247-0-rte.cbp" />
-		<Project filename="nuc-247-1-rte/nuc-247-1-rte.cbp" />
+		<Project filename="nuc-247-1-rte/nuc-247-1-rte.cbp" active="1" />
 	</Workspace>
 </CodeBlocks_workspace_file>
