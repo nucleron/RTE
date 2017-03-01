@@ -191,39 +191,21 @@ bool plc_iom_check_and_sort(void)
     //Sort locations
     _plc_loc_sort(0, o_end);
 
+    //Weigth locations for protocol specific sort
     for (i = 0; i < o_end; i++)
     {
-        //Weigth locations for protocol specific sort
         j = mid_from_pid( PLC_APP->l_tab[i]->proto );
         PLC_APP->w_tab[i] = plc_iom_registry[j].weigth(i);
-        //Set plc_iom.m_begin
-        //use tflg as init indicator
-        if (false == plc_iom.tflg)
+    }
+    //Set plc_iom.m_begin
+    for (i = 0; i < o_end; i++)
+    {
+        if (PLC_LT_I != PLC_APP->l_tab[i]->v_type)
         {
-            switch( PLC_APP->l_tab[i]->v_type )
-            {
-            case PLC_LT_I:
-            default:
-            {
-                break;
-            }
-            case PLC_LT_M:
-            {
-                plc_iom.m_begin = i;
-                plc_iom.tflg = true;
-                break;
-            }
-            case PLC_LT_Q:
-            {
-                plc_iom.m_begin = i;
-                plc_iom.tflg = true;
-                break;
-            }
-            }
+            plc_iom.m_begin = i;
+            break;
         }
     }
-    //Clear plc_iom.tflg
-    plc_iom.tflg = false;
     //Set plc_iom.m_end
     for (i = plc_iom.m_begin; i < o_end; i++)
     {
