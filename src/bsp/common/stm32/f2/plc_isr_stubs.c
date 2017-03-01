@@ -45,7 +45,7 @@ static uint32_t read_irq(void)
 //If unhandled interrupt happens, then we must remember the vector and reset the system!
 void plc_irq_stub(void)
 {
-    uint32_t irq,i;
+    uint32_t irq,i,hfsr;
 
     irq = read_irq();
     if (irq > PLC_DIAG_INUM)
@@ -64,6 +64,8 @@ void plc_irq_stub(void)
 
     rtc_lock();
     BACKUP_LOCK();
+
+    hfsr = SCB_HFSR;
 
     scb_reset_system();
 }

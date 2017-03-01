@@ -1,0 +1,3 @@
+((plc_app_abi_t *)0x08008000)->l_tab
+((plc_app_abi_t *)0x08008000)->w_tab
+plc_iom
