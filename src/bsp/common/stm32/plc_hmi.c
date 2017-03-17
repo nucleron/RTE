@@ -566,13 +566,20 @@ static char hmi_app_poll(uint32_t tick, char input)
             return PLC_HMI_BTN_NO_CHAR;
         }
     }
+    else
+    {
+        if (ss_mode)
+        {
+            hmi.cur_par = ss_par;
+        }
+    }
 
     if ((HMI_SCREENASVER < (tick - ss_tmr)) && !ss_mode)
     {
-        ss_mode          = true;
-        saved_par        = hmi.cur_par;
-        hmi.cur_par      = ss_par;
-        hmi.state        = PLC_HMI_STATE_VIEW;
+        ss_mode           = true;
+        saved_par         = hmi.cur_par;
+        hmi.cur_par       = ss_par;
+        hmi.state         = PLC_HMI_STATE_VIEW;
         saved_plc_hmi_bri = plc_hmi_bri;
         plc_hmi_bri       >>= 1;
     }
