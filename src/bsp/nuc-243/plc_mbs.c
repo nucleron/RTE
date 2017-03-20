@@ -127,6 +127,9 @@ static uint16_t mb_hr_get( uint16_t reg )
     case MB_REG_RS09:
     case MB_REG_RS10:
     case MB_REG_RS11:
+    {
+        return 0;
+    }
         /* */
     case MB_REG_AI0:
     case MB_REG_AI1:
