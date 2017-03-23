@@ -846,10 +846,11 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         {
             tmp = 1;
         }
-        if (tmp < (plc_tick_time/1000000))
-        {
-            tmp = plc_tick_time/1000000;
-        }
+        // Do we realy need this limitation?
+//        if (tmp < (plc_tick_time/1000000))
+//        {
+//            tmp = plc_tick_time/1000000;
+//        }
         //Set chanel processing mode
         analog_input[chn].polling_period = tmp;
         break;
