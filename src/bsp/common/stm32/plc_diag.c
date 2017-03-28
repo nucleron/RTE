@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include <libopencm3/cm3/dwt.h>
+#include <libopencm3/cm3/scb.h>
 
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
@@ -89,6 +90,9 @@ volatile uint64_t plc_diag_wcct = 0; //Worst case cycle time
 
 void PLC_IOM_LOCAL_INIT(void)
 {
+#if defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
+    SCB_SHCSR |= SCB_SHCSR_USGFAULTENA|SCB_SHCSR_BUSFAULTENA|SCB_SHCSR_MEMFAULTENA;
+#endif
     plc_has_wdt = dwt_enable_cycle_counter();
     clr_post_flg();
     blink_thr = 500;

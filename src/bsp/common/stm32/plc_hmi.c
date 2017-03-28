@@ -540,8 +540,8 @@ plc_hmi_dm_t plc_hmi_app =
 };
 
 plc_hmi_t hmi;
-#define HMI_SCREENASVER 30000
 
+static uint32_t ss_thr = 30000;
 static uint8_t ss_par = 1;
 
 static char hmi_app_poll(uint32_t tick, char input)
@@ -574,7 +574,7 @@ static char hmi_app_poll(uint32_t tick, char input)
         }
     }
 
-    if ((HMI_SCREENASVER < (tick - ss_tmr)) && !ss_mode)
+    if ((0 < ss_thr) && (ss_thr < (tick - ss_tmr)) && !ss_mode)
     {
         ss_mode           = true;
         saved_par         = hmi.cur_par;
@@ -948,13 +948,13 @@ bool PLC_IOM_LOCAL_TEST_HW(void)
 }
 
 const char plc_hmi_err_dir[]      = "Only output and memory locations are supported for HMI";
-const char plc_hmi_err_type[]      = "Only BOOL type output locations are supported for HMI";
-const char plc_hmi_err_olim[]    = "HMI output must have address 0...13!";
-const char plc_hmi_err_mlim[]    = "Parameter address out of limits!";
-const char plc_hmi_err_multi[] = "Memory location address must be unique!";
+const char plc_hmi_err_type[]     = "Only BOOL type output locations are supported for HMI";
+const char plc_hmi_err_olim[]     = "HMI output must have address 0...13!";
+const char plc_hmi_err_mlim[]     = "Parameter address out of limits!";
+const char plc_hmi_err_multi[]    = "Memory location address must be unique!";
 const char plc_hmi_err_mem_type[] = "Memory location data type must be bool or word!";
-const char plc_hmi_err_addr_sz[]    = "Wrong address size";
-const char plc_hmi_err_repr[]    = "Wrong parameter representation!";
+const char plc_hmi_err_addr_sz[]  = "Wrong address size";
+const char plc_hmi_err_repr[]     = "Wrong parameter representation!";
 
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
@@ -978,6 +978,16 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             }
         }
         else if (PLC_APP->l_tab[i]->v_size == PLC_LSZ_B)
+        {
+            if (addr!=0)
+            {
+                PLC_LOG_ERROR(plc_hmi_err_mlim);
+                return false;
+            }
+            else
+                return true;
+        }
+        else if (PLC_APP->l_tab[i]->v_size == PLC_LSZ_W)
         {
             if (addr!=0)
             {
@@ -1186,6 +1196,10 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         else if (plc_curr_app->l_tab[i]->v_size == PLC_LSZ_B) //screensaver parameter is the only byte value for now
         {
             ss_par = *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf);
+        }
+        else if (plc_curr_app->l_tab[i]->v_size == PLC_LSZ_W) //screensaver timer threshold
+        {
+            ss_thr = 1000ul * *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
         }
 
     }
