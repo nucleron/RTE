@@ -14,6 +14,8 @@
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 
+#include <iec_std_lib.h>
+
 #include <plc_config.h>
 #include <plc_abi.h>
 #include <plc_dbg.h>
@@ -35,7 +37,9 @@ static const plc_gpio_t led_hb[] =
 static uint32_t blink_thr;
 static uint32_t blink_tmr;
 static bool err_test_flg = true;
-
+//RTC check
+static IEC_TIME rtc_last_val, rtc_curr_val;
+static uint32_t rtc_chck_tmr;
 
 typedef struct
 {
@@ -198,6 +202,9 @@ uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
 
 void PLC_IOM_LOCAL_START(void)
 {
+    PLC_CLEAR_TIMER(rtc_chck_tmr);
+    plc_rtc_time_get(&rtc_last_val);
+
     PLC_CLEAR_TIMER(blink_tmr);
     clr_post_flg();
     plc_diag_status &= ~(PLC_DIAG_ERR_APP_INFO|PLC_DIAG_ERR_APP_WARN|PLC_DIAG_ERR_APP_CRIT); //Clear software errors
@@ -206,6 +213,7 @@ void PLC_IOM_LOCAL_START(void)
 void PLC_IOM_LOCAL_POLL(uint32_t tick)
 {
     //WCCT measurement.
+    (void)tick;
     if (plc_has_wdt)
     {
         static uint32_t pivot = 0;
@@ -223,9 +231,19 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
         pivot = point;
         plc_wcct_pivot_present = true;
     }
-    //WCCT measurement.
-    (void)tick;
-
+    //Check if RTC failed
+    //RTC time must change every 2 secconds
+    if (2000 < PLC_TIMER(rtc_chck_tmr))
+    {
+        PLC_CLEAR_TIMER(rtc_chck_tmr);
+        plc_rtc_time_get(&rtc_curr_val);
+        if( 0 == (rtc_curr_val.tv_sec - rtc_last_val.tv_sec) )
+        {
+            plc_diag_status |= PLC_DIAG_ERR_LSE;
+        }
+        rtc_last_val.tv_sec = rtc_curr_val.tv_sec;
+    }
+    //Blink status led
     if (PLC_TIMER(blink_tmr) > (blink_thr>>1))
     {
         err_test_flg = true;

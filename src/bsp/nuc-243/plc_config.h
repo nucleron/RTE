@@ -204,16 +204,16 @@
 #define PLC_DEFAULT_ADC_FLG              0
 #define PLC_DEFAULT_ADC_MODE             1
 
-#define PLC_DEFAULT_COEF_10V             41952
-#define PLC_DEFAULT_COEF_20MA            41769
-#define PLC_DEFAULT_COEF_100R            2495  //*0.1 Ohm
-#define PLC_DEFAULT_COEF_4K              4020  //*1 Ohm
+#define PLC_DEFAULT_COEF_10V             43388
+#define PLC_DEFAULT_COEF_20MA            41511
+#define PLC_DEFAULT_COEF_100R            2503  //*0.1 Ohm
+#define PLC_DEFAULT_COEF_4K              4006  //*1 Ohm
 
 ///TODO: Compute rigth values!!!
 #define PLC_COEF_DELTA_10V             20000 ///!!!
 #define PLC_COEF_DELTA_20MA            20000 ///!!!
-#define PLC_COEF_DELTA_100R            100   ///!!!
-#define PLC_COEF_DELTA_4K              1500  ///!!!
+#define PLC_COEF_DELTA_100R            500   ///!!!
+#define PLC_COEF_DELTA_4K              500   ///!!!
 
 #define PLC_DEFAULT_SUM                  2 // количество данных для усреднения
 #define PLC_DEFAULT_CNTR                 0 // счётчик количества усреднений
@@ -319,9 +319,9 @@
 // Analog outputs
 #define PLC_AO_NUM    2
 
-#define PLC_DEFAULT_COEF_OUT    10000
+#define PLC_DEFAULT_COEF_OUT    10325
 ///TODO: compute rigth value!
-#define PLC_COEF_DELTA_OUT      100
+#define PLC_COEF_DELTA_OUT      500
 
 
 #define PLC_DAC_CLK_PERIPH      RCC_GPIOC
