@@ -53,7 +53,7 @@ void PLC_WAIT_TMR_ISR(void)
         _plc_ain_adc_poll();
         _plc_aout_dac_poll();
 
-        if (0 == plc_wait_cnt%10)
+        if (0 == (plc_wait_cnt%10))
         {
             plc_sys_timer++;
             plc_iom_tick();

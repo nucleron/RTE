@@ -247,7 +247,7 @@ static void __plc_ain_data_calc(ai_data_t * self)
 
         // пересчёт результатов АЦП в физ. величины
         mode = self->mode;
-        if (mode < sizeof(calc)/sizeof(calc_func))
+        if (mode < (sizeof(calc)/sizeof(calc_func)))
         {
             func = calc[mode];
         }
