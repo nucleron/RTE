@@ -334,11 +334,11 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
         switch(plc_curr_app->l_tab[i]->a_data[0])
         {
         case PLC_DIAG_I_HSE:
-            tmp = (0 != plc_diag_status  & PLC_DIAG_ERR_HSE);
+            tmp = (0 != (plc_diag_status & PLC_DIAG_ERR_HSE));
             break;
 
         case PLC_DIAG_I_LSE:
-            tmp = (0 != plc_diag_status  & PLC_DIAG_ERR_LSE);
+            tmp = (0 != (plc_diag_status & PLC_DIAG_ERR_LSE));
             break;
 
         default:
