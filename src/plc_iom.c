@@ -32,7 +32,7 @@ static void _plc_loc_sort( uint16_t start, uint16_t end )
         p_weigth = PLC_APP->w_tab[i];
         p_loc    = PLC_APP->l_tab[i];
 
-        for (j = i-1; j >= start && PLC_APP->w_tab[j] > p_weigth; j--)
+        for (j = i-1; (j >= start) && (PLC_APP->w_tab[j] > p_weigth); j--)
         {
             PLC_APP->w_tab[j+1] = PLC_APP->w_tab[j];
             PLC_APP->l_tab[j+1] = PLC_APP->l_tab[j];

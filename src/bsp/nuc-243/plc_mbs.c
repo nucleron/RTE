@@ -446,7 +446,7 @@ eMBRegHoldingCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs,
     int             iRegIndex;
 
     if( ( usAddress >= REG_HOLDING_START ) &&
-            ( usAddress + usNRegs <= REG_HOLDING_START + REG_HOLDING_NREGS ) )
+            ( (usAddress + usNRegs) <= (REG_HOLDING_START + REG_HOLDING_NREGS) ) )
     {
         iRegIndex = ( int )( usAddress - usRegHoldingStart );
         switch ( eMode )

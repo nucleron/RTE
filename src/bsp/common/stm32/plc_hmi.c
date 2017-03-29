@@ -1015,7 +1015,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             if (PLC_HMI_NOT_USED == plc_hmi_app_ptype[addr])
             {
                 int ptid;
-                if (PLC_APP->l_tab[i]->a_size!=2)
+                if (PLC_APP->l_tab[i]->a_size != 2)
                 {
                     PLC_LOG_ERROR(plc_hmi_err_addr_sz);
                     return false;
