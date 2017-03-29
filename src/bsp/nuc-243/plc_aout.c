@@ -40,6 +40,9 @@ static inline void _plc_aout_init(void)
 // *** ext DAC для AO ***
 uint16_t plc_aout_dataA  = 0;  // данные для DAC первого канала, 0...4095
 uint16_t plc_aout_dataB  = 0;  // данные для DAC второго канала, 0...4095
+uint16_t _plc_aout_data_dacA  = 0;  // данные для DAC первого канала, 0...4095
+uint16_t _plc_aout_data_dacB  = 0;  // данные для DAC второго канала, 0...4095
+
 uint16_t plc_aout_clk   = 0;  // счётчик прерываний для генерации последовательности сигналов
 
 // DAC аналоговых выходов
@@ -62,7 +65,7 @@ void _plc_aout_dac_poll(void)
     {
         gpio_clear(PLC_DAC_SYN0_PORT, PLC_DAC_SYN0_PIN);
 
-        if ((plc_aout_dataA >> (0x000F-(((plc_aout_clk&0x001F)>>1)&0x000F)))&0x0001) ///Black magic!
+        if ((_plc_aout_data_dacA >> (0x000F-(((plc_aout_clk&0x001F)>>1)&0x000F)))&0x0001) ///Black magic!
         {
             gpio_set(PLC_DAC_DIN_PORT, PLC_DAC_DIN_PIN);
         }
@@ -81,7 +84,7 @@ void _plc_aout_dac_poll(void)
     {
         gpio_clear(PLC_DAC_SYN1_PORT, PLC_DAC_SYN1_PIN);
 
-        if ( (plc_aout_dataB >> (0x000F-(((plc_aout_clk&0x001F)>>1)&0x000F)))& 0x0001)
+        if ( (_plc_aout_data_dacB >> (0x000F-(((plc_aout_clk&0x001F)>>1)&0x000F)))& 0x0001)
         {
             gpio_set(PLC_DAC_DIN_PORT, PLC_DAC_DIN_PIN);
         }
@@ -188,8 +191,8 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
 
 void PLC_IOM_LOCAL_STOP(void)
 {
-    plc_aout_dataA = 0;
-    plc_aout_dataB = 0;
+    _plc_aout_data_dacA = 0;
+    _plc_aout_data_dacB = 0;
 }
 
 uint32_t PLC_IOM_LOCAL_WEIGTH(uint16_t lid)
@@ -212,20 +215,30 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 
     j = plc_curr_app->l_tab[i]->a_data[0];//j is checked in PLC_IOM_LOCAL_CHECK
 
-    tmp *= clb_data.val[j];
-    tmp /= 10000;
-    //Limit the outout
-    if (tmp > 4000)
-    {
-        tmp = 4000;
-    }
-
     switch(j)
     {
     case 0:
         plc_aout_dataA = (uint16_t)tmp;
     case 1:
         plc_aout_dataB = (uint16_t)tmp;
+    default:
+        break;
+    }
+
+    tmp *= clb_data.val[j];
+    tmp /= 10000;
+    //Limit the outout
+    if (tmp > 4095)
+    {
+        tmp = 4095;
+    }
+
+    switch(j)
+    {
+    case 0:
+        _plc_aout_data_dacA = (uint16_t)tmp;
+    case 1:
+        _plc_aout_data_dacB = (uint16_t)tmp;
     default:
         break;
     }

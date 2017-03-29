@@ -204,10 +204,10 @@
 #define PLC_DEFAULT_ADC_FLG              0
 #define PLC_DEFAULT_ADC_MODE             1
 
-#define PLC_DEFAULT_COEF_10V             43388
-#define PLC_DEFAULT_COEF_20MA            41511
-#define PLC_DEFAULT_COEF_100R            2503  //*0.1 Ohm
-#define PLC_DEFAULT_COEF_4K              4006  //*1 Ohm
+#define PLC_DEFAULT_COEF_10V             40563
+#define PLC_DEFAULT_COEF_20MA            42027
+#define PLC_DEFAULT_COEF_100R            2487  //*0.1 Ohm
+#define PLC_DEFAULT_COEF_4K              4034  //*1 Ohm
 
 ///TODO: Compute rigth values!!!
 #define PLC_COEF_DELTA_10V             20000 ///!!!
@@ -319,7 +319,7 @@
 // Analog outputs
 #define PLC_AO_NUM    2
 
-#define PLC_DEFAULT_COEF_OUT    10325
+#define PLC_DEFAULT_COEF_OUT    9713
 ///TODO: compute rigth value!
 #define PLC_COEF_DELTA_OUT      500
 
