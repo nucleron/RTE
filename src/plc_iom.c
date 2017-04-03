@@ -160,10 +160,6 @@ bool plc_iom_check_and_sort(void)
     uint8_t j;
 
     o_end   = PLC_APP->l_sz;
-    if( 0 == o_end )
-    {
-        return false;
-    }
 
     for (i = 0; i < o_end; i++)
     {
