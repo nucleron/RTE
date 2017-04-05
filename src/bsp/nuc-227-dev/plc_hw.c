@@ -49,6 +49,8 @@ void plc_boot_init(void)
     gpio_set( PLC_BOOT_PORT, PLC_BOOT_PIN ); //Exit boot mode
 }
 
+extern bool plc_dbg_mode;
+
 void plc_boot_mode_enter(void)
 {
     uint32_t delay;

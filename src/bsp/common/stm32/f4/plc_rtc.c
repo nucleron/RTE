@@ -90,6 +90,67 @@ void plc_rtc_init( tm* time )
     pwr_enable_backup_domain_write_protect();
 }
 
+void plc_rtc_dt_set( tm* time )
+{
+    uint32_t i,tmp=0;
+
+    if (plc_diag_status & PLC_DIAG_ERR_LSE)
+    {
+        return;
+    }
+    pwr_disable_backup_domain_write_protect(); //Disable backup domain write protect
+    rtc_unlock();
+
+    RTC_ISR = RTC_ISR_INIT; //Init mode
+
+     for(i=0; i<1000000; i++)
+    {
+        if( RTC_ISR & RTC_ISR_INITF )
+        {
+            break;
+        }
+    }
+
+    if( !(RTC_ISR & RTC_ISR_INITF) )
+    {
+        goto lse_error;
+    }
+
+    tmp |= (time->tm_sec%10);
+    tmp |= (time->tm_sec/10)<< 4;
+
+    tmp |= (time->tm_min%10)<< 8;
+    tmp |= (time->tm_min/10)<< 12;
+
+    tmp |= (time->tm_hour%10)<< 16;
+    tmp |= (time->tm_hour/10)<< 20;
+
+    RTC_TR = tmp;
+    //set date
+    tmp=0;
+    tmp = 1<<RTC_DR_WDU_SHIFT;
+    tmp |= (time->tm_day%10);
+    tmp |= (time->tm_day/10) << 4;
+
+    tmp |= (time->tm_mon%10) << 8;
+    tmp |= (time->tm_mon/10) << 12;
+
+    tmp |= (time->tm_year%10) << 16;
+    tmp |= ((time->tm_year%100)/10) << 20;
+    RTC_DR = tmp;
+
+    RTC_ISR &= ~RTC_ISR_INIT;
+
+    /* Normal termination */
+    rtc_lock();
+    pwr_enable_backup_domain_write_protect();
+    return;
+    /* LSE error occured */
+lse_error:
+    plc_diag_status |= PLC_DIAG_ERR_LSE;
+    rtc_lock();
+    pwr_enable_backup_domain_write_protect();
+}
 /*
  *  Julian Day Number computation
  *  See http://en.wikipedia.org/wiki/Julian_day
