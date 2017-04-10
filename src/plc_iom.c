@@ -169,12 +169,7 @@ bool plc_iom_check_and_sort(void)
         //Check protocol
         if (PLC_IOM_MID_ERROR == j)
         {
-            plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_iom_err_proto, sizeof(plc_iom_err_proto));
-            return false;
-        }
-        //Check location, plc_iom_registry[j].check(i) must print all error messages!
-        if (false == plc_iom_registry[j].check(i))
-        {
+            PLC_LOG_ERROR(plc_iom_err_proto);
             return false;
         }
         //Weigth location
@@ -191,6 +186,11 @@ bool plc_iom_check_and_sort(void)
     for (i = 0; i < o_end; i++)
     {
         j = mid_from_pid( PLC_APP->l_tab[i]->proto );
+        //Check location, plc_iom_registry[j].check(i) must print all error messages!
+        if (false == plc_iom_registry[j].check(i))
+        {
+            return false;
+        }
         PLC_APP->w_tab[i] = plc_iom_registry[j].weigth(i);
     }
     //Set plc_iom.m_begin

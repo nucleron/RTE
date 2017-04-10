@@ -452,18 +452,18 @@ static void par_value_str(char* s, plc_hmi_par_t par_type, int32_t val)
         break;
     case PLC_HMI_SINT:
     case PLC_HMI_RO_SINT:
-    {
-        if (val>HMI_MAX_SINT)
         {
-            val = HMI_MAX_SINT;
+            if (val>HMI_MAX_SINT)
+            {
+                val = HMI_MAX_SINT;
+            }
+            if (val<HMI_MIN_SINT)
+            {
+                val = HMI_MIN_SINT;
+            }
+            sprintf(s, "%4d", (int)val);
         }
-        if (val<HMI_MIN_SINT)
-        {
-            val = HMI_MIN_SINT;
-        }
-        sprintf(s, "%4d", (int)val);
-    }
-    break;
+        break;
     case PLC_HMI_HEX:
     case PLC_HMI_RO_HEX:
         sprintf(s,"%4x",val);
@@ -598,17 +598,16 @@ static int32_t hmi_app_get(uint8_t par)
 static int32_t hmi_app_chk(uint8_t par, int32_t val)
 {
     (void)par;
-    int32_t delta = hmi_app_pupper[par] - hmi_app_plower[par];
-    if (0 < delta)
+    if (hmi_app_pupper[par] > hmi_app_plower[par])
     {
         //Parameter is not freerunning
-        if (hmi_app_pupper[par] < val)
+        if (hmi_app_pupper[par] < hmi_app_pdata[par])
         {
             //Check upper limit
             val = hmi_app_plower[par];
         }
 
-        if (hmi_app_plower[par] > val)
+        if (hmi_app_plower[par] > hmi_app_pdata[par])
         {
             //Check lower limit
             val = hmi_app_pupper[par];
@@ -870,8 +869,7 @@ static void plc_hmi_controller(char input)
                     {
                         hmi.tmp = HMI_MAX_SINT;
                     }
-                }
-                else if (hmi.tmp < hmi.delta)
+                }else if (hmi.tmp < hmi.delta)
                 {
                     hmi.tmp += hmi.delta*(mul-1);
                 }
@@ -890,8 +888,7 @@ static void plc_hmi_controller(char input)
                     {
                         hmi.tmp = HMI_MIN_SINT;
                     }
-                }
-                else if (max_val <= hmi.tmp)
+                }else if (max_val <= hmi.tmp)
                 {
                     hmi.tmp %= max_val;
                 }
@@ -967,175 +964,129 @@ bool PLC_IOM_LOCAL_TEST_HW(void)
     return true;
 }
 
-const char plc_hmi_err_dir[]      = "Wrong location direction!";
-const char plc_hmi_err_type[]     = "Wrong location type!";
+const char plc_hmi_err_dir[]      = "Only output and memory locations are supported for HMI";
+const char plc_hmi_err_type[]     = "Only BOOL type output locations are supported for HMI";
 const char plc_hmi_err_olim[]     = "HMI output must have address 0...13!";
 const char plc_hmi_err_mlim[]     = "Parameter address out of limits!";
 const char plc_hmi_err_multi[]    = "Memory location address must be unique!";
 const char plc_hmi_err_mem_type[] = "Memory location data type must be bool or word!";
-const char plc_hmi_err_i_type[]   = "Input location data type must be BYTE!";
-const char plc_hmi_err_addr_sz[]  = "Wrong address size!";
+const char plc_hmi_err_addr_sz[]  = "Wrong address size";
 const char plc_hmi_err_repr[]     = "Wrong parameter representation!";
-const char plc_hmi_err_lulim[]    = "Parameter limit address must be 0 or 1!";
-const char plc_hmi_err_ltf[]      = "BOOL parameter must not have limits!";
-const char plc_hmi_err_lused[]    = "Parameter must be used!";
 
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
     uint32_t addr;
 
     addr = PLC_APP->l_tab[i]->a_data[0];
-    switch (PLC_APP->l_tab[i]->v_type)
+
+
+    if (PLC_APP->l_tab[i]->v_type == PLC_LT_Q) //led outputs and screensaver parameter
     {
-    case PLC_LT_Q:
-    {
-        switch (PLC_APP->l_tab[i]->v_size)
-        {
-        case PLC_LSZ_X:
+        if (PLC_APP->l_tab[i]->v_size == PLC_LSZ_X)
         {
             if ((PLC_HMI_DO_NUM+PLC_HMI_DISPLAY_LEDS+PLC_HMI_DISPLAY_DOTS) <= addr)
             {
                 PLC_LOG_ERROR(plc_hmi_err_olim);
                 return false;
             }
-
-            return true;
+            else
+            {
+                return true;
+            }
         }
-        case PLC_LSZ_B:
+        else if (PLC_APP->l_tab[i]->v_size == PLC_LSZ_B)
         {
             if (addr!=0)
             {
                 PLC_LOG_ERROR(plc_hmi_err_mlim);
                 return false;
             }
-
-            return true;
+            else
+                return true;
         }
-        case PLC_LSZ_W:
+        else if (PLC_APP->l_tab[i]->v_size == PLC_LSZ_W)
         {
-            switch (PLC_APP->l_tab[i]->a_size)
+            if (addr!=0)
             {
-            case 1:
-            {
-                if (addr!=0)
-                {
-                    PLC_LOG_ERROR(plc_hmi_err_mlim);
-                    return false;
-                }
-
-                return true;
-            }
-            case 2:
-            {
-                if (PLC_HMI_NUM_PARAMS <= addr)
-                {
-                    PLC_LOG_ERROR(plc_hmi_err_mlim);
-                    return false;
-                }
-
-                if (2 <= PLC_APP->l_tab[i]->a_data[1])
-                {
-                    PLC_LOG_ERROR(plc_hmi_err_lulim);
-                    return false;
-                }
-
-                switch (plc_hmi_app_ptype[addr])
-                {
-                //Parameter must be used
-                case PLC_HMI_BOOL_TF:
-                case PLC_HMI_BOOL_OO:
-                case PLC_HMI_RO_BOOL_TF:
-                case PLC_HMI_RO_BOOL_OO:
-                {
-                    PLC_LOG_ERROR(plc_hmi_err_ltf);
-                    return false;
-                }
-                case PLC_HMI_NOT_USED:
-                {
-                    PLC_LOG_ERROR(plc_hmi_err_lused);
-                    return false;
-                }
-                }
-
-                return true;
-            }
-            default:
-            {
-                PLC_LOG_ERROR(plc_hmi_err_addr_sz);
+                PLC_LOG_ERROR(plc_hmi_err_mlim);
                 return false;
             }
-            }
+            else
+                return true;
         }
-        default:
+        else
         {
             PLC_LOG_ERROR(plc_hmi_err_type);
             return false;
         }
-        }
     }
-    case PLC_LT_M:
+    else if (PLC_APP->l_tab[i]->v_type == PLC_LT_M) //menu parameters
     {
-        int ptid;
-        if (PLC_HMI_NUM_PARAMS <= addr)
+        if (PLC_HMI_NUM_PARAMS < addr)
         {
             PLC_LOG_ERROR(plc_hmi_err_mlim);
             return false;
         }
-
-        if (PLC_HMI_NOT_USED != plc_hmi_app_ptype[addr])
+        else
         {
-            PLC_LOG_ERROR(plc_hmi_err_multi);
-            return false;
-        }
-
-        if (2 != PLC_APP->l_tab[i]->a_size)
-        {
-            PLC_LOG_ERROR(plc_hmi_err_addr_sz);
-            return false;
-        }
-
-        ptid = PLC_APP->l_tab[i]->a_data[1];
-
-        switch(PLC_APP->l_tab[i]->v_size)
-        {
-        case PLC_LSZ_X:
-        {
-            static const plc_hmi_par_t ptype[] = {PLC_HMI_BOOL_TF, PLC_HMI_BOOL_OO, PLC_HMI_RO_BOOL_TF, PLC_HMI_RO_BOOL_OO};
-            if (ptid < sizeof(ptype)/sizeof(plc_hmi_par_t))
+            if (PLC_HMI_NOT_USED == plc_hmi_app_ptype[addr])
             {
-                plc_hmi_app_ptype[addr] = ptype[ptid];
-                return true;
+                int ptid;
+                if (PLC_APP->l_tab[i]->a_size != 2)
+                {
+                    PLC_LOG_ERROR(plc_hmi_err_addr_sz);
+                    return false;
+                }
+
+                ptid = PLC_APP->l_tab[i]->a_data[1];
+
+                switch(PLC_APP->l_tab[i]->v_size)
+                {
+                case PLC_LSZ_X:
+                {
+                    static const plc_hmi_par_t ptype[] = {PLC_HMI_BOOL_TF, PLC_HMI_BOOL_OO, PLC_HMI_RO_BOOL_TF, PLC_HMI_RO_BOOL_OO};
+                    if (ptid < sizeof(ptype)/sizeof(plc_hmi_par_t))
+                    {
+                        plc_hmi_app_ptype[addr] = ptype[ptid];
+                        return true;
+                    }
+                    else
+                    {
+                        PLC_LOG_ERROR(plc_hmi_err_repr);
+                        return false;
+                    }
+                }
+                case PLC_LSZ_W:
+                {
+                    static const plc_hmi_par_t ptype[] = {PLC_HMI_UINT, PLC_HMI_SINT, PLC_HMI_HEX, PLC_HMI_RO_UINT, PLC_HMI_RO_SINT, PLC_HMI_RO_HEX};
+                    if (ptid < sizeof(ptype)/sizeof(plc_hmi_par_t))
+                    {
+                        plc_hmi_app_ptype[addr] = ptype[ptid];
+                        return true;
+                    }
+                    else
+                    {
+                        PLC_LOG_ERROR(plc_hmi_err_repr);
+                        return false;
+                    }
+                }
+                default:
+                {
+                    PLC_LOG_ERROR(plc_hmi_err_mem_type);
+                    return false;
+                }
+                }
             }
             else
             {
-                PLC_LOG_ERROR(plc_hmi_err_repr);
+                PLC_LOG_ERROR(plc_hmi_err_multi);
                 return false;
             }
-        }
-        case PLC_LSZ_W:
-        {
-            static const plc_hmi_par_t ptype[] = {PLC_HMI_UINT, PLC_HMI_SINT, PLC_HMI_HEX, PLC_HMI_RO_UINT, PLC_HMI_RO_SINT, PLC_HMI_RO_HEX};
-            if (ptid < sizeof(ptype)/sizeof(plc_hmi_par_t))
-            {
-                plc_hmi_app_ptype[addr] = ptype[ptid];
-                return true;
-            }
-            else
-            {
-                PLC_LOG_ERROR(plc_hmi_err_repr);
-                return false;
-            }
-        }
-        default:
-        {
-            PLC_LOG_ERROR(plc_hmi_err_mem_type);
-            return false;
-        }
         }
     }
-    case PLC_LT_I:
+    else if (PLC_APP->l_tab[i]->v_type == PLC_LT_I)
     {
-        if (PLC_LSZ_B == PLC_APP->l_tab[i]->v_size) //menu current position location
+        if (PLC_APP->l_tab[i]->v_size == PLC_LSZ_B) //menu current position location
         {
             if (addr==0)
             {
@@ -1143,22 +1094,22 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             }
             else
             {
-                PLC_LOG_ERROR(plc_hmi_err_mlim);
+                plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_hmi_err_mlim, sizeof(plc_hmi_err_mlim));
                 return false;
             }
         }
         else //bad type
         {
-            PLC_LOG_ERROR(plc_hmi_err_i_type);
+            plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_hmi_err_mem_type, sizeof(plc_hmi_err_mem_type));
             return false;
         }
     }
-    default:
+    else
     {
-        PLC_LOG_ERROR(plc_hmi_err_dir);
+        plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_hmi_err_dir, sizeof(plc_hmi_err_dir));
         return false;
     }
-    }
+
 }
 
 void PLC_IOM_LOCAL_BEGIN(uint16_t lid)
@@ -1211,8 +1162,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
         case PLC_HMI_RO_BOOL_TF:
             *(bool *)(plc_curr_app->l_tab[i]->v_buf) = (0 != hmi_app_pdata[(plc_curr_app->l_tab[i]->a_data[0])]);
             break;
-        case PLC_HMI_SINT:
-        case PLC_HMI_RO_SINT:
+        case PLC_HMI_SINT: case PLC_HMI_RO_SINT:
             *(int16_t *)(plc_curr_app->l_tab[i]->v_buf) =  (int16_t)hmi_app_pdata[(plc_curr_app->l_tab[i]->a_data[0])];
             break;
         case PLC_HMI_UINT:
@@ -1231,7 +1181,6 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
     }
     return 0;
 }
-
 uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 {
     int addr;
@@ -1240,13 +1189,9 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 
     addr = (plc_curr_app->l_tab[i]->a_data[0]);
 
-    switch (plc_curr_app->l_tab[i]->v_type)
+    if (plc_curr_app->l_tab[i]->v_type == PLC_LT_Q) //led outputs and screensaver parameter
     {
-    case PLC_LT_Q: //led outputs and screensaver parameter
-    {
-        switch (plc_curr_app->l_tab[i]->v_size)
-        {
-        case PLC_LSZ_X:
+        if (plc_curr_app->l_tab[i]->v_size == PLC_LSZ_X)
         {
             if (addr<PLC_HMI_DO_NUM) //RxTx led
             {
@@ -1264,64 +1209,18 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
                     plc_hmi_app.leds &=~PLC_HMI_LED_MSK(addr);
                 }
             }
-            break;
         }
-        case PLC_LSZ_B: //screensaver parameter is the only byte value for now
+        else if (plc_curr_app->l_tab[i]->v_size == PLC_LSZ_B) //screensaver parameter is the only byte value for now
         {
             ss_par = *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf);
-            break;
         }
-        case PLC_LSZ_W:
-        default: //screensaver timer threshold
+        else if (plc_curr_app->l_tab[i]->v_size == PLC_LSZ_W) //screensaver timer threshold
         {
-            switch (plc_curr_app->l_tab[i]->a_size)
-            {
-            case 1:
-            {
-                ss_thr = 1000ul * *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
-                break;
-            }
-            case 2:
-            {
-                int32_t * lim;
-                //Parameter number checked on start!
-                if (0 == plc_curr_app->l_tab[i]->a_data[1])
-                {
-                    lim = hmi_app_plower;
-                }
-                else
-                {
-                    lim = hmi_app_pupper;
-                }
+            ss_thr = 1000ul * *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+        }
 
-                switch (plc_hmi_app_ptype[addr])
-                {
-                case PLC_HMI_SINT:
-                case PLC_HMI_RO_SINT:
-                    lim[addr] = *(int16_t *)(plc_curr_app->l_tab[i]->v_buf);
-                    break;
-                case PLC_HMI_UINT:
-                case PLC_HMI_HEX:
-                case PLC_HMI_RO_UINT:
-                case PLC_HMI_RO_HEX:
-                    lim[addr] = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
-                    break;
-                default:
-                    break;
-                }
-                break;
-            }
-            default:
-            {
-                break;
-            }
-            }
-            break;
-        }
-        }
-        break;
     }
-    case PLC_LT_M:
+    else if (plc_curr_app->l_tab[i]->v_type == PLC_LT_M)
     {
         switch (plc_hmi_app_ptype[addr])
         {
@@ -1331,8 +1230,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         case PLC_HMI_RO_BOOL_TF:
             hmi_app_pdata[addr] = *(bool *)(plc_curr_app->l_tab[i]->v_buf);
             break;
-        case PLC_HMI_SINT:
-        case PLC_HMI_RO_SINT:
+        case PLC_HMI_SINT: case PLC_HMI_RO_SINT:
             hmi_app_pdata[addr] = *(int16_t *)(plc_curr_app->l_tab[i]->v_buf);
             break;
         case PLC_HMI_UINT:
@@ -1344,8 +1242,6 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         default:
             break;
         }
-        break;
-    }
     }
     return 0;
 }
