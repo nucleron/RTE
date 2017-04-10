@@ -405,9 +405,9 @@ uint8_t mid_from_pid( uint16_t proto )
     switch(proto)
     {
     case 0:
-        return 1;
-    case 1:
         return 0;
+    case 1:
+        return 1;
     default:
         return PLC_IOM_MID_ERROR;
     }
