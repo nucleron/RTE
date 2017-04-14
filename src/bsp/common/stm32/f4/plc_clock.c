@@ -58,11 +58,11 @@ static void rcc_pll_setup( uint32_t source, const struct rcc_clock_scale *clock 
 
     if( RCC_CFGR_SW_HSE == source )
     {
-        rcc_set_main_pll_hse(clock->pllm, clock->plln, clock->pllp, clock->pllq);
+        rcc_set_main_pll_hse(clock->pllm, clock->plln, clock->pllp, clock->pllq, clock->pllr);
     }
     else
     {
-        rcc_set_main_pll_hsi(clock->pllm, clock->plln, clock->pllp, clock->pllq);
+        rcc_set_main_pll_hsi(clock->pllm, clock->plln, clock->pllp, clock->pllq, clock->pllr);
     }
 
     /* Enable PLL oscillator and wait for it to stabilize. */

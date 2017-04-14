@@ -182,7 +182,6 @@ bool plc_iom_check_and_sort(void)
     //Sort locations
     _plc_loc_sort(0, o_end);
 
-    //Weigth locations for protocol specific sort
     for (i = 0; i < o_end; i++)
     {
         j = mid_from_pid( PLC_APP->l_tab[i]->proto );
@@ -191,6 +190,7 @@ bool plc_iom_check_and_sort(void)
         {
             return false;
         }
+        //Weigth location for protocol specific sort
         PLC_APP->w_tab[i] = plc_iom_registry[j].weigth(i);
     }
     //Set plc_iom.m_begin
