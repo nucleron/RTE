@@ -232,12 +232,13 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
         plc_wcct_pivot_present = true;
     }
     //Check if RTC failed
-    //RTC time must change every 2 secconds
-    if (2000 < PLC_TIMER(rtc_chck_tmr))
+    //RTC time must change every 3 secconds
+    if (3000 < PLC_TIMER(rtc_chck_tmr))
     {
         PLC_CLEAR_TIMER(rtc_chck_tmr);
         plc_rtc_time_get(&rtc_curr_val);
-        if( 0 == (rtc_curr_val.tv_sec - rtc_last_val.tv_sec) )
+        //The change must be at least 2 full seconds
+        if( 2 > (rtc_curr_val.tv_sec - rtc_last_val.tv_sec) )
         {
             plc_diag_status |= PLC_DIAG_ERR_LSE;
         }

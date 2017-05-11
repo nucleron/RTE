@@ -40,6 +40,7 @@ volatile uint32_t plc_wait_cnt  = 0;
 extern void plc_hmi_vout_poll(void);
 extern void _plc_ain_adc_poll(void);
 extern void _plc_aout_dac_poll(void);
+extern void _plc_rtc_poll(void);
 
 void PLC_WAIT_TMR_ISR(void)
 {
@@ -47,14 +48,18 @@ void PLC_WAIT_TMR_ISR(void)
     {
         /* Clear compare interrupt flag. */
         timer_clear_flag(PLC_WAIT_TMR, TIM_SR_UIF);
-        plc_wait_cnt++;
+
 
         plc_hmi_vout_poll();
         _plc_ain_adc_poll();
         _plc_aout_dac_poll();
+        _plc_rtc_poll();
 
-        if (0 == (plc_wait_cnt%10))
+        plc_wait_cnt++;
+        if (10 <= plc_wait_cnt)
         {
+            plc_wait_cnt = 0;
+
             plc_sys_timer++;
             plc_iom_tick();
         }

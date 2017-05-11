@@ -289,15 +289,66 @@ void plc_rtc_dt_get( tm* time )
     sec_to_dt( utime, time );
 }
 
+//THis function is called every 100us in PLC_WAIT_TMR_ISR
+static uint32_t plc_rtc_100us_ticks = 0;
+static uint32_t plc_rtc_dr = 0;
+static uint32_t plc_rtc_tr = 0;
+void _plc_rtc_poll(void)
+{
+    static uint32_t last_sec = 0;
+    static bool start_flg = true;
+
+    uint32_t current_sec;
+
+    current_sec = RTC_TR & 0x0000000F;
+
+    if (start_flg)
+    {
+        start_flg = false;
+        last_sec = current_sec;
+
+        plc_rtc_dr = RTC_DR;
+        plc_rtc_tr = RTC_TR;
+    }
+
+    // Count ticks from last RTC second update
+    if (0 != current_sec - last_sec)
+    {
+        last_sec = current_sec;
+        plc_rtc_100us_ticks = 0;
+        //Update buffered date and time registers
+        plc_rtc_dr = RTC_DR;
+        plc_rtc_tr = RTC_TR;
+    }
+    else
+    {
+        /*
+        Normally one RTC second is about 10000 ticks,
+        so 15000 ticks must be anougth to count delay from last
+        RTC second change.
+
+        If the delay is greater than 15000 ticks then RTC has failed,
+        we must saturate.
+        */
+        if (plc_rtc_100us_ticks < 15000ul)
+        {
+            plc_rtc_100us_ticks++;
+        }
+    }
+
+}
+
 void plc_rtc_time_get( IEC_TIME *current_time )
 {
     static tm curr;
-    static uint32_t rtc_ssr, rtc_tr, rtc_dr, rtc_prediv_s;
+    static uint32_t rtc_ssr, rtc_tr, rtc_dr, rtc_100us;
 
-    /* Read regs AQAP */
-    //rtc_ssr = RTC_SSR;
+    //Read buffered register values
+    PLC_DISABLE_INTERRUPTS();
     rtc_tr  = RTC_TR;
     rtc_dr  = RTC_DR;
+    rtc_100us = plc_rtc_100us_ticks;
+    PLC_ENABLE_INTERRUPTS();
 
     curr.tm_sec   = (unsigned char)(  rtc_tr & 0x0000000F);
     curr.tm_sec  += (unsigned char)(((rtc_tr & 0x000000F0) >> 4 ) * 10 );
@@ -316,25 +367,8 @@ void plc_rtc_time_get( IEC_TIME *current_time )
 
     /* Convert current date/time to unix time seconds */
     current_time->tv_sec = dt_to_sec( &curr );
-
-    #ifdef SUBSECOND
-    /* Add subseconds! */
-    rtc_prediv_s = RTC_PRER & 0x7FFF;
-    /* Check for time shift... */
-    if( rtc_ssr > rtc_prediv_s )
-    {
-        /* This is NOT normal RTC operation!!! */
-        current_time->tv_sec--;
-        current_time->tv_nsec = 0;
-        return;
-    }
-    else
-    {
-        current_time->tv_nsec = (((rtc_prediv_s - rtc_ssr)*10000ul)/(rtc_prediv_s + 1))*100000ul;
-    }
-    #else
-        current_time->tv_nsec=0;
-    #endif
+    current_time->tv_sec += (rtc_100us / 10000ul);
+    current_time->tv_nsec = (rtc_100us % 10000ul) * 100000ul; //One 100us tick is 100000ns;
 }
 
 
