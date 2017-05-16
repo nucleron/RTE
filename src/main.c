@@ -73,7 +73,7 @@ int main(void)
             plc_backup_reset();
         }
 
-        if (0 == plc_rtc_is_ok())
+        if (0 == plc_rtc_clken_and_check())
         {
             //rtc is not OK, must reset it!
             plc_rtc_init( (tm *)&default_date );

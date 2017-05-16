@@ -8,6 +8,7 @@
 #ifndef _PLC_CLOCK_H_
 #define _PLC_CLOCK_H_
 
+extern volatile uint8_t plc_clock_hse_failure;
 void plc_clock_setup(void);
 
 #endif /* _PLC_CLOCK_H_ */

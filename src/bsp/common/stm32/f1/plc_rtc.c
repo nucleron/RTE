@@ -28,7 +28,9 @@
 
 #define PLC_RTC_DIV_VAL 0x7FFF
 
-uint32_t plc_rtc_is_ok(void)
+volatile uint8_t plc_rtc_failure = 0; //Not failed by default
+
+uint32_t plc_rtc_clken_and_check(void)
 {
     rcc_periph_clock_enable(RCC_PWR);
     rcc_periph_clock_enable(RCC_BKP);
@@ -235,32 +237,75 @@ lse_error:
     pwr_enable_backup_domain_write_protect();
 }
 
+#define PLC_BASE_TICK_NS (100000)
+#define PLC_RTC_CORR_THR (1200000000)
+static int32_t plc_rtc_tick_ns;// Initial tick value is 100'000ns
+static int64_t plc_rtc_correction;//Correction to RTC time
+
+static uint32_t plc_rtc_cntr = 0;
+
+//THis function is called every 100us in PLC_WAIT_TMR_ISR
+void _plc_rtc_poll(void)
+{
+    static uint32_t last_sec = 0;
+    static bool start_flg = true;
+
+    uint32_t current_sec;
+
+    current_sec = rtc_get_counter_val();
+
+    if (start_flg)
+    {
+        start_flg = false;
+        last_sec = current_sec;
+
+        plc_rtc_cntr = current_sec;
+        // Initial tick value is 100'000ns or 100us
+        plc_rtc_tick_ns = PLC_BASE_TICK_NS;
+        plc_rtc_correction = 0;
+    }
+
+    // Count ticks from last RTC second update
+    plc_rtc_correction += plc_rtc_tick_ns;
+    //Check if LSE is working
+    if ((plc_rtc_correction < PLC_RTC_CORR_THR) &&  (plc_rtc_correction >- PLC_RTC_CORR_THR))
+    {
+        //Check if second has passed
+        if (0 != current_sec - last_sec)
+        {
+            last_sec = current_sec;
+            //Update buffered date and time registers
+            plc_rtc_cntr = current_sec;
+            //This second is in plc_rtc_dr now!
+            plc_rtc_correction -= 1000000000;
+            //Update plc_rtc_tick_ns
+            plc_rtc_tick_ns = PLC_BASE_TICK_NS - (plc_rtc_correction/20000);
+        }
+    }
+    else
+    {
+        plc_rtc_failure = 1;
+    }
+}
+
 void plc_rtc_dt_get( tm* time )
 {
-    uint32_t utime;
-
-    utime = rtc_get_counter_val();
-    sec_to_dt( utime, time );
+    sec_to_dt( plc_rtc_cntr, time );
 }
 
 void plc_rtc_time_get( IEC_TIME *current_time )
 {
-    uint32_t sub_sec;
+    int64_t rtc_corr;
 
-    current_time->tv_sec = rtc_get_counter_val();
-    /* Add subseconds! */
-    sub_sec = rtc_get_prescale_div_val();
-    /* Check for time shift... */
-    if (sub_sec > PLC_RTC_DIV_VAL)
-    {
-        /* This is NOT normal RTC operation!!! */
-        current_time->tv_nsec = 0;
-        return;
-    }
-    else
-    {
-        current_time->tv_nsec = (((PLC_RTC_DIV_VAL - sub_sec)*10000ul)/(PLC_RTC_DIV_VAL + 1))*100000ul;
-    }
+    PLC_DISABLE_INTERRUPTS();
+
+    current_time->tv_sec = plc_rtc_cntr;
+    rtc_corr             = plc_rtc_correction;
+
+    PLC_ENABLE_INTERRUPTS();
+
+    current_time->tv_sec += (rtc_corr / 1000000000);
+    current_time->tv_nsec = (rtc_corr % 1000000000);
 }
 
 

@@ -35,10 +35,9 @@
 #define BACKUP_UNLOCK() PWR_CR |= PWR_CR_DBP
 #define BACKUP_LOCK() PWR_CR &= ~PWR_CR_DBP
 
+volatile uint8_t plc_rtc_failure = 0; //Not failed by default
 
-void plc_rtc_time_get( IEC_TIME *current_time );
-
-uint32_t plc_rtc_is_ok(void)
+uint32_t plc_rtc_clken_and_check(void)
 {
     rcc_periph_clock_enable(RCC_PWR);
 
@@ -141,7 +140,7 @@ void plc_rtc_init( tm* time )
     rcc_periph_clock_enable( RCC_RTC );
 
     //Wait for LSE oscillator start
-     for(i=0; i<1000000; i++)
+    for(i=0; i<1000000; i++)
     {
         if( RCC_BDCR  &  RCC_BDCR_LSERDY )
         {
@@ -215,6 +214,7 @@ void plc_rtc_init( tm* time )
 lse_error:
     //plc_diag_status |= PLC_DIAG_ERR_LSE; //FIXME
     rtc_lock();
+    plc_rtc_failure = 1;
 }
 
 void plc_rtc_dt_set( tm* time )
@@ -230,7 +230,7 @@ void plc_rtc_dt_set( tm* time )
 
     RTC_ISR = RTC_ISR_INIT; //Init mode
 
-     for(i=0; i<1000000; i++)
+    for(i=0; i<1000000; i++)
     {
         if( RTC_ISR & RTC_ISR_INITF )
         {
@@ -277,6 +277,7 @@ lse_error:
     plc_diag_status |= PLC_DIAG_ERR_LSE;
     rtc_lock();
     BACKUP_LOCK();
+    plc_rtc_failure = 1;
 }
 
 void plc_rtc_dt_get( tm* time )
@@ -289,10 +290,16 @@ void plc_rtc_dt_get( tm* time )
     sec_to_dt( utime, time );
 }
 
-//THis function is called every 100us in PLC_WAIT_TMR_ISR
-static uint32_t plc_rtc_100us_ticks = 0;
+
+#define PLC_BASE_TICK_NS (100000)
+#define PLC_RTC_CORR_THR (1200000000)
+static int32_t plc_rtc_tick_ns;// Initial tick value is 100'000ns
+static int64_t plc_rtc_correction;//Correction to RTC time
+
 static uint32_t plc_rtc_dr = 0;
 static uint32_t plc_rtc_tr = 0;
+
+//THis function is called every 100us in PLC_WAIT_TMR_ISR
 void _plc_rtc_poll(void)
 {
     static uint32_t last_sec = 0;
@@ -309,45 +316,46 @@ void _plc_rtc_poll(void)
 
         plc_rtc_dr = RTC_DR;
         plc_rtc_tr = RTC_TR;
+        // Initial tick value is 100'000ns or 100us
+        plc_rtc_tick_ns = PLC_BASE_TICK_NS;
+        plc_rtc_correction = 0;
     }
 
     // Count ticks from last RTC second update
-    if (0 != current_sec - last_sec)
+    plc_rtc_correction += plc_rtc_tick_ns;
+    //Check if LSE is working
+    if ((plc_rtc_correction < PLC_RTC_CORR_THR) &&  (plc_rtc_correction >- PLC_RTC_CORR_THR))
     {
-        last_sec = current_sec;
-        plc_rtc_100us_ticks = 0;
-        //Update buffered date and time registers
-        plc_rtc_dr = RTC_DR;
-        plc_rtc_tr = RTC_TR;
+        //Check if second has passed
+        if (0 != current_sec - last_sec)
+        {
+            last_sec = current_sec;
+            //Update buffered date and time registers
+            plc_rtc_dr = RTC_DR;
+            plc_rtc_tr = RTC_TR;
+            //This second is in plc_rtc_dr now!
+            plc_rtc_correction -= 1000000000;
+            //Update plc_rtc_tick_ns
+            plc_rtc_tick_ns = PLC_BASE_TICK_NS - (plc_rtc_correction/20000);
+        }
     }
     else
     {
-        /*
-        Normally one RTC second is about 10000 ticks,
-        so 15000 ticks must be anougth to count delay from last
-        RTC second change.
-
-        If the delay is greater than 15000 ticks then RTC has failed,
-        we must saturate.
-        */
-        if (plc_rtc_100us_ticks < 15000ul)
-        {
-            plc_rtc_100us_ticks++;
-        }
+        plc_rtc_failure = 1;
     }
-
 }
 
 void plc_rtc_time_get( IEC_TIME *current_time )
 {
     static tm curr;
-    static uint32_t rtc_ssr, rtc_tr, rtc_dr, rtc_100us;
+    static uint32_t rtc_ssr, rtc_tr, rtc_dr;
+    static int64_t rtc_corr;
 
     //Read buffered register values
     PLC_DISABLE_INTERRUPTS();
-    rtc_tr  = RTC_TR;
-    rtc_dr  = RTC_DR;
-    rtc_100us = plc_rtc_100us_ticks;
+    rtc_tr  = plc_rtc_tr;
+    rtc_dr  = plc_rtc_dr;
+    rtc_corr = plc_rtc_correction;
     PLC_ENABLE_INTERRUPTS();
 
     curr.tm_sec   = (unsigned char)(  rtc_tr & 0x0000000F);
@@ -367,8 +375,8 @@ void plc_rtc_time_get( IEC_TIME *current_time )
 
     /* Convert current date/time to unix time seconds */
     current_time->tv_sec = dt_to_sec( &curr );
-    current_time->tv_sec += (rtc_100us / 10000ul);
-    current_time->tv_nsec = (rtc_100us % 10000ul) * 100000ul; //One 100us tick is 100000ns;
+    current_time->tv_sec += (rtc_corr / 1000000000);
+    current_time->tv_nsec = (rtc_corr % 1000000000);
 }
 
 

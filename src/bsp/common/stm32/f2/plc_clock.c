@@ -35,6 +35,8 @@
 #define PLL_HSE 0x0
 #define PLL_HSI 0x1
 
+volatile uint8_t plc_clock_hse_failure = 0;
+
 typedef struct
 {
     uint32_t hpre;
@@ -192,7 +194,8 @@ void plc_clock_setup(void)
     pll_setup( &cfg_hsi );
     pll_is_dirty = false;
     /* This is an error, but we can do some work... */
-    plc_diag_status |= PLC_DIAG_ERR_HSE;
+    plc_clock_hse_failure = 1;
+    //plc_diag_status |= PLC_DIAG_ERR_HSE;
 }
 
 void nmi_handler(void)
@@ -211,7 +214,8 @@ void nmi_handler(void)
             /* We are already on HSI, so we need only PLL setup. */
             pll_setup( &cfg_hsi );
             /* This is an error, but we can do some work... */
-            plc_diag_status |= PLC_DIAG_ERR_HSE;
+            plc_clock_hse_failure = 1;
+            //plc_diag_status |= PLC_DIAG_ERR_HSE;
         }
     }
 }

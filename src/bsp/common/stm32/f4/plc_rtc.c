@@ -18,18 +18,20 @@
 
 #define PLC_BKP_RTC_IS_OK   MMIO32(RTC_BKP_BASE + PLC_BKP_RTC_IS_OK_OFFSET)
 
-uint32_t plc_rtc_is_ok(void)
+volatile uint8_t plc_rtc_failure = 0; //Not failed by default
+
+uint32_t plc_rtc_clken_and_check(void)
 {
     return PLC_BKP_RTC_IS_OK;
 }
 
-void plc_rtc_init( tm* time )
+void plc_rtc_init(tm* time)
 {
     uint32_t tmp=0;
     uint32_t year;
     uint32_t i;
 
-    rcc_periph_clock_enable( RCC_PWR );
+    rcc_periph_clock_enable(RCC_PWR);
 
     pwr_disable_backup_domain_write_protect();
 
@@ -44,15 +46,15 @@ void plc_rtc_init( tm* time )
     rtc_unlock();
 
     RTC_ISR |= RTC_ISR_INIT;
-    for(i=0; i<1000000; i++)
+    for (i=0; i<1000000; i++)
     {
-        if( RTC_ISR & RTC_ISR_INITF )
+        if (RTC_ISR & RTC_ISR_INITF)
         {
             break;
         }
     }
 
-    if( !(RTC_ISR & RTC_ISR_INITF) )
+    if (!(RTC_ISR & RTC_ISR_INITF))
     {
         plc_diag_status |= PLC_DIAG_ERR_LSE;
 
@@ -90,7 +92,7 @@ void plc_rtc_init( tm* time )
     pwr_enable_backup_domain_write_protect();
 }
 
-void plc_rtc_dt_set( tm* time )
+void plc_rtc_dt_set(tm* time)
 {
     uint32_t i,tmp=0;
 
@@ -103,15 +105,15 @@ void plc_rtc_dt_set( tm* time )
 
     RTC_ISR = RTC_ISR_INIT; //Init mode
 
-     for(i=0; i<1000000; i++)
+    for (i=0; i<1000000; i++)
     {
-        if( RTC_ISR & RTC_ISR_INITF )
+        if (RTC_ISR & RTC_ISR_INITF)
         {
             break;
         }
     }
 
-    if( !(RTC_ISR & RTC_ISR_INITF) )
+    if (!(RTC_ISR & RTC_ISR_INITF))
     {
         goto lse_error;
     }
@@ -200,16 +202,73 @@ static uint32_t dt_to_sec( tm *date_time )
     return ret;
 }
 
+#define PLC_BASE_TICK_NS (100000)
+#define PLC_RTC_CORR_THR (1200000000)
+static int32_t plc_rtc_tick_ns;// Initial tick value is 100'000ns
+static int64_t plc_rtc_correction;//Correction to RTC time
+
+static uint32_t plc_rtc_dr = 0;
+static uint32_t plc_rtc_tr = 0;
+
+//THis function is called every 100us in PLC_WAIT_TMR_ISR
+void _plc_rtc_poll(void)
+{
+    static uint32_t last_sec = 0;
+    static bool start_flg = true;
+
+    uint32_t current_sec;
+
+    current_sec = RTC_TR & 0x0000000F;
+
+    if (start_flg)
+    {
+        start_flg = false;
+        last_sec = current_sec;
+
+        plc_rtc_dr = RTC_DR;
+        plc_rtc_tr = RTC_TR;
+        // Initial tick value is 100'000ns or 100us
+        plc_rtc_tick_ns = PLC_BASE_TICK_NS;
+        plc_rtc_correction = 0;
+    }
+
+    // Count ticks from last RTC second update
+    plc_rtc_correction += plc_rtc_tick_ns;
+    //Check if LSE is working
+    if ((plc_rtc_correction < PLC_RTC_CORR_THR) &&  (plc_rtc_correction >- PLC_RTC_CORR_THR))
+    {
+        //Check if second has passed
+        if (0 != current_sec - last_sec)
+        {
+            last_sec = current_sec;
+            //Update buffered date and time registers
+            plc_rtc_dr = RTC_DR;
+            plc_rtc_tr = RTC_TR;
+            //This second is in plc_rtc_dr now!
+            plc_rtc_correction -= 1000000000;
+            //Update plc_rtc_tick_ns
+            plc_rtc_tick_ns = PLC_BASE_TICK_NS - (plc_rtc_correction/20000);
+        }
+    }
+    else
+    {
+        plc_rtc_failure = 1;
+    }
+}
+
 ///WARNING, this function is not reentrant!!!
 void plc_rtc_time_get( IEC_TIME *current_time )
 {
     static tm curr;
-    static uint32_t rtc_ssr, rtc_tr, rtc_dr, rtc_prediv_s;
+    static uint32_t rtc_ssr, rtc_tr, rtc_dr;
+    static int64_t rtc_corr;
 
-    /* Read regs AQAP */
-    rtc_ssr = RTC_SSR;
-    rtc_tr  = RTC_TR;
-    rtc_dr  = RTC_DR;
+    //Read buffered register values
+    PLC_DISABLE_INTERRUPTS();
+    rtc_tr  = plc_rtc_tr;
+    rtc_dr  = plc_rtc_dr;
+    rtc_corr = plc_rtc_correction;
+    PLC_ENABLE_INTERRUPTS();
 
     curr.tm_sec   = (unsigned char)(  rtc_tr & 0x0000000F);
     curr.tm_sec  += (unsigned char)(((rtc_tr & 0x000000F0) >> 4 ) * 10 );
@@ -228,21 +287,8 @@ void plc_rtc_time_get( IEC_TIME *current_time )
 
     /* Convert current date/time to unix time seconds */
     current_time->tv_sec = dt_to_sec( &curr );
-
-    /* Add subseconds! */
-    rtc_prediv_s = RTC_PRER & 0x7FFF;
-    /* Check for time shift... */
-    if( rtc_ssr > rtc_prediv_s )
-    {
-        /* This is NOT normal RTC operation!!! */
-        current_time->tv_sec--;
-        current_time->tv_nsec = 0;
-        return;
-    }
-    else
-    {
-        current_time->tv_nsec = (((rtc_prediv_s - rtc_ssr)*10000ul)/(rtc_prediv_s + 1))*100000ul;
-    }
+    current_time->tv_sec += (rtc_corr / 1000000000);
+    current_time->tv_nsec = (rtc_corr % 1000000000);
 }
 
 

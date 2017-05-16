@@ -18,6 +18,7 @@
 
 #include <plc_config.h>
 #include <plc_abi.h>
+#include <plc_clock.h>
 #include <plc_dbg.h>
 #include <plc_diag.h>
 #include <plc_iom.h>
@@ -70,8 +71,8 @@ static const diag_cfg_t diag_poll_cfg[]=
 {
     DIAG_POLL_REC(PLC_DIAG_LEVEL_CRI, PLC_DIAG_ERR_DEADLINE  ,250, plc_dl_err_msg ),
     DIAG_POLL_REC(PLC_DIAG_LEVEL_CRI, PLC_DIAG_ERR_OTHER_CRIT,250, plc_crt_err_msg),
-    DIAG_POLL_REC(PLC_DIAG_LEVEL_WRN, PLC_DIAG_ERR_HSE       ,125, plc_hse_err_msg),
     DIAG_POLL_REC(PLC_DIAG_LEVEL_WRN, PLC_DIAG_ERR_LSE       ,250, plc_lse_err_msg),
+    DIAG_POLL_REC(PLC_DIAG_LEVEL_WRN, PLC_DIAG_ERR_HSE       ,125, plc_hse_err_msg),
     DIAG_POLL_REC(PLC_DIAG_LEVEL_WRN, PLC_DIAG_ERR_APP_WARN  ,500, plc_app_wrn_msg),
     DIAG_POLL_REC(PLC_DIAG_LEVEL_INF, PLC_DIAG_ERR_APP_INFO  ,250, plc_app_inf_msg),
 };
@@ -233,17 +234,16 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
     }
     //Check if RTC failed
     //RTC time must change every 3 secconds
-    if (3000 < PLC_TIMER(rtc_chck_tmr))
+    if (0 != plc_rtc_failure)
     {
-        PLC_CLEAR_TIMER(rtc_chck_tmr);
-        plc_rtc_time_get(&rtc_curr_val);
-        //The change must be at least 2 full seconds
-        if( 2 > (rtc_curr_val.tv_sec - rtc_last_val.tv_sec) )
-        {
-            plc_diag_status |= PLC_DIAG_ERR_LSE;
-        }
-        rtc_last_val.tv_sec = rtc_curr_val.tv_sec;
+        plc_diag_status |= PLC_DIAG_ERR_LSE;
     }
+
+    if( 0!= plc_clock_hse_failure )
+    {
+        plc_diag_status |= PLC_DIAG_ERR_HSE;
+    }
+
     //Blink status led
     if (PLC_TIMER(blink_tmr) > (blink_thr>>1))
     {
@@ -275,7 +275,7 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
             err_level = PLC_DIAG_LEVEL_NRM;
             for (i=0; i< sizeof(diag_post_flg); i++)
             {
-                if ((plc_diag_status & diag_poll_cfg[i].msk) && (diag_poll_cfg[i].level < err_level))
+                if ((plc_diag_status & diag_poll_cfg[i].msk) && (diag_poll_cfg[i].level <= err_level))
                 {
                     err_level = diag_poll_cfg[i].level;
                     blink_thr = diag_poll_cfg[i].thr;
