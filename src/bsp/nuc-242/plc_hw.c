@@ -73,7 +73,7 @@ void plc_boot_mode_enter(void)
 /*
 //Led blink timer
 static uint32_t blink_tmr;
-void plc_heart_beat_init(void)
+void plc_tick_init(void)
 {
     //LEDs
     PLC_CLEAR_TIMER( blink_tmr );
@@ -103,7 +103,7 @@ static bool lse_post_flag = true;
 const char plc_lse_err_msg[] = "LSE oscilator failed!";
 static bool dl_post_flag = true;
 const char plc_dl_err_msg[] = "Deadline violation detected, PLC is stoped!";
-void plc_heart_beat_poll(void)
+void plc_tick_poll(void)
 {
     uint32_t blink_thr;
     if( plc_diag_status > 0 )

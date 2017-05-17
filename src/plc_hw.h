@@ -15,8 +15,8 @@ void plc_jmpr_init(void);
 bool plc_dbg_jmpr_get(void);
 bool plc_rst_jmpr_get(void);
 
-void plc_heart_beat_init(void);
-void plc_heart_beat_poll(void);
+void plc_tick_init(void);
+void plc_tick_poll(void);
 
 void plc_boot_init(void);
 void plc_boot_mode_enter(void);

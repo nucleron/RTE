@@ -61,15 +61,18 @@ extern void plc_irq_stub(void);
 extern volatile uint32_t plc_diag_status;
 
 static bool dl_post_flag = true;
+static bool dl_fail_flag = false;
 
-void plc_heart_beat_init(void)
+void plc_tick_init(void)
 {
 }
 
-void plc_heart_beat_poll(void)
+void plc_tick_poll(void)
 {
-    if (plc_diag_status  & PLC_DIAG_ERR_DEADLINE)
+    if (dl_fail_flag)
     {
+        plc_diag_status |= PLC_DIAG_ERR_DEADLINE;
+
         if( dl_post_flag )
         {
             dl_post_flag = false;
@@ -86,7 +89,7 @@ void sys_tick_handler(void)
         if (plc_dbg_mode)
         {
             //In debug mode we stop the program
-            plc_diag_status |= PLC_DIAG_ERR_DEADLINE;
+            dl_fail_flag = true;
         }
         else
         {

@@ -58,7 +58,7 @@ int main(void)
     plc_wait_tmr_init();
     plc_jmpr_init();
     plc_boot_init();
-    plc_heart_beat_init();
+    plc_tick_init();
     plc_iom_init();
 
     if (plc_iom_test_hw())
@@ -127,7 +127,7 @@ int main(void)
         //Hadnle debug connection
         dbg_handler();
         //Heart bit
-        plc_heart_beat_poll();
+        plc_tick_poll();
         plc_iom_poll();
         //App run
         if (plc_tick_flag)
