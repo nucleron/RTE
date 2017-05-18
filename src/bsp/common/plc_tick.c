@@ -86,16 +86,19 @@ void sys_tick_handler(void)
     //Soft watchdog
     if (plc_tick_flag)
     {
-        if (plc_dbg_mode)
-        {
-            //In debug mode we stop the program
-            dl_fail_flag = true;
-        }
-        else
-        {
-            //In normal mode we reset PLC
-            plc_irq_stub();
-        }
+//// We need some RTOS for such behaviour
+//        if (plc_dbg_mode)
+//        {
+//            //In debug mode we stop the program
+//            dl_fail_flag = true;
+//        }
+//        else
+//        {
+//            //In normal mode we reset PLC
+//            plc_irq_stub();
+//        }
+//// so now we can only reset the device!!!
+        plc_irq_stub();
     }
 
     switch (tick_state)
