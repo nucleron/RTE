@@ -45,13 +45,14 @@
 			<Add directory="../../src" />
 			<Add directory="../../src/bsp/common/stm32" />
 			<Add directory="../../src/bsp/common/stm32/f2" />
-			<Add directory="../../src/bsp/common/stm32/f2/fmb_port" />
+			<Add directory="../../src/bsp/common/stm32/f2/libremodbus_port" />
 			<Add directory="../../src/bsp/nuc-243" />
 			<Add directory="../../../libopencm3/include" />
 			<Add directory="../../../matiec/lib/C" />
-			<Add directory="../../../freemodbus-v1.5.0/modbus/include" />
-			<Add directory="../../../freemodbus-v1.5.0/modbus/rtu" />
-			<Add directory="../../../freemodbus-v1.5.0/modbus/ascii" />
+			<Add directory="../../../libremodbus/include" />
+			<Add directory="../../../libremodbus/rtu" />
+			<Add directory="../../../libremodbus/ascii" />
+			<Add directory="../../../libremodbus/" />
 		</Compiler>
 		<Linker>
 			<Add option="-mthumb" />
@@ -81,19 +82,21 @@
 		<Unit filename="../../src/bsp/common/stm32/f2/ADC/adc_common_v1.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/f2/fmb_port/port.h" />
-		<Unit filename="../../src/bsp/common/stm32/f2/fmb_port/portevent.c">
+		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/serial_multi.h" />
+		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/serial_port.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/f2/fmb_port/portother.c">
+		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/serial_port.h" />
+		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/serial_portevent.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/f2/fmb_port/portserial.c">
+		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/serial_portother.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../src/bsp/common/stm32/f2/fmb_port/porttimer.c">
+		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/serial_porttimer.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/tcp_port.h" />
 		<Unit filename="../../src/bsp/common/stm32/f2/mbconfig.h" />
 		<Unit filename="../../src/bsp/common/stm32/f2/plc_backup.c">
 			<Option compilerVar="CC" />
@@ -191,49 +194,53 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../src/xprintf.h" />
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/ascii/mbascii.c">
+		<Unit filename="../../../libremodbus/ascii/ascii_multiport.h" />
+		<Unit filename="../../../libremodbus/ascii/mbascii.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/ascii/mbascii.h" />
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/functions/mbfunccoils.c">
+		<Unit filename="../../../libremodbus/ascii/mbascii.h" />
+		<Unit filename="../../../libremodbus/functions/mbfunccoils.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/functions/mbfuncdiag.c">
+		<Unit filename="../../../libremodbus/functions/mbfuncdiag.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/functions/mbfuncdisc.c">
+		<Unit filename="../../../libremodbus/functions/mbfuncdisc.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/functions/mbfuncholding.c">
+		<Unit filename="../../../libremodbus/functions/mbfuncholding.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/functions/mbfuncinput.c">
+		<Unit filename="../../../libremodbus/functions/mbfuncinput.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/functions/mbfuncother.c">
+		<Unit filename="../../../libremodbus/functions/mbfuncother.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/functions/mbutils.c">
+		<Unit filename="../../../libremodbus/functions/mbutils.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/include/mb.h" />
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/include/mbconfig.h" />
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/include/mbframe.h" />
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/include/mbfunc.h" />
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/include/mbport.h" />
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/include/mbproto.h" />
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/include/mbutils.h" />
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/mb.c">
+		<Unit filename="../../../libremodbus/include/mb.h" />
+		<Unit filename="../../../libremodbus/include/mb_types.h" />
+		<Unit filename="../../../libremodbus/include/mbframe.h" />
+		<Unit filename="../../../libremodbus/include/mbfunc.h" />
+		<Unit filename="../../../libremodbus/include/mbport.h" />
+		<Unit filename="../../../libremodbus/include/mbproto.h" />
+		<Unit filename="../../../libremodbus/include/mbutils.h" />
+		<Unit filename="../../../libremodbus/mb.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/rtu/mbcrc.c">
+		<Unit filename="../../../libremodbus/mb_master.h" />
+		<Unit filename="../../../libremodbus/mb_multiport.h" />
+		<Unit filename="../../../libremodbus/rtu/mbcrc.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/rtu/mbcrc.h" />
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/rtu/mbrtu.c">
+		<Unit filename="../../../libremodbus/rtu/mbcrc.h" />
+		<Unit filename="../../../libremodbus/rtu/mbrtu.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../freemodbus-v1.5.0/modbus/rtu/mbrtu.h" />
+		<Unit filename="../../../libremodbus/rtu/mbrtu.h" />
+		<Unit filename="../../../libremodbus/rtu/rtu_multiport.h" />
 		<Extensions>
 			<envvars />
 			<code_completion />

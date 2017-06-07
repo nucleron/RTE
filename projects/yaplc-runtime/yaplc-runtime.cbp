@@ -62,7 +62,6 @@
 		</Linker>
 		<ExtraCommands>
 			<Add after="arm-none-eabi-size ${TARGET_OUTPUT_FILE}" />
-			<Add after="arm-none-eabi-objcopy -O ihex ${TARGET_OUTPUT_FILE} ${TARGET_OUTPUT_FILE}.hex" />
 			<Mode after="always" />
 		</ExtraCommands>
 		<Unit filename="../../src/COPYING.GPL3" />

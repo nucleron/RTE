@@ -68,6 +68,10 @@
 #define REG_HOLDING_NREGS 64
 
 /* ----------------------- Static variables ---------------------------------*/
+
+static MBInstance MBSlave;
+static MBRTUInstance MBTransport;
+
 static tm mbtime;
 static bool mbt_sflg = false;
 
@@ -127,10 +131,8 @@ static uint16_t mb_hr_get( uint16_t reg )
     case MB_REG_RS09:
     case MB_REG_RS10:
     case MB_REG_RS11:
-    {
-        return 0;
-    }
         /* */
+        break;
     case MB_REG_AI0:
     case MB_REG_AI1:
     case MB_REG_AI2:
@@ -360,7 +362,7 @@ void PLC_IOM_LOCAL_END(uint16_t i)
             mb_enabled = true;
             mb_start = true;
         }
-        eMBInit( (mb_ascii==true)?MB_ASCII:MB_RTU, mb_slave_addr, 0, mb_baudrate, MB_PAR_NONE );
+        eMBInitRTU(&MBSlave,&MBTransport, mb_slave_addr, MBS_USART, mb_baudrate, MB_PAR_NONE );
     }
 }
 
@@ -372,19 +374,21 @@ uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
 void PLC_IOM_LOCAL_POLL(uint32_t tick)
 {
     //Do once!
+    if (!mb_init_flg) return;
+
     if (mb_start)
     {
         mb_start = false;
         if(!mb_enabled)
         {
-            eMBDisable();
+            eMBDisable(&MBSlave);
             return;
         }
-        eMBEnable();
+        eMBEnable(&MBSlave);
     }
 
     plc_rtc_dt_get( &mbtime );
-    eMBPoll();
+    eMBPoll(&MBSlave);
     if (mbt_sflg)
     {
         mbt_sflg = false;
@@ -446,7 +450,7 @@ eMBRegHoldingCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs,
     int             iRegIndex;
 
     if( ( usAddress >= REG_HOLDING_START ) &&
-            ( (usAddress + usNRegs) <= (REG_HOLDING_START + REG_HOLDING_NREGS) ) )
+            ( usAddress + usNRegs <= REG_HOLDING_START + REG_HOLDING_NREGS ) )
     {
         iRegIndex = ( int )( usAddress - usRegHoldingStart );
         switch ( eMode )

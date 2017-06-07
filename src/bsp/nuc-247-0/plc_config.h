@@ -58,29 +58,34 @@
 /*
 *  Modbus usart
 */
-#define MB_USART        USART2
-#define MB_USART_PERIPH RCC_USART2
-#define MB_USART_VECTOR NVIC_USART2_IRQ
-#define MB_USART_ISR    usart2_isr
+#define USART_2
 
-#define MB_USART_TXEN_PERIPH RCC_GPIOD
-#define MB_USART_TXEN_PORT   GPIOD
-#define MB_USART_TXEN_PIN    GPIO7
+#define USART_MBS_PERIPH USART2
+#define USART_MBS_RCC_PERIPH RCC_USART2
+#define USART_MBS_VECTOR NVIC_USART2_IRQ
+#define USART_MBS_ISR usart2_isr
 
-#define MB_USART_TX_PERIPH RCC_GPIOD
-#define MB_USART_TX_PORT   GPIOD
-#define MB_USART_TX_PIN    GPIO5
+#define USART_MBS_TXEN_PERIPH RCC_GPIOD
+#define USART_MBS_TXEN_PORT   GPIOD
+#define USART_MBS_TXEN_PIN    GPIO7
 
-#define MB_USART_RX_PERIPH RCC_GPIOD
-#define MB_USART_RX_PORT   GPIOD
-#define MB_USART_RX_PIN    GPIO6
+#define USART_MBS_TX_PERIPH RCC_GPIOD
+#define USART_MBS_TX_PORT   GPIOD
+#define USART_MBS_TX_PIN    GPIO5
+
+#define USART_MBS_RX_PERIPH RCC_GPIOD
+#define USART_MBS_RX_PORT   GPIOD
+#define USART_MBS_RX_PIN    GPIO6
+
+#define MBS_USART        0
+
 /*
 *  Modbus timer
 */
-#define MB_TMR_PERIPH RCC_TIM6
-#define MB_TMR        TIM6
-#define MB_TMR_VECTOR NVIC_TIM6_DAC_IRQ
-#define MB_TMR_ISR    tim6_dac_isr
+#define MBS_TMR_PERIPH RCC_TIM6
+#define MBS_TMR        TIM6
+#define MBS_TMR_VECTOR NVIC_TIM6_DAC_IRQ
+#define MBS_TMR_ISR    tim6_dac_isr
 
 /*
 *  PLC LEDS
@@ -347,7 +352,54 @@ extern void plc_diag_reset(void);
 
 #define PLC_HW_ID      2470
 
-/**
-* TODO: Add simple printf for error logging!!!
+/*
+*  PLC RTE error numbers
 */
+/* DIO */
+#define PLC_ERRNO_DIO_ASZ     10
+#define PLC_ERRNO_DIO_ASZ_FLT 11
+#define PLC_ERRNO_DIO_TP      12
+#define PLC_ERRNO_DIO_TP_FLT  13
+#define PLC_ERRNO_DIO_ILIM    14
+#define PLC_ERRNO_DIO_FLT_LIM 15
+#define PLC_ERRNO_DIO_OLIM    16
+/* MBS */
+#define PLC_ERRNO_MBS_ASZ     20
+#define PLC_ERRNO_MBS_TP      21
+#define PLC_ERRNO_MBS_ADDR    22
+#define PLC_ERRNO_MBS_INIT    23
+#define PLC_ERRNO_MBS_TP_INIT 24
+#define PLC_ERRNO_MBS_EX_INIT 25
+
+/* HMI */
+#define PLC_ERRNO_HMI_ASZ     400
+#define PLC_ERRNO_HMI_TP      401
+#define PLC_ERRNO_HMI_DIR     402
+#define PLC_ERRNO_HMI_OLIM    403
+#define PLC_ERRNO_HMI_MLIM    404
+#define PLC_ERRNO_HMI_MULTI   405
+#define PLC_ERRNO_HMI_MTYPE   406
+#define PLC_ERRNO_HMI_ITYPE   407
+#define PLC_ERRNO_HMI_REPR    408
+#define PLC_ERRNO_HMI_LLIM    409
+#define PLC_ERRNO_HMI_LTF     410
+#define PLC_ERRNO_HMI_LUSED   411
+
+/* AOUT */
+#define PLC_ERRNO_AOUT_ASZ  50
+#define PLC_ERRNO_AOUT_TP   51
+#define PLC_ERRNO_AOUT_ADDR 52
+/* AIN */
+#define PLC_ERRNO_AIN_ASZ 60
+#define PLC_ERRNO_AIN_MEM 61
+#define PLC_ERRNO_AIN_CHN 62
+#define PLC_ERRNO_AIN_IX  63
+#define PLC_ERRNO_AIN_IX9 64
+#define PLC_ERRNO_AIN_QB  65
+#define PLC_ERRNO_AIN_QBX 66
+#define PLC_ERRNO_AIN_QWX 67
+#define PLC_ERRNO_AIN_IW7 68
+
+
+
 #endif /* _PLC_CONFIG_H_ */

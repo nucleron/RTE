@@ -48,8 +48,8 @@ static bool txen = false;
 #define txen  inst->txen
 #define uartnum inst->uartnum
 
-MBSerialInstance* uart2_inst;
-MBSerialInstance* uart3_inst;
+MBSerialInstance* uart_mb_inst;
+MBSerialInstance* uart_mbm_inst;
 
 #endif
 /* ----------------------- Enable USART interrupts -----------------------------*/
@@ -72,10 +72,17 @@ vMBPortSerialEnable(MULTIPORT_SERIAL_ARG BOOL xRxEnable, BOOL xTxEnable )
     if (xTxEnable)
     {
         txen = true;
-        if(uartnum==USART2)
-            gpio_set(MB_USART_TXEN_PORT, MB_USART_TXEN_PIN);
-        else if(uartnum==USART3)
-            gpio_set(MBM_USART_TXEN_PORT, MBM_USART_TXEN_PIN);
+        if(uartnum==USART_MBS_PERIPH)
+        {
+            gpio_set(USART_MBS_TXEN_PORT, USART_MBS_TXEN_PIN);
+        }
+        #ifdef USART_MBM
+        else if(uartnum==USART_MBM_PERIPH)
+        {
+                gpio_set(USART_MBM_TXEN_PORT, USART_MBM_TXEN_PIN);
+        }
+        #endif //
+
 
         usart_enable_tx_interrupt(uartnum);
     }
@@ -95,71 +102,75 @@ xMBPortSerialInit(MULTIPORT_SERIAL_ARG UCHAR ucPort, ULONG ulBaudRate, UCHAR ucD
 {
     BOOL bStatus;
 
-    if((ucPort!=2)&&(ucPort!=3)) return false; //we have 2 available uarts for modbus. #1 and #2
+    if((ucPort!=MBS_USART)
+       #ifdef USART_MBM
+       &&(ucPort!=MBM_USART)
+       #endif
+       ) return false; //we have 2 available uarts for modbus. #2 and #3
     uartnum = ucPort;
 
-    if(uartnum==2)
+    if(uartnum==MBS_USART)
     {
-        uartnum = USART2;
+        uartnum = USART_MBS_PERIPH;
         #ifdef SERIAL_MULTIPORT
-        uart2_inst = inst;
+        uart_mb_inst = inst;
         #endif
-        //rcc_periph_clock_enable(RCC_AFIO            ); //FIXME
-        rcc_periph_clock_enable(MB_USART_PERIPH     );
-        rcc_periph_clock_enable(MB_USART_TX_PERIPH  );
-    #if (MB_USART_TX_PERIPH != MB_USART_RX_PERIPH)
-        rcc_periph_clock_enable(MB_USART_RX_PERIPH  );
+        rcc_periph_clock_enable(USART_MBS_RCC_PERIPH);
+        rcc_periph_clock_enable(USART_MBS_TX_PERIPH  );
+    #if (USART_MBS_TX_PERIPH != USART_MBS_RX_PERIPH)
+        rcc_periph_clock_enable(USART_MBS_RX_PERIPH  );
     #endif
-    #if (MB_USART_TX_PERIPH != MB_USART_RX_PERIPH)
-        rcc_periph_clock_enable(MB_USART_TXEN_PERIPH);
+    #if (USART_MBS_TX_PERIPH != USART_MBS_RX_PERIPH)
+        rcc_periph_clock_enable(USART_MBS_TXEN_PERIPH);
     #endif
         /*Setup TxEN pin*/
-        gpio_mode_setup(MB_USART_TXEN_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, MB_USART_TXEN_PIN);
-        gpio_set_output_options(MB_USART_TXEN_PORT,GPIO_OSPEED_50MHZ, GPIO_OTYPE_PP,MB_USART_TXEN_PIN);
-        gpio_clear(MB_USART_TXEN_PORT, MB_USART_TXEN_PIN);
+        gpio_mode_setup(USART_MBS_TXEN_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, USART_MBS_TXEN_PIN);
+        gpio_set_output_options(USART_MBS_TXEN_PORT,GPIO_OSPEED_50MHZ, GPIO_OTYPE_PP,USART_MBS_TXEN_PIN);
+        gpio_clear(USART_MBS_TXEN_PORT, USART_MBS_TXEN_PIN);
         /*Setup TxD pin*/
-        gpio_mode_setup(MB_USART_TX_PORT,GPIO_MODE_AF, GPIO_PUPD_NONE, MB_USART_TX_PIN);
-        gpio_set_output_options(MB_USART_TX_PORT,GPIO_OSPEED_50MHZ, GPIO_OTYPE_PP, MB_USART_TX_PIN);
+        gpio_mode_setup(USART_MBS_TX_PORT,GPIO_MODE_AF, GPIO_PUPD_NONE, USART_MBS_TX_PIN);
+        gpio_set_output_options(USART_MBS_TX_PORT,GPIO_OSPEED_50MHZ, GPIO_OTYPE_PP, USART_MBS_TX_PIN);
         /*Setup RxD pin*/
-        gpio_mode_setup(MB_USART_RX_PORT, GPIO_MODE_AF, GPIO_PUPD_NONE, MB_USART_RX_PIN);
+        gpio_mode_setup(USART_MBS_RX_PORT, GPIO_MODE_AF, GPIO_PUPD_NONE, USART_MBS_RX_PIN);
 
-        gpio_set_af(MB_USART_TX_PORT, GPIO_AF7, MB_USART_TX_PIN);
-        gpio_set_af(MB_USART_RX_PORT, GPIO_AF7, MB_USART_RX_PIN);
+        gpio_set_af(USART_MBS_TX_PORT, GPIO_AF7, USART_MBS_TX_PIN);
+        gpio_set_af(USART_MBS_RX_PORT, GPIO_AF7, USART_MBS_RX_PIN);
 
-        /* Enable the MB_USART interrupt. */
-        nvic_enable_irq(MB_USART_VECTOR);
+        /* Enable slave usart interrupt. */
+        nvic_enable_irq(USART_MBS_VECTOR);
     }
-    else if(uartnum==3)
+    #ifdef USART_MBM
+    else if(uartnum==MBM_USART)
     {
-        uartnum = USART3;
+        uartnum = USART_MBM_PERIPH;
         #ifdef SERIAL_MULTIPORT
-        uart3_inst = inst;
+        uart_mbm_inst = inst;
         #endif
-        //rcc_periph_clock_enable(RCC_AFIO            ); //FIXME
-        rcc_periph_clock_enable(MBM_USART_PERIPH     );
-        rcc_periph_clock_enable(MBM_USART_TX_PERIPH  );
-    #if (MBM_USART_TX_PERIPH != MBM_USART_RX_PERIPH)
-        rcc_periph_clock_enable(MBM_USART_RX_PERIPH  );
+        rcc_periph_clock_enable(USART_MBM_RCC_PERIPH);
+        rcc_periph_clock_enable(USART_MBM_TX_PERIPH  );
+    #if (USART_MBM_TX_PERIPH != USART_MBM_RX_PERIPH)
+        rcc_periph_clock_enable(USART_MBM_RX_PERIPH  );
     #endif
-    #if (MBM_USART_TX_PERIPH != MBM_USART_RX_PERIPH)
-        rcc_periph_clock_enable(MBM_USART_TXEN_PERIPH);
+    #if (USART_MBM_TX_PERIPH != USART_MBM_RX_PERIPH)
+        rcc_periph_clock_enable(USART_MBM_TXEN_PERIPH);
     #endif
         /*Setup TxEN pin*/
-        gpio_mode_setup(MBM_USART_TXEN_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, MBM_USART_TXEN_PIN);
-        gpio_set_output_options(MBM_USART_TXEN_PORT,GPIO_OSPEED_50MHZ, GPIO_OTYPE_PP,MBM_USART_TXEN_PIN);
-        gpio_clear(MBM_USART_TXEN_PORT, MBM_USART_TXEN_PIN);
+        gpio_mode_setup(USART_MBM_TXEN_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, USART_MBM_TXEN_PIN);
+        gpio_set_output_options(USART_MBM_TXEN_PORT,GPIO_OSPEED_50MHZ, GPIO_OTYPE_PP,USART_MBM_TXEN_PIN);
+        gpio_clear(USART_MBM_TXEN_PORT, USART_MBM_TXEN_PIN);
         /*Setup TxD pin*/
-        gpio_mode_setup(MBM_USART_TX_PORT,GPIO_MODE_AF, GPIO_PUPD_NONE, MBM_USART_TX_PIN);
-        gpio_set_output_options(MBM_USART_TX_PORT,GPIO_OSPEED_50MHZ, GPIO_OTYPE_PP, MBM_USART_TX_PIN);
+        gpio_mode_setup(USART_MBM_TX_PORT,GPIO_MODE_AF, GPIO_PUPD_NONE, USART_MBM_TX_PIN);
+        gpio_set_output_options(USART_MBM_TX_PORT,GPIO_OSPEED_50MHZ, GPIO_OTYPE_PP, USART_MBM_TX_PIN);
         /*Setup RxD pin*/
-        gpio_mode_setup(MBM_USART_RX_PORT, GPIO_MODE_AF, GPIO_PUPD_NONE, MBM_USART_RX_PIN);
+        gpio_mode_setup(USART_MBM_RX_PORT, GPIO_MODE_AF, GPIO_PUPD_NONE, USART_MBM_RX_PIN);
 
-        gpio_set_af(MBM_USART_TX_PORT, GPIO_AF7, MBM_USART_TX_PIN);
-        gpio_set_af(MBM_USART_RX_PORT, GPIO_AF7, MBM_USART_RX_PIN);
+        gpio_set_af(USART_MBM_TX_PORT, GPIO_AF7, USART_MBM_TX_PIN);
+        gpio_set_af(USART_MBM_RX_PORT, GPIO_AF7, USART_MBM_RX_PIN);
 
-        /* Enable the MB_USART interrupt. */
-        nvic_enable_irq(MBM_USART_VECTOR);
+        /* Enable master usart interrupt. */
+        nvic_enable_irq(USART_MBM_VECTOR);
     }
+    #endif
 
     /* Setup UART parameters. */
     usart_set_baudrate    (uartnum, ulBaudRate            );
@@ -250,7 +261,17 @@ xMBPortSerialGetByte(MULTIPORT_SERIAL_ARG CHAR * pucByte)
 void
 vMBPortSerialClose ( MULTIPORT_SERIAL_ARG_VOID )
 {
-    nvic_disable_irq(MB_USART_VECTOR);
+    if(uartnum==USART_MBS_PERIPH)
+    {
+        nvic_disable_irq(USART_MBS_VECTOR);
+    }
+    #ifdef USART_MBM
+    else if(uartnum==USART_MBM_PERIPH)
+    {
+        nvic_disable_irq(USART_MBS_VECTOR);
+    }
+    #endif // USART_MBM
+
     usart_disable   (uartnum);
 }
 
@@ -265,59 +286,61 @@ vMBPortSerialClose ( MULTIPORT_SERIAL_ARG_VOID )
 
 #undef txen
 
-void MB_USART_ISR(void)
+void USART_MBS_ISR(void)
 {
     /* Check if we were called because of RXNE. */
-    if (((USART_CR1(MB_USART) & USART_CR1_RXNEIE) != 0) && ((USART_SR(MB_USART) & USART_SR_RXNE) != 0))
+    if (((USART_CR1(USART_MBS_PERIPH) & USART_CR1_RXNEIE) != 0) && ((USART_SR(USART_MBS_PERIPH) & USART_SR_RXNE) != 0))
     {
-        ((MBInstance*)(((MBRTUInstance*)(uart2_inst->parent))->parent))->pxMBFrameCBByteReceived((MBRTUInstance*)(uart2_inst->parent));
+        ((MBInstance*)(((MBRTUInstance*)(uart_mb_inst->parent))->parent))->pxMBFrameCBByteReceived((MBRTUInstance*)(uart_mb_inst->parent));
     }
     /* Check if we were called because of TXE. */
-    if (((USART_CR1(MB_USART) & USART_CR1_TXEIE) != 0) && ((USART_SR(MB_USART) & USART_SR_TXE) != 0))
+    if (((USART_CR1(USART_MBS_PERIPH) & USART_CR1_TXEIE) != 0) && ((USART_SR(USART_MBS_PERIPH) & USART_SR_TXE) != 0))
     {
-       ((MBInstance*)(((MBRTUInstance*)(uart2_inst->parent))->parent))->pxMBFrameCBTransmitterEmpty((MBRTUInstance*)(uart2_inst->parent));
+       ((MBInstance*)(((MBRTUInstance*)(uart_mb_inst->parent))->parent))->pxMBFrameCBTransmitterEmpty((MBRTUInstance*)(uart_mb_inst->parent));
         /* Check if we need to disable transmitter*/
-        if(!uart2_inst->txen)
+        if(!uart_mb_inst->txen)
         {
-            USART_SR (MB_USART) &= ~USART_SR_TC;   /* Clear TC flag*/
-            USART_CR1(MB_USART) |= USART_CR1_TCIE; /* Enable transfer complite interrupt*/
+            USART_SR (USART_MBS_PERIPH) &= ~USART_SR_TC;   /* Clear TC flag*/
+            USART_CR1(USART_MBS_PERIPH) |= USART_CR1_TCIE; /* Enable transfer complite interrupt*/
         }
     }
     /* Disable transmitter on transfer comlite*/
-    if (((USART_CR1(MB_USART) & USART_CR1_TCIE) != 0) && ((USART_SR(MB_USART) & USART_SR_TC) != 0))
+    if (((USART_CR1(USART_MBS_PERIPH) & USART_CR1_TCIE) != 0) && ((USART_SR(USART_MBS_PERIPH) & USART_SR_TC) != 0))
     {
-        USART_CR1(MB_USART) &= ~USART_CR1_TCIE;/* Disble transfer complete interrupt*/
-        USART_SR (MB_USART) &= ~USART_SR_TC;   /* Clear TC flag*/
+        USART_CR1(USART_MBS_PERIPH) &= ~USART_CR1_TCIE;/* Disble transfer complete interrupt*/
+        USART_SR (USART_MBS_PERIPH) &= ~USART_SR_TC;   /* Clear TC flag*/
         /* Disable transmitter*/
-        gpio_clear(MB_USART_TXEN_PORT, MB_USART_TXEN_PIN);
+        gpio_clear(USART_MBS_TXEN_PORT, USART_MBS_TXEN_PIN);
     }
 }
 
-void MBM_USART_ISR(void)
+#ifdef USART_MBM
+void USART_MBM_ISR(void)
 {
     /* Check if we were called because of RXNE. */
-    if (((USART_CR1(MBM_USART) & USART_CR1_RXNEIE) != 0) && ((USART_SR(MBM_USART) & USART_SR_RXNE) != 0))
+    if (((USART_CR1(USART_MBM_PERIPH) & USART_CR1_RXNEIE) != 0) && ((USART_SR(USART_MBM_PERIPH) & USART_SR_RXNE) != 0))
     {
-        ((MBInstance*)(((MBRTUInstance*)(uart3_inst->parent))->parent))->pxMBFrameCBByteReceived((MBRTUInstance*)(uart3_inst->parent));
+        ((MBInstance*)(((MBRTUInstance*)(uart_mbm_inst->parent))->parent))->pxMBFrameCBByteReceived((MBRTUInstance*)(uart_mbm_inst->parent));
     }
     /* Check if we were called because of TXE. */
-    if (((USART_CR1(MBM_USART) & USART_CR1_TXEIE) != 0) && ((USART_SR(MBM_USART) & USART_SR_TXE) != 0))
+    if (((USART_CR1(USART_MBM_PERIPH) & USART_CR1_TXEIE) != 0) && ((USART_SR(USART_MBM_PERIPH) & USART_SR_TXE) != 0))
     {
-        ((MBInstance*)(((MBRTUInstance*)(uart3_inst->parent))->parent))->pxMBFrameCBTransmitterEmpty((MBRTUInstance*)(uart3_inst->parent));
+        ((MBInstance*)(((MBRTUInstance*)(uart_mbm_inst->parent))->parent))->pxMBFrameCBTransmitterEmpty((MBRTUInstance*)(uart_mbm_inst->parent));
         /* Check if we need to disable transmitter*/
-        if(!uart3_inst->txen)
+        if(!uart_mbm_inst->txen)
         {
-            USART_SR (MBM_USART) &= ~USART_SR_TC;   /* Clear TC flag*/
-            USART_CR1(MBM_USART) |= USART_CR1_TCIE; /* Enable transfer complete interrupt*/
+            USART_SR (USART_MBM_PERIPH) &= ~USART_SR_TC;   /* Clear TC flag*/
+            USART_CR1(USART_MBM_PERIPH) |= USART_CR1_TCIE; /* Enable transfer complete interrupt*/
         }
     }
     /* Disable transmitter on transfer comlete*/
-    if (((USART_CR1(MBM_USART) & USART_CR1_TCIE) != 0) && ((USART_SR(MBM_USART) & USART_SR_TC) != 0))
+    if (((USART_CR1(USART_MBM_PERIPH) & USART_CR1_TCIE) != 0) && ((USART_SR(USART_MBM_PERIPH) & USART_SR_TC) != 0))
     {
-        USART_CR1(MBM_USART) &= ~USART_CR1_TCIE;/* Disble transfer complete interrupt*/
-        USART_SR (MBM_USART) &= ~USART_SR_TC;   /* Clear TC flag*/
+        USART_CR1(USART_MBM_PERIPH) &= ~USART_CR1_TCIE;/* Disble transfer complete interrupt*/
+        USART_SR (USART_MBM_PERIPH) &= ~USART_SR_TC;   /* Clear TC flag*/
         /* Disable transmitter*/
-        gpio_clear(MBM_USART_TXEN_PORT, MBM_USART_TXEN_PIN);
+        gpio_clear(USART_MBM_TXEN_PORT, USART_MBM_TXEN_PIN);
     }
 }
 
+#endif

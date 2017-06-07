@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_workspace_file>
 	<Workspace title="Workspace">
-		<Project filename="nuc-242-rte/nuc-242-rte.cbp" />
 		<Project filename="nuc-243-rte/nuc-243-rte.cbp" active="1" />
 		<Project filename="nuc-247-0-rte/nuc-247-0-rte.cbp" />
 		<Project filename="nuc-247-1-rte/nuc-247-1-rte.cbp" />
-		<Project filename="yaplc-runtime/yaplc-runtime.cbp" />
+		<Project filename="nuc-242-rte/nuc-242-rte.cbp" />
+		<Project filename="modbus_test/modbus_test.cbp" />
+		<Project filename="modbus_multi_test/modbus_multi_test.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>

@@ -64,6 +64,10 @@
 #define REG_HOLDING_NREGS 64
 
 /* ----------------------- Static variables ---------------------------------*/
+
+static MBInstance MBSlave;
+static MBRTUInstance MBTransport;
+
 static tm mbtime;
 static bool mbt_sflg = false;
 
@@ -254,13 +258,14 @@ bool PLC_IOM_LOCAL_TEST_HW(void)
 {
     return true;
 }
-
+/*
 static const char plc_mb_err_asz[]     = "Modbus local register adress must be one number!";
 static const char plc_mb_err_tp[]      = "Modbus local supports only memory locations for registers!";
 static const char plc_mb_err_addr[]    = "Modbus local register adress must be in 0...31!";
 static const char plc_mb_err_init[]    = "Modbus wrong init value format. Must be QX2.[baudrate].[mode]";
 static const char plc_mb_err_tp_init[] = "Modbus local supports only output location for initialization!";
 static const char plc_mb_err_extrainit[] = "Only one modbus init variable allowed!";
+*/
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
     uint32_t addr;
@@ -269,17 +274,20 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     case PLC_LSZ_X:
         if (PLC_LT_Q != PLC_APP->l_tab[i]->v_type)
         {
-            plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mb_err_tp_init, sizeof(plc_mb_err_tp_init));
+            //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mb_err_tp_init, sizeof(plc_mb_err_tp_init));
+            plc_iom_errno_print(PLC_ERRNO_MBS_TP_INIT);
             return false;
         }
         if (3 != PLC_APP->l_tab[i]->a_size)
         {
-            plc_curr_app->log_msg_post(LOG_CRITICAL,(char *)plc_mb_err_init,sizeof(plc_mb_err_init));
+            //plc_curr_app->log_msg_post(LOG_CRITICAL,(char *)plc_mb_err_init,sizeof(plc_mb_err_init));
+            plc_iom_errno_print(PLC_ERRNO_MBS_INIT);
             return false;
         }
         if (mb_gotinit)
         {
-            plc_curr_app->log_msg_post(LOG_CRITICAL,(char *)plc_mb_err_extrainit,sizeof(plc_mb_err_extrainit));
+            //plc_curr_app->log_msg_post(LOG_CRITICAL,(char *)plc_mb_err_extrainit,sizeof(plc_mb_err_extrainit));
+            plc_iom_errno_print(PLC_ERRNO_MBS_EX_INIT);
             return false;
         }
 
@@ -292,23 +300,26 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     case PLC_LSZ_W:
         if (PLC_LT_M != PLC_APP->l_tab[i]->v_type)
         {
-            plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mb_err_tp, sizeof(plc_mb_err_tp));
+            //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mb_err_tp, sizeof(plc_mb_err_tp));
+            plc_iom_errno_print(PLC_ERRNO_MBS_TP);
             return false;
         }
         if (1 != PLC_APP->l_tab[i]->a_size)
         {
-            plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mb_err_asz, sizeof(plc_mb_err_asz));
+            //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mb_err_asz, sizeof(plc_mb_err_asz));
+            plc_iom_errno_print(PLC_ERRNO_MBS_ASZ);
             return false;
         }
         if (32 <= PLC_APP->l_tab[i]->a_data[0])
         {
-            plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mb_err_addr, sizeof(plc_mb_err_addr));
+            //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mb_err_addr, sizeof(plc_mb_err_addr));
+            plc_iom_errno_print(PLC_ERRNO_MBS_ADDR);
             return false;
         }
         return true;
 
     default:
-        plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_iom_err_sz, plc_iom_err_sz_sz );
+        PLC_LOG_ERR_SZ();//plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_iom_err_sz, plc_iom_err_sz_sz );
         return false;
     }
 }
@@ -340,7 +351,7 @@ void PLC_IOM_LOCAL_END(uint16_t i)
             mb_enabled = true;
             mb_start = true;
         }
-        eMBInit( (mb_ascii==true)?MB_ASCII:MB_RTU, mb_slave_addr, 0, mb_baudrate, MB_PAR_NONE );
+        eMBInitRTU(&MBSlave,&MBTransport, mb_slave_addr, MBS_USART, mb_baudrate, MB_PAR_NONE );
     }
 }
 
@@ -352,19 +363,21 @@ uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
 void PLC_IOM_LOCAL_POLL(uint32_t tick)
 {
     //Do once!
+    if (!mb_init_flg) return;
+
     if (mb_start)
     {
         mb_start = false;
         if(!mb_enabled)
         {
-            eMBDisable();
+            eMBDisable(&MBSlave);
             return;
         }
-        eMBEnable();
+        eMBEnable(&MBSlave);
     }
 
     plc_rtc_dt_get( &mbtime );
-    eMBPoll();
+    eMBPoll(&MBSlave);
     if (mbt_sflg)
     {
         mbt_sflg = false;

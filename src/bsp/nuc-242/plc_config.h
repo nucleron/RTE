@@ -218,4 +218,18 @@ extern void plc_diag_reset(void);
 /**
 * TODO: Add simple printf for error logging!!!
 */
+#define PLC_ERRNO_DIO_ASZ     10
+#define PLC_ERRNO_DIO_ASZ_FLT 11
+#define PLC_ERRNO_DIO_TP      12
+#define PLC_ERRNO_DIO_TP_FLT  13
+#define PLC_ERRNO_DIO_ILIM    14
+#define PLC_ERRNO_DIO_FLT_LIM 15
+#define PLC_ERRNO_DIO_OLIM    16
+/* MBS */
+#define PLC_ERRNO_MBS_ASZ     20
+#define PLC_ERRNO_MBS_TP      21
+#define PLC_ERRNO_MBS_ADDR    22
+#define PLC_ERRNO_MBS_INIT    23
+#define PLC_ERRNO_MBS_TP_INIT 24
+#define PLC_ERRNO_MBS_EX_INIT 25
 #endif /* _PLC_CONFIG_H_ */

@@ -28,6 +28,8 @@
 #include <plc_hw.h>
 #include <plc_iom.h>
 
+#include <mb.h>
+
 #include "user_mb_app.h"
 
 #define MBM_REQUEST_MAX_ADDR 250
@@ -116,7 +118,7 @@ bool PLC_IOM_LOCAL_TEST_HW(void)
 {
     return true;
 }
-
+/*
 static const char plc_mbm_err_asz[]     = "Modbus local register adress must be one number!";
 static const char plc_mbm_err_tp[]      = "Modbus local supports only memory locations for registers!";
 static const char plc_mbm_err_addr[]    = "Modbus local register adress must be in 0...31!";
@@ -127,6 +129,7 @@ static const char plc_mbm_err_reglimit[]  = "Registers number limit reached for 
 static const char plc_mbm_err_badtype[]  = "Modbus register type does not match request_t type";
 static const char plc_mbm_err_requid[]  = "Modbus request_t UID out of range";
 static const char plc_mbm_err_extrainit[] = "Only one modbus init variable allowed!";
+*/
 
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
@@ -142,12 +145,14 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         {
             if (PLC_APP->l_tab[i]->v_size != PLC_LSZ_X)
             {
-                plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mbm_err_tp_init, sizeof(plc_mbm_err_tp_init));
+                //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mbm_err_tp_init, sizeof(plc_mbm_err_tp_init));
+                plc_iom_errno_print(PLC_ERRNO_MBM_TP_INIT);
                 return false;
             }
             if (mbm_gotinit)
             {
-                plc_curr_app->log_msg_post(LOG_CRITICAL,(char *)plc_mbm_err_extrainit,sizeof(plc_mbm_err_extrainit));
+                //plc_curr_app->log_msg_post(LOG_CRITICAL,(char *)plc_mbm_err_extrainit,sizeof(plc_mbm_err_extrainit));
+                plc_iom_errno_print(PLC_ERRNO_MBM_EX_INIT);
                 return false;
             }
 
@@ -158,24 +163,18 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         }
         else if (PLC_APP->l_tab[i]->v_type == PLC_LT_M)//requested registers
         {
-            if (PLC_APP->l_tab[i]->v_size == PLC_LSZ_X) //bool size only for coils and discrete inputs
-            {
-                //
-            }
-            else if (PLC_APP->l_tab[i]->v_size == PLC_LSZ_W) //word size for holding & input regs
-            {
-                //
-            }
-            else//other types does not make sense here
-            {
-                plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mbm_err_badtype, sizeof(plc_mbm_err_badtype));
+            if ((PLC_APP->l_tab[i]->v_size != PLC_LSZ_X) && (PLC_APP->l_tab[i]->v_size != PLC_LSZ_W)) //bool size only for coils and discrete inputs
+            {                                                                                         //word size for holding & input regs
+                //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mbm_err_badtype, sizeof(plc_mbm_err_badtype));
+                plc_iom_errno_print(PLC_ERRNO_MBM_SZ);
                 return false;
             }
 
         }
         else
         {
-            plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mbm_err_tp, sizeof(plc_mbm_err_tp));
+            //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mbm_err_tp, sizeof(plc_mbm_err_tp));
+            plc_iom_errno_print(PLC_ERRNO_MBM_TP);
                 return false;
         }
         break;
@@ -185,17 +184,17 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         {
             if (PLC_APP->l_tab[i]->v_size != PLC_LSZ_B)
             {
-                plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mbm_err_badtype, sizeof(plc_mbm_err_badtype));
+                //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mbm_err_badtype, sizeof(plc_mbm_err_badtype));
+                plc_iom_errno_print(PLC_ERRNO_MBM_TP);
                 return false;
             }
         }
-
-
-
         break;
-
+    default:
+            plc_iom_errno_print(PLC_ERRNO_MBM_ASZ);
+            return false;
+        break;
     }
-
     return true;
 }
 
@@ -237,12 +236,11 @@ void PLC_IOM_LOCAL_END(uint16_t i)
         if (!mbm_gotinit)
         {
             mbm_ascii = MB_DEFAULT_TRANSPORT;
-//            mbm_slave_addr = mbm_DEFAULT_ADDRESS;
             mbm_baudrate = MB_DEFAULT_BAUDRATE;
             mbm_enabled = true;
             mbm_start = true;
         }
-        eMBMasterInitRTU(&MBMaster,&MBMTransport, 3, mbm_baudrate, MB_PAR_NONE );
+        eMBMasterInitRTU(&MBMaster,&MBMTransport, MBM_USART, mbm_baudrate, MB_PAR_NONE );
 
     }
 }

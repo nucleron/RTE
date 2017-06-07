@@ -32,7 +32,7 @@
 #define _MB_CONFIG_H
 
 #ifdef __cplusplus
-PR_BEGIN_EXTERN_C
+extern "C" {
 #endif
 /* ----------------------- Defines ------------------------------------------*/
 /*! \defgroup modbus_cfg Modbus Configuration
@@ -47,13 +47,19 @@ PR_BEGIN_EXTERN_C
  *  @{
  */
 /*! \brief If Modbus ASCII support is enabled. */
-#define MB_ASCII_ENABLED                        (  1 )
+#define MB_ASCII_ENABLED                        ( 1 )
 
 /*! \brief If Modbus RTU support is enabled. */
 #define MB_RTU_ENABLED                          (  1 )
 
 /*! \brief If Modbus TCP support is enabled. */
 #define MB_TCP_ENABLED                          (  0 )
+
+/*! \brief Enable multiple modbus instances */
+#define MB_MULTIPORT 							(  0 )
+
+/*! \brief Enable modbus master. Works only with multiport */
+#define MB_MASTER                               (  0 )
 
 /*! \brief The character timeout value for Modbus ASCII.
  *
@@ -125,8 +131,22 @@ PR_BEGIN_EXTERN_C
 /*! \brief If the <em>Read/Write Multiple Registers</em> function should be enabled. */
 #define MB_FUNC_READWRITE_HOLDING_ENABLED       (  1 )
 
+
+
+/*! \brief If master send a broadcast frame,the master will wait time of convert to delay,
+ * then master can send other frame */
+#define MB_MASTER_DELAY_MS_CONVERT              (200 )
+/*! \brief If master send a frame which is not broadcast,the master will wait sometime for slave.
+ * And if slave is not respond in this time,the master will process this timeout error.
+ * Then master can send other frame */
+#define MB_MASTER_TIMEOUT_MS_RESPOND            (100 )
+/*! \brief The total slaves in Modbus Master system. Default 16.
+ * \note : The slave ID must be continuous from 1.*/
+#define MB_MASTER_TOTAL_SLAVE_NUM               ( 16 )
+
+
 /*! @} */
 #ifdef __cplusplus
-    PR_END_EXTERN_C
+}
 #endif
 #endif

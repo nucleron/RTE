@@ -967,18 +967,20 @@ bool PLC_IOM_LOCAL_TEST_HW(void)
     return true;
 }
 
-const char plc_hmi_err_dir[]      = "Wrong location direction!";
+/*
+const char plc_hmi_err_addr_sz[]  = "Wrong address size!";
 const char plc_hmi_err_type[]     = "Wrong location type!";
+const char plc_hmi_err_dir[]      = "Wrong location direction!";
 const char plc_hmi_err_olim[]     = "HMI output must have address 0...13!";
 const char plc_hmi_err_mlim[]     = "Parameter address out of limits!";
 const char plc_hmi_err_multi[]    = "Memory location address must be unique!";
 const char plc_hmi_err_mem_type[] = "Memory location data type must be bool or word!";
 const char plc_hmi_err_i_type[]   = "Input location data type must be BYTE!";
-const char plc_hmi_err_addr_sz[]  = "Wrong address size!";
 const char plc_hmi_err_repr[]     = "Wrong parameter representation!";
 const char plc_hmi_err_lulim[]    = "Parameter limit address must be 0 or 1!";
 const char plc_hmi_err_ltf[]      = "BOOL parameter must not have limits!";
 const char plc_hmi_err_lused[]    = "Parameter must be used!";
+*/
 
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
@@ -995,7 +997,8 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         {
             if ((PLC_HMI_DO_NUM+PLC_HMI_DISPLAY_LEDS+PLC_HMI_DISPLAY_DOTS) <= addr)
             {
-                PLC_LOG_ERROR(plc_hmi_err_olim);
+                //PLC_LOG_ERROR(plc_hmi_err_olim);
+                plc_iom_errno_print(PLC_ERRNO_HMI_OLIM);
                 return false;
             }
 
@@ -1005,7 +1008,8 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         {
             if (addr!=0)
             {
-                PLC_LOG_ERROR(plc_hmi_err_mlim);
+                //PLC_LOG_ERROR(plc_hmi_err_mlim);
+                plc_iom_errno_print(PLC_ERRNO_HMI_MLIM);
                 return false;
             }
 
@@ -1019,7 +1023,8 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             {
                 if (addr!=0)
                 {
-                    PLC_LOG_ERROR(plc_hmi_err_mlim);
+                    //PLC_LOG_ERROR(plc_hmi_err_mlim);
+                    plc_iom_errno_print(PLC_ERRNO_HMI_MLIM);
                     return false;
                 }
 
@@ -1029,13 +1034,15 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             {
                 if (PLC_HMI_NUM_PARAMS <= addr)
                 {
-                    PLC_LOG_ERROR(plc_hmi_err_mlim);
+                    //PLC_LOG_ERROR(plc_hmi_err_mlim);
+                    plc_iom_errno_print(PLC_ERRNO_HMI_MLIM);
                     return false;
                 }
 
                 if (2 <= PLC_APP->l_tab[i]->a_data[1])
                 {
-                    PLC_LOG_ERROR(plc_hmi_err_lulim);
+                    //PLC_LOG_ERROR(plc_hmi_err_lulim);
+                    plc_iom_errno_print(PLC_ERRNO_HMI_LLIM);
                     return false;
                 }
 
@@ -1047,12 +1054,14 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
                 case PLC_HMI_RO_BOOL_TF:
                 case PLC_HMI_RO_BOOL_OO:
                 {
-                    PLC_LOG_ERROR(plc_hmi_err_ltf);
+                    //PLC_LOG_ERROR(plc_hmi_err_ltf);
+                    plc_iom_errno_print(PLC_ERRNO_HMI_LTF);
                     return false;
                 }
                 case PLC_HMI_NOT_USED:
                 {
-                    PLC_LOG_ERROR(plc_hmi_err_lused);
+                    //PLC_LOG_ERROR(plc_hmi_err_lused);
+                    plc_iom_errno_print(PLC_ERRNO_HMI_LUSED);
                     return false;
                 }
                 }
@@ -1061,14 +1070,16 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             }
             default:
             {
-                PLC_LOG_ERROR(plc_hmi_err_addr_sz);
+                //PLC_LOG_ERROR(plc_hmi_err_addr_sz);
+                plc_iom_errno_print(PLC_ERRNO_HMI_ASZ);
                 return false;
             }
             }
         }
         default:
         {
-            PLC_LOG_ERROR(plc_hmi_err_type);
+            //PLC_LOG_ERROR(plc_hmi_err_type);
+            plc_iom_errno_print(PLC_ERRNO_HMI_TP);
             return false;
         }
         }
@@ -1078,19 +1089,22 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         int ptid;
         if (PLC_HMI_NUM_PARAMS <= addr)
         {
-            PLC_LOG_ERROR(plc_hmi_err_mlim);
+            //PLC_LOG_ERROR(plc_hmi_err_mlim);
+            plc_iom_errno_print(PLC_ERRNO_HMI_MLIM);
             return false;
         }
 
         if (PLC_HMI_NOT_USED != plc_hmi_app_ptype[addr])
         {
-            PLC_LOG_ERROR(plc_hmi_err_multi);
+            //PLC_LOG_ERROR(plc_hmi_err_multi);
+            plc_iom_errno_print(PLC_ERRNO_HMI_MULTI);
             return false;
         }
 
         if (2 != PLC_APP->l_tab[i]->a_size)
         {
-            PLC_LOG_ERROR(plc_hmi_err_addr_sz);
+            //PLC_LOG_ERROR(plc_hmi_err_addr_sz);
+            plc_iom_errno_print(PLC_ERRNO_HMI_ASZ);
             return false;
         }
 
@@ -1108,7 +1122,8 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             }
             else
             {
-                PLC_LOG_ERROR(plc_hmi_err_repr);
+                //PLC_LOG_ERROR(plc_hmi_err_repr);
+                plc_iom_errno_print(PLC_ERRNO_HMI_REPR);
                 return false;
             }
         }
@@ -1122,13 +1137,15 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             }
             else
             {
-                PLC_LOG_ERROR(plc_hmi_err_repr);
+                //PLC_LOG_ERROR(plc_hmi_err_repr);
+                plc_iom_errno_print(PLC_ERRNO_HMI_REPR);
                 return false;
             }
         }
         default:
         {
-            PLC_LOG_ERROR(plc_hmi_err_mem_type);
+            //PLC_LOG_ERROR(plc_hmi_err_mem_type);
+            plc_iom_errno_print(PLC_ERRNO_HMI_MTYPE);
             return false;
         }
         }
@@ -1143,19 +1160,22 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             }
             else
             {
-                PLC_LOG_ERROR(plc_hmi_err_mlim);
+                //PLC_LOG_ERROR(plc_hmi_err_mlim);
+                plc_iom_errno_print(PLC_ERRNO_HMI_MLIM);
                 return false;
             }
         }
         else //bad type
         {
-            PLC_LOG_ERROR(plc_hmi_err_i_type);
+            //PLC_LOG_ERROR(plc_hmi_err_i_type);
+            plc_iom_errno_print(PLC_ERRNO_HMI_ITYPE);
             return false;
         }
     }
     default:
     {
-        PLC_LOG_ERROR(plc_hmi_err_dir);
+        //PLC_LOG_ERROR(plc_hmi_err_dir);
+        plc_iom_errno_print(PLC_ERRNO_HMI_DIR);
         return false;
     }
     }
