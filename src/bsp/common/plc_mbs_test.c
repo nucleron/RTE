@@ -15,7 +15,9 @@
 #include <plc_hw.h>
 #include <plc_iom.h>
 
+#include <serial_port.h>
 #include <mb.h>
+
 /* ----------------------- Defines ------------------------------------------*/
 #define MB_REG_HWST  0
 /*Unhandled interrupts*/

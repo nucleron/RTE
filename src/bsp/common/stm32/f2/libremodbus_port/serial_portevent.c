@@ -20,6 +20,8 @@
  */
 
 /* ----------------------- Modbus includes ----------------------------------*/
+#include <serial_port.h>
+
 #include <mb.h>
 #include <mbport.h>
 
