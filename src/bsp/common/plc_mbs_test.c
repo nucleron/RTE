@@ -362,7 +362,7 @@ void PLC_IOM_LOCAL_END(uint16_t i)
             mb_enabled = true;
             mb_start = true;
         }
-        eMBInitRTU(&MBSlave,&MBTransport, mb_slave_addr, 2, mb_baudrate, MB_PAR_NONE );
+        eMBInitRTU(&MBSlave,&MBTransport, mb_slave_addr, MBS_USART, mb_baudrate, MB_PAR_NONE);
     }
 }
 
