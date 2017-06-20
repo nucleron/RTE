@@ -77,7 +77,7 @@ UCHAR    ucSCoilBuf[S_COIL_NCOILS/8+1];
 /* ----------------------- Static variables ---------------------------------*/
 
 static MBInstance MBSlave;
-static MBRTUInstance MBTransport;
+static MBASCIIInstance MBTransport;
 
 static tm mbtime;
 static bool mbt_sflg = false;
@@ -362,7 +362,7 @@ void PLC_IOM_LOCAL_END(uint16_t i)
             mb_enabled = true;
             mb_start = true;
         }
-        eMBInitRTU(&MBSlave,&MBTransport, mb_slave_addr, MBS_USART, mb_baudrate, MB_PAR_NONE);
+        eMBInitASCII(&MBSlave,&MBTransport, mb_slave_addr, MBS_USART, mb_baudrate, MB_PAR_NONE);
     }
 }
 
