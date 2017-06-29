@@ -200,6 +200,7 @@ xMBPortSerialInit(MULTIPORT_SERIAL_ARG UCHAR ucPort, ULONG ulBaudRate, UCHAR ucD
     CHAR wordLength;
     switch (ucDataBits)
     {
+    case 7:
     case 8:
         if (eParity == MB_PAR_NONE)
         {
@@ -211,16 +212,16 @@ xMBPortSerialInit(MULTIPORT_SERIAL_ARG UCHAR ucPort, ULONG ulBaudRate, UCHAR ucD
         }
         usart_set_databits(uartnum,wordLength);
         break;
-    case 7:
-        if (eParity == MB_PAR_NONE)
-        {
-            bStatus = FALSE;
-        }
-        else
-        {
-            usart_set_databits(uartnum,8);
-        }
-        break;
+//    case 7:
+//        if (eParity == MB_PAR_NONE)
+//        {
+//            bStatus = FALSE;
+//        }
+//        else
+//        {
+//            usart_set_databits(uartnum,8);
+//        }
+//        break;
     default:
         bStatus = FALSE;
     }
