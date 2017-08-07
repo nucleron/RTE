@@ -33,6 +33,8 @@
 #include "mb.h"
 #include "mbport.h"
 
+#define SERIAL_MULTIPORT
+
 #ifndef SERIAL_MULTIPORT
 #define inst
 #endif // SERIAL_MULTIPORT

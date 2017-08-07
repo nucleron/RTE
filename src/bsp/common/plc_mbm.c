@@ -276,7 +276,7 @@ void execute_request(uint32_t tick)
                     reg_index = mbm_request.target_addr[j]-mbm_request.target_addr[0];
                     mbm_preread_buffer[reg_index] = mbm_request.target_value[j];
                 }
-                eMBMasterReqWriteHoldingRegister(&MBMaster,mbm_request.slave_addr,mbm_request.target_addr[0],get_full_length(),mbm_preread_buffer,0);
+                eMBMasterReqWriteHoldingRegister(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), mbm_preread_buffer, 0);
             }
             else //we need to send a request_t to first read full registers range
             {

@@ -37,6 +37,7 @@
 
 #include <plc_config.h>
 
+#define SERIAL_MULTIPORT
 
 #ifndef SERIAL_MULTIPORT
 

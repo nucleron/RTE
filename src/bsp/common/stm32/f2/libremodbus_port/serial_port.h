@@ -26,12 +26,9 @@
 #include <assert.h>
 
 #define	INLINE
-#define PR_BEGIN_EXTERN_C			extern "C" {
-#define	PR_END_EXTERN_C				}
 
-#ifdef __cplusplus
+#include <mb_common.h>
 PR_BEGIN_EXTERN_C
-#endif
 
 /* ----------------------- Defines ------------------------------------------*/
 
@@ -63,7 +60,5 @@ void            vMBPortTimerPoll(  MULTIPORT_SERIAL_ARG void* caller  ); //FIXME
 BOOL            xMBPortSerialPoll( MULTIPORT_SERIAL_ARG void* caller ); //FIXME
 BOOL            xMBPortSerialSetTimeout(MULTIPORT_SERIAL_ARG DWORD dwTimeoutMs );
 
-#ifdef __cplusplus
 PR_END_EXTERN_C
-#endif
 #endif

@@ -1,11 +1,12 @@
 #ifndef SERIAL_MULTI_H
 #define SERIAL_MULTI_H
 
-#include "mb_types.h"
-#include "mbconfig.h"
-
 #include <stdint.h>
 #include <stdbool.h>
+
+
+#include <mbconfig.h>
+#include <mb_types.h>
 
 typedef uint8_t BOOL;
 
@@ -19,10 +20,6 @@ typedef uint32_t ULONG;
 typedef int32_t LONG;
 
 typedef uint32_t DWORD;
-
-#if defined(MB_MULTIPORT) && (defined(MB_ASCII_ENABLED) || defined(MB_RTU_ENABLED))
-
-#define SERIAL_MULTIPORT
 
 #if MB_ASCII_ENABLED == 1
 #define	BUF_SIZE	513     /* must hold a complete ASCII frame. */
@@ -59,17 +56,5 @@ typedef struct
 
 #define MULTIPORT_SERIAL_ARG MBSerialInstance* inst,
 #define MULTIPORT_SERIAL_ARG_VOID MBSerialInstance* inst
-
-#else
-
-#define CALLER_ARG
-
-#define CALLBACK_ARG
-#define CALLBACK_ARG_VOID
-
-#define MULTIPORT_SERIAL_ARG
-#define MULTIPORT_SERIAL_ARG_VOID
-
-#endif
 
 #endif
