@@ -275,11 +275,13 @@ void USART_MBS_ISR(void)
     /* Check if we were called because of RXNE. */
     if (((USART_CR1(USART_MBS_PERIPH) & USART_CR1_RXNEIE) != 0) && ((USART_SR(USART_MBS_PERIPH) & USART_SR_RXNE) != 0))
     {
+        //uart_mb_inst->base.cb->byte_rcvd(uart_mb_inst->base.arg);
         ((MBInstance*)(((MBRTUInstance*)(uart_mb_inst->parent))->parent))->pxMBFrameCBByteReceived((MBRTUInstance*)(uart_mb_inst->parent));
     }
     /* Check if we were called because of TXE. */
     if (((USART_CR1(USART_MBS_PERIPH) & USART_CR1_TXEIE) != 0) && ((USART_SR(USART_MBS_PERIPH) & USART_SR_TXE) != 0))
     {
+       //uart_mb_inst->base.cb->tx_empty(uart_mb_inst->base.arg);
        ((MBInstance*)(((MBRTUInstance*)(uart_mb_inst->parent))->parent))->pxMBFrameCBTransmitterEmpty((MBRTUInstance*)(uart_mb_inst->parent));
         /* Check if we need to disable transmitter*/
         if(!uart_mb_inst->tx_en)
@@ -304,11 +306,13 @@ void USART_MBM_ISR(void)
     /* Check if we were called because of RXNE. */
     if (((USART_CR1(USART_MBM_PERIPH) & USART_CR1_RXNEIE) != 0) && ((USART_SR(USART_MBM_PERIPH) & USART_SR_RXNE) != 0))
     {
+        //uart_mbm_inst->base.cb->byte_rcvd(uart_mbm_inst->base.arg);
         ((MBInstance*)(((MBRTUInstance*)(uart_mbm_inst->parent))->parent))->pxMBFrameCBByteReceived((MBRTUInstance*)(uart_mbm_inst->parent));
     }
     /* Check if we were called because of TXE. */
     if (((USART_CR1(USART_MBM_PERIPH) & USART_CR1_TXEIE) != 0) && ((USART_SR(USART_MBM_PERIPH) & USART_SR_TXE) != 0))
     {
+        //uart_mbm_inst->base.cb->tx_empty(uart_mbm_inst->base.arg);
         ((MBInstance*)(((MBRTUInstance*)(uart_mbm_inst->parent))->parent))->pxMBFrameCBTransmitterEmpty((MBRTUInstance*)(uart_mbm_inst->parent));
         /* Check if we need to disable transmitter*/
         if(!uart_mbm_inst->tx_en)

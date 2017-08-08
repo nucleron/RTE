@@ -183,6 +183,8 @@ void MBS_TMR_ISR(void)
         timer_clear_flag(MBS_TMR, TIM_SR_UIF); /* Clear interrrupt flag. */
     }
     timer_get_flag(MBS_TMR, TIM_SR_UIF);	/* Reread to force the previous (buffered) write before leaving */
+
+    //uart_mb_inst->base.cb->tmr_expired(uart_mb_inst->base.arg);
     ((MBInstance*)(((MBRTUInstance*)(uart_mb_inst->parent))->parent))->pxMBPortCBTimerExpired(uart_mb_inst->parent);
 }
 #ifdef USART_MBM
@@ -195,6 +197,7 @@ void MBM_TMR_ISR(void)
         timer_clear_flag(MBM_TMR, TIM_SR_UIF); /* Clear interrrupt flag. */
     }
     timer_get_flag(MBM_TMR, TIM_SR_UIF);	/* Reread to force the previous (buffered) write before leaving */
+    //uart_mbm_inst->base.cb->tmr_expired(uart_mbm_inst->base.arg);
     ((MBInstance*)(((MBRTUInstance*)(uart_mbm_inst->parent))->parent))->pxMBPortCBTimerExpired(uart_mbm_inst->parent);
 }
 #endif
