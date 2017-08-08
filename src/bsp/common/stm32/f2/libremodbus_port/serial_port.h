@@ -64,7 +64,7 @@ struct _mb_port_ser
 	eMBEventType eQueuedEvent;
 	BOOL     xEventInQueue;
 
-	void* parent;
+	//void* parent;
 };
 /* ----------------------- Type definitions ---------------------------------*/
 
