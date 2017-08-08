@@ -18,14 +18,8 @@
  *
  * File: $Id: porttimer.c,v 1.1 2006/08/22 21:35:13 wolti Exp $
  */
-
-/* ----------------------- Platform includes --------------------------------*/
-#include "serial_port.h"
-#include "tcp_port.h"
-
 /* ----------------------- Modbus includes ----------------------------------*/
-#include "mb.h"
-#include "mbport.h"
+#include <mb.h>
 
 /* ----------------------- libopencm3 STM32F includes -------------------------------*/
 #include <libopencm3/cm3/nvic.h>
@@ -36,12 +30,12 @@
 
 #include <plc_config.h>
 
-extern MBSerialInstance* uart_mb_inst;
-extern MBSerialInstance* uart_mbm_inst;
+extern mb_port_ser* uart_mb_inst;
+extern mb_port_ser* uart_mbm_inst;
 
 /* ----------------------- Initialize Timer -----------------------------*/
 BOOL
-xMBPortTimersInit(MULTIPORT_SERIAL_ARG  USHORT usTim1Timerout50us )
+xMBPortTimersInit(mb_port_ser* inst,  USHORT usTim1Timerout50us )
 {
 //    rcc_periph_clock_enable( RCC_GPIOA );
 //    gpio_mode_setup(GPIOA, GPIO_OSPEED_50MHZ, GPIO_OTYPE_PP, GPIO1);
@@ -80,7 +74,7 @@ xMBPortTimersInit(MULTIPORT_SERIAL_ARG  USHORT usTim1Timerout50us )
 
 /* ----------------------- Enable Timer -----------------------------*/
 void
-vMBPortTimersEnable(MULTIPORT_SERIAL_ARG_VOID)
+vMBPortTimersEnable(mb_port_ser* inst)
 {
     if(inst==uart_mb_inst)
     {
@@ -107,7 +101,7 @@ vMBPortTimersEnable(MULTIPORT_SERIAL_ARG_VOID)
 
 /* ----------------------- Disable timer -----------------------------*/
 void
-vMBPortTimersDisable(MULTIPORT_SERIAL_ARG_VOID)
+vMBPortTimersDisable(mb_port_ser* inst)
 
 {
     if(inst==uart_mb_inst)
@@ -124,7 +118,7 @@ vMBPortTimersDisable(MULTIPORT_SERIAL_ARG_VOID)
     }
 }
 
-void vMBPortTimersDelay(MULTIPORT_SERIAL_ARG USHORT usTimeOutMS )
+void vMBPortTimersDelay(mb_port_ser* inst, USHORT usTimeOutMS )
 {
     /*Not supproted*/
 #if MB_ASCII_TIMEOUT_WAIT_BEFORE_SEND_MS > 0
@@ -133,7 +127,7 @@ void vMBPortTimersDelay(MULTIPORT_SERIAL_ARG USHORT usTimeOutMS )
 }
 
 #ifdef USART_MBM
-void vMBPortTimersConvertDelayEnable(MULTIPORT_SERIAL_ARG_VOID)
+void vMBPortTimersConvertDelayEnable(mb_port_ser* inst)
 {
     if(inst==uart_mbm_inst)
     {
@@ -146,7 +140,7 @@ void vMBPortTimersConvertDelayEnable(MULTIPORT_SERIAL_ARG_VOID)
     }
 }
 #endif
-void vMBPortTimersRespondTimeoutEnable(MULTIPORT_SERIAL_ARG_VOID)
+void vMBPortTimersRespondTimeoutEnable(mb_port_ser* inst)
 {
 	if(inst==uart_mb_inst)
     {
@@ -177,8 +171,8 @@ void vMBPortTimersRespondTimeoutEnable(MULTIPORT_SERIAL_ARG_VOID)
  * the timer has expired.
  */
 
-extern MBSerialInstance* uart_mb_inst;
-extern MBSerialInstance* uart_mbm_inst;
+extern mb_port_ser* uart_mb_inst;
+extern mb_port_ser* uart_mbm_inst;
 
 static CHAR count;
 void MBS_TMR_ISR(void)

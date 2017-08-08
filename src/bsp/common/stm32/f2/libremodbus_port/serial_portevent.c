@@ -20,30 +20,21 @@
  */
 
 /* ----------------------- Modbus includes ----------------------------------*/
-#include <serial_port.h>
-
 #include <mb.h>
-#include <mbport.h>
 
-/* ----------------------- Variables ----------------------------------------*/
-#ifndef SERIAL_MULTIPORT
-	static eMBEventType eQueuedEvent;
-	static BOOL     xEventInQueue;
-#else
-	#define xEventInQueue inst->xEventInQueue
-	#define eQueuedEvent inst->eQueuedEvent
-#endif
+#define xEventInQueue inst->xEventInQueue
+#define eQueuedEvent inst->eQueuedEvent
 
 /* ----------------------- Start implementation -----------------------------*/
 BOOL
-xMBPortEventInit( MULTIPORT_SERIAL_ARG_VOID )
+xMBPortEventInit( mb_port_ser* inst )
 {
     xEventInQueue = FALSE;
     return TRUE;
 }
 
 BOOL
-xMBPortEventPost(  MULTIPORT_SERIAL_ARG eMBEventType eEvent )
+xMBPortEventPost(  mb_port_ser* inst, eMBEventType eEvent )
 {
     xEventInQueue = TRUE;
     eQueuedEvent = eEvent;
@@ -51,7 +42,7 @@ xMBPortEventPost(  MULTIPORT_SERIAL_ARG eMBEventType eEvent )
 }
 
 BOOL
-xMBPortEventGet( MULTIPORT_SERIAL_ARG void* caller, eMBEventType * eEvent )
+xMBPortEventGet( mb_port_ser* inst, void* caller, eMBEventType * eEvent )
 {
     BOOL            xEventHappened = FALSE;
 

@@ -34,6 +34,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define	INLINE
 /* ----------------------- Defines ------------------------------------------*/
 /*! \defgroup modbus_cfg Modbus Configuration
  *
