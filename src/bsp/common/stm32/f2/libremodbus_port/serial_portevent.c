@@ -65,7 +65,7 @@ xMBPortEventGet( mb_port_ser* inst, void* caller, eMBEventType * eEvent )
  *
  * @return request error code
  */
-eMBMasterReqErrCode eMBMasterWaitRequestFinish( void ) {
+eMBMasterReqErrCode eMBRTUMasterWaitRequestFinish( void ) {
 
 	/*
 	eMBMasterReqErrCode    eErrStatus = MB_MRE_NO_ERR;
