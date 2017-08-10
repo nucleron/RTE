@@ -80,7 +80,7 @@ void
 vMBPortClose( mb_port_ser* inst )
 {
     extern void vMBPortSerialClose( mb_port_ser* inst );
-    extern void vMBPortTimersDisable( mb_port_ser* inst );
+    //extern void vMBPortTimersDisable( mb_port_ser* inst );
     vMBPortSerialClose( inst );
     vMBPortTimersDisable( inst );
 }

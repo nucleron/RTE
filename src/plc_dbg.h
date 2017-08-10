@@ -8,7 +8,8 @@
 #ifndef _PLC_DBG_H_
 #define _PLC_DBG_H_
 
-#include <iec_std_lib.h>
+//#include <iec_std_lib.h>
+#include <iec_types_all.h>
 #include <plc_abi.h>
 #include <plc_iom.h>
 
@@ -158,18 +159,18 @@ typedef struct
 #define PLC_STATE_STOPED 0x55
 #define PLC_STATE_STARTED 0xAA
 
-extern void plc_boot_mode_enter(void);
+//extern void plc_boot_mode_enter(void);
 extern uint8_t plc_state;
 extern bool plc_dbg_mode;
 
-static inline plc_app_start(void)
+static inline void plc_app_start(void)
 {
     plc_curr_app->start(0,0);
     plc_iom_start();
     plc_state = PLC_STATE_STARTED;
 }
 
-static inline plc_app_stop(void)
+static inline void plc_app_stop(void)
 {
     plc_state = PLC_STATE_STOPED;
     plc_iom_stop();

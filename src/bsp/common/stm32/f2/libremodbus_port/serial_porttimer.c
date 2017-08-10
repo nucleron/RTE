@@ -171,8 +171,8 @@ void vMBPortTimersRespondTimeoutEnable(mb_port_ser* inst)
  * the timer has expired.
  */
 
-extern mb_port_ser* uart_mb_inst;
-extern mb_port_ser* uart_mbm_inst;
+//extern mb_port_ser* uart_mb_inst;
+//extern mb_port_ser* uart_mbm_inst;
 
 static CHAR count;
 void MBS_TMR_ISR(void)

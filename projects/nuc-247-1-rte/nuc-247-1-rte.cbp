@@ -31,8 +31,15 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-mthumb" />
 			<Add option="-mcpu=cortex-m3" />
+			<Add option="-mthumb" />
+			<Add option="-Wshadow" />
+			<Add option="-Winit-self" />
+			<Add option="-Wredundant-decls" />
+			<Add option="-Wcast-align" />
+			<Add option="-Wunreachable-code" />
+			<Add option="-Wmissing-include-dirs" />
+			<Add option="-Wall" />
 			<Add option="-std=gnu90" />
 			<Add option="-fmessage-length=0" />
 			<Add option="-fno-builtin" />

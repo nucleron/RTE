@@ -104,6 +104,7 @@ void plc_iom_get(void);
 void plc_iom_set(void);
 
 void plc_iom_start(void);
+void plc_iom_stop(void);
 void plc_iom_poll(void);
 void plc_iom_end(void);
 

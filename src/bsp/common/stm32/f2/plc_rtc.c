@@ -211,10 +211,10 @@ void plc_rtc_init( tm* time )
     BACKUP_LOCK();
     return;
     /* LSE error occured */
-lse_error:
-    //plc_diag_status |= PLC_DIAG_ERR_LSE; //FIXME
-    rtc_lock();
-    plc_rtc_failure = 1;
+//lse_error:
+//    //plc_diag_status |= PLC_DIAG_ERR_LSE; //FIXME
+//    rtc_lock();
+//    plc_rtc_failure = 1;
 }
 
 void plc_rtc_dt_set( tm* time )
@@ -348,7 +348,7 @@ void _plc_rtc_poll(void)
 void plc_rtc_time_get( IEC_TIME *current_time )
 {
     static tm curr;
-    static uint32_t rtc_ssr, rtc_tr, rtc_dr;
+    static uint32_t rtc_tr, rtc_dr;
     static int64_t rtc_corr;
 
     //Read buffered register values

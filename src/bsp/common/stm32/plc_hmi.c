@@ -108,7 +108,7 @@ static const plc_gpio_t button[] =
 #define PLC_HMI_BTN_DW_S 5
 #define PLC_HMI_BTN_DW_L 6
 
-static const button_cfg[3][2] =
+static const char button_cfg[3][2] =
 {
     //     SHORT            LONG
     {PLC_HMI_BTN_UP_S, PLC_HMI_BTN_UP_L},
@@ -152,13 +152,13 @@ static uint8_t buf2[HMI_DIGITS];
 
 static uint8_t* video     = buf1;
 static uint8_t* convert   = buf2;
-static bool     ready_flg = false;
+//static bool     ready_flg = false;
 uint8_t         plc_hmi_bri = 0;
 char            str_buf[HMI_DIGITS+1];
 
 static inline void swap_buf(void)
 {
-    char* tmp;
+    uint8_t* tmp;
 
     tmp = video;
     video = convert;
@@ -192,6 +192,8 @@ static const plc_gpio_t segments[8] =
     PLC_GPIO_REC(HMI_SEG_6),
     PLC_GPIO_REC(HMI_SEG_7),
 };
+
+extern uint8_t plc_backup_load_brightness(void);
 
 void plc_hmi_vout_init(void)
 {
@@ -448,7 +450,7 @@ static void par_value_str(char* s, plc_hmi_par_t par_type, int32_t val)
         break;
     case PLC_HMI_UINT:
     case PLC_HMI_RO_UINT:
-        sprintf(s,"%4d",val);
+        sprintf(s,"%4d",(int)val);
         break;
     case PLC_HMI_SINT:
     case PLC_HMI_RO_SINT:
@@ -466,13 +468,13 @@ static void par_value_str(char* s, plc_hmi_par_t par_type, int32_t val)
     break;
     case PLC_HMI_HEX:
     case PLC_HMI_RO_HEX:
-        sprintf(s,"%4x",val);
+        sprintf(s,"%4x",(int)val);
         break;
     case PLC_HMI_MMDD:
     case PLC_HMI_HHMM:
     case PLC_HMI_RO_MMDD:
     case PLC_HMI_RO_HHMM:
-        sprintf(s,"%04d",val);
+        sprintf(s,"%04d",(int)val);
         break;
     case PLC_HMI_NOT_USED:
     case PLC_HMI_EMPTY:
@@ -710,7 +712,7 @@ static void find_par(void)
 #define PLC_HMI_MDL_DFLT plc_hmi_app
 void _plc_hmi_init(void)
 {
-    uint8_t i;
+//    uint8_t i;
     plc_hmi_kb_init();
     plc_hmi_vout_init();
 

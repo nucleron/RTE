@@ -90,7 +90,7 @@ void plc_backup_reset(void) //used to reset
 
 void plc_backup_validate(void)
 {
-    uint32_t i;
+//    uint32_t i;
 
     BACKUP_UNLOCK();
 
@@ -125,7 +125,7 @@ int plc_backup_check(void)
 
 void plc_backup_remind(unsigned int offset, unsigned int count, void *p)
 {
-    uint32_t i;
+//    uint32_t i;
     uint32_t* source = PLC_BKP_BANK1_START;
 
     if (PLC_BKP_VER_1 > PLC_BKP_VER_2)

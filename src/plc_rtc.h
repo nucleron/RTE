@@ -8,7 +8,17 @@
 #ifndef _RTC_H_
 #define _RTC_H_
 
-#include <iec_std_lib.h>
+typedef struct {
+	int tm_sec;			/* Seconds.	[0-60] (1 leap second) */
+	int tm_min;			/* Minutes.	[0-59] */
+	int tm_hour;			/* Hours.	[0-23] */
+	int tm_day;			/* Day.		[1-31] */
+	int tm_mon;			/* Month.	[0-11] */
+	int tm_year;			/* Year	*/
+} tm;
+//#include <time.h>
+#include <iec_types_all.h>
+//#include <iec_std_lib.h>
 
 extern volatile uint8_t plc_rtc_failure;
 

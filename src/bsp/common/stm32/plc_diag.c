@@ -8,13 +8,13 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <iec_types_all.h>
+
 #include <libopencm3/cm3/dwt.h>
 #include <libopencm3/cm3/scb.h>
 
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
-
-#include <iec_std_lib.h>
 
 #include <plc_config.h>
 #include <plc_abi.h>
@@ -39,7 +39,7 @@ static uint32_t blink_thr;
 static uint32_t blink_tmr;
 static bool err_test_flg = true;
 //RTC check
-static IEC_TIME rtc_last_val, rtc_curr_val;
+static IEC_TIME rtc_last_val;
 static uint32_t rtc_chck_tmr;
 
 typedef struct
@@ -128,7 +128,7 @@ static const char plc_diag_err_addr_i[]  = "Diag I location adress must be in 0 
 static const char plc_diag_err_addr_q[]  = "Diag Q location adress must be in 0..3!";
 static const char plc_diag_err_addr_m[]  = "WCCT location adress must be 0!";
 
-static bool abort_present = false;
+//static bool abort_present = false;
 
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {

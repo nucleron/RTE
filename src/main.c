@@ -8,7 +8,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <iec_std_lib.h>
+//#include <iec_std_lib.h>
+#include <iec_types_all.h>
 
 #include <plc_config.h>
 

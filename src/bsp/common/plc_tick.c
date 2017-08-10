@@ -58,7 +58,7 @@ volatile bool plc_tick_flag = false;
 
 extern void plc_irq_stub(void);
 
-extern volatile uint32_t plc_diag_status;
+//extern volatile uint32_t plc_diag_status;
 
 static bool dl_post_flag = true;
 static bool dl_fail_flag = false;

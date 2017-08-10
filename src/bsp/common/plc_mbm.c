@@ -76,7 +76,7 @@ typedef struct request_struct request_t;
 
 static request_t mbm_request;
 
-static uint8_t mbm_preread_buffer[MBM_REQUEST_MAX_ADDR>>3+1];
+static uint8_t mbm_preread_buffer[(MBM_REQUEST_MAX_ADDR>>3)+1];
 
 static uint32_t mbm_nearest_time=0xFFFFFFFF;
 static uint16_t mbm_nearest_num;
@@ -133,10 +133,10 @@ static const char plc_mbm_err_extrainit[] = "Only one modbus init variable allow
 
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
-    int j;
-    uint32_t addr;
-    uint32_t temp;
-    req_type_t rtype;
+//    int j;
+//    uint32_t addr;
+//    uint32_t temp;
+//    req_type_t rtype;
 
     switch (PLC_APP->l_tab[i]->a_size)
     {
@@ -228,7 +228,7 @@ uint8_t get_full_length()
 //Do once!
 void PLC_IOM_LOCAL_END(uint16_t i)
 {
-    int j,k,l;
+//    int j,k,l;
     if (!mbm_init_flg)
     {
         mbm_init_flg = true;
@@ -342,9 +342,9 @@ bool request_completed(void)
 
 void PLC_IOM_LOCAL_POLL(uint32_t tick)
 {
-    int i,j;
-    uint8_t max_weight_num;
-    uint8_t max_weight=0;
+//    int i,j;
+//    uint8_t max_weight_num;
+//    uint8_t max_weight=0;
 
     if (!mbm_init_flg) return;
 
@@ -546,8 +546,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
  * @param ucPDULength PDU buffer length
  *
  */
-void vMBMasterErrorCBRespondTimeout(UCHAR ucDestAddress, const UCHAR* pucPDUData,
-        USHORT ucPDULength)
+void vMBMasterErrorCBRespondTimeout(UCHAR ucDestAddress, const UCHAR* pucPDUData, USHORT ucPDULength)
 {
     mbm_request.result=RR_TIMEOUT;
     mbm_busy=0xFF;
@@ -564,8 +563,7 @@ void vMBMasterErrorCBRespondTimeout(UCHAR ucDestAddress, const UCHAR* pucPDUData
  * @param ucPDULength PDU buffer length
  *
  */
-void vMBMasterErrorCBReceiveData(UCHAR ucDestAddress, const UCHAR* pucPDUData,
-        USHORT ucPDULength)
+void vMBMasterErrorCBReceiveData(UCHAR ucDestAddress, const UCHAR* pucPDUData, USHORT ucPDULength)
 {
     mbm_request.result=RR_DATA_ERR;
     mbm_busy=0xFF;
@@ -581,8 +579,7 @@ void vMBMasterErrorCBReceiveData(UCHAR ucDestAddress, const UCHAR* pucPDUData,
  * @param ucPDULength PDU buffer length
  *
  */
-void vMBMasterErrorCBExecuteFunction(UCHAR ucDestAddress, const UCHAR* pucPDUData,
-        USHORT ucPDULength)
+void vMBMasterErrorCBExecuteFunction(UCHAR ucDestAddress, const UCHAR* pucPDUData, USHORT ucPDULength)
 {
     mbm_request.result=RR_INT_ERR;
     mbm_busy=0xFF;
@@ -594,7 +591,7 @@ void vMBMasterErrorCBExecuteFunction(UCHAR ucDestAddress, const UCHAR* pucPDUDat
  * So,for real-time of system.Do not execute too much waiting process.
  *
  */
-void vMBMasterCBRequestScuuess( void )
+void vMBMasterCBRequestScuuess(void)
 {
     if (!(mbm_need_preread))
     {
@@ -647,8 +644,7 @@ eMBErrorCode eMBMasterRegInputCB(MBInstance* inst, UCHAR * pucRegBuffer, USHORT 
 
 
 
-eMBErrorCode eMBMasterRegHoldingCB(MBInstance* inst, UCHAR * pucRegBuffer, USHORT usAddress,
-        USHORT usNRegs, eMBRegisterMode eMode)
+eMBErrorCode eMBMasterRegHoldingCB(MBInstance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs, eMBRegisterMode eMode)
 {
     eMBErrorCode    eStatus = MB_ENOERR;
 
@@ -721,8 +717,7 @@ eMBErrorCode eMBMasterRegHoldingCB(MBInstance* inst, UCHAR * pucRegBuffer, USHOR
  *
  * @return result
  */
-eMBErrorCode eMBMasterRegCoilsCB(MBInstance* inst, UCHAR * pucRegBuffer, USHORT usAddress,
-        USHORT usNCoils, eMBRegisterMode eMode)
+eMBErrorCode eMBMasterRegCoilsCB(MBInstance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils, eMBRegisterMode eMode)
 {
     eMBErrorCode    eStatus = MB_ENOERR;
 
