@@ -35,8 +35,11 @@
 
 #define SERIAL_MULTIPORT
 
-mb_port_ser* uart_mb_inst;
-mb_port_ser* uart_mbm_inst;
+mb_port_ser mbs_inst_usart;
+mb_port_ser mbm_inst_usart;
+//
+//mb_port_ser* uart_mb_inst;
+//mb_port_ser* uart_mbm_inst;
 /* ----------------------- Enable USART interrupts -----------------------------*/
 void
 vMBPortSerialEnable(mb_port_ser* inst, BOOL xRxEnable, BOOL xTxEnable )
@@ -80,26 +83,14 @@ vMBPortSerialEnable(mb_port_ser* inst, BOOL xRxEnable, BOOL xTxEnable )
 
 /* ----------------------- Initialize USART ----------------------------------*/
 /* Called with databits = 8 for RTU */
-
-BOOL
-xMBPortSerialInit(mb_port_ser* inst, UCHAR ucPort, ULONG ulBaudRate, UCHAR ucDataBits,
+BOOL xMBPortSerialInit(mb_port_ser* inst, ULONG ulBaudRate, UCHAR ucDataBits,
                    eMBParity eParity )
 {
     BOOL bStatus;
-
-    if((ucPort!=MBS_USART)
-       #ifdef USART_MBM
-       &&(ucPort!=MBM_USART)
-       #endif
-       ) return false; //we have 2 available uarts for modbus. #2 and #3
-    inst->uart_num = ucPort;
-
-    if(inst->uart_num==MBS_USART)
+    if((&mbs_inst_usart) == inst)
     {
         inst->uart_num = USART_MBS_PERIPH;
-        #ifdef SERIAL_MULTIPORT
-        uart_mb_inst = inst;
-        #endif
+
         rcc_periph_clock_enable(USART_MBS_RCC_PERIPH);
         rcc_periph_clock_enable(USART_MBS_TX_PERIPH  );
     #if (USART_MBS_TX_PERIPH != USART_MBS_RX_PERIPH)
@@ -125,12 +116,10 @@ xMBPortSerialInit(mb_port_ser* inst, UCHAR ucPort, ULONG ulBaudRate, UCHAR ucDat
         nvic_enable_irq(USART_MBS_VECTOR);
     }
     #ifdef USART_MBM
-    else if(inst->uart_num==MBM_USART)
+    else if((&mbm_inst_usart) == inst)
     {
         inst->uart_num = USART_MBM_PERIPH;
-        #ifdef SERIAL_MULTIPORT
-        uart_mbm_inst = inst;
-        #endif
+
         rcc_periph_clock_enable(USART_MBM_RCC_PERIPH);
         rcc_periph_clock_enable(USART_MBM_TX_PERIPH  );
     #if (USART_MBM_TX_PERIPH != USART_MBM_RX_PERIPH)
@@ -156,6 +145,10 @@ xMBPortSerialInit(mb_port_ser* inst, UCHAR ucPort, ULONG ulBaudRate, UCHAR ucDat
         nvic_enable_irq(USART_MBM_VECTOR);
     }
     #endif
+    else
+    {
+        return false;
+    }
 
     /* Setup UART parameters. */
     usart_set_baudrate    (inst->uart_num, ulBaudRate            );
@@ -275,16 +268,16 @@ void USART_MBS_ISR(void)
     /* Check if we were called because of RXNE. */
     if (((USART_CR1(USART_MBS_PERIPH) & USART_CR1_RXNEIE) != 0) && ((USART_SR(USART_MBS_PERIPH) & USART_SR_RXNE) != 0))
     {
-        uart_mb_inst->base.cb->byte_rcvd(uart_mb_inst->base.arg);
-        //((MBInstance*)(((MBRTUInstance*)(uart_mb_inst->parent))->parent))->pxMBFrameCBByteReceived((MBRTUInstance*)(uart_mb_inst->parent));
+        mbs_inst_usart.base.cb->byte_rcvd(mbs_inst_usart.base.arg);
+        //((MBInstance*)(((MBRTUInstance*)(mbs_inst_usart.parent))->parent))->pxMBFrameCBByteReceived((MBRTUInstance*)(mbs_inst_usart.parent));
     }
     /* Check if we were called because of TXE. */
     if (((USART_CR1(USART_MBS_PERIPH) & USART_CR1_TXEIE) != 0) && ((USART_SR(USART_MBS_PERIPH) & USART_SR_TXE) != 0))
     {
-       uart_mb_inst->base.cb->tx_empty(uart_mb_inst->base.arg);
-       //((MBInstance*)(((MBRTUInstance*)(uart_mb_inst->parent))->parent))->pxMBFrameCBTransmitterEmpty((MBRTUInstance*)(uart_mb_inst->parent));
+       mbs_inst_usart.base.cb->tx_empty(mbs_inst_usart.base.arg);
+       //((MBInstance*)(((MBRTUInstance*)(mbs_inst_usart.parent))->parent))->pxMBFrameCBTransmitterEmpty((MBRTUInstance*)(mbs_inst_usart.parent));
         /* Check if we need to disable transmitter*/
-        if(!uart_mb_inst->tx_en)
+        if(!mbs_inst_usart.tx_en)
         {
             USART_SR (USART_MBS_PERIPH) &= ~USART_SR_TC;   /* Clear TC flag*/
             USART_CR1(USART_MBS_PERIPH) |= USART_CR1_TCIE; /* Enable transfer complite interrupt*/
@@ -306,16 +299,16 @@ void USART_MBM_ISR(void)
     /* Check if we were called because of RXNE. */
     if (((USART_CR1(USART_MBM_PERIPH) & USART_CR1_RXNEIE) != 0) && ((USART_SR(USART_MBM_PERIPH) & USART_SR_RXNE) != 0))
     {
-        uart_mbm_inst->base.cb->byte_rcvd(uart_mbm_inst->base.arg);
-        //((MBInstance*)(((MBRTUInstance*)(uart_mbm_inst->parent))->parent))->pxMBFrameCBByteReceived((MBRTUInstance*)(uart_mbm_inst->parent));
+        mbm_inst_usart.base.cb->byte_rcvd(mbm_inst_usart.base.arg);
+        //((MBInstance*)(((MBRTUInstance*)(mbm_inst_usart.parent))->parent))->pxMBFrameCBByteReceived((MBRTUInstance*)(mbm_inst_usart.parent));
     }
     /* Check if we were called because of TXE. */
     if (((USART_CR1(USART_MBM_PERIPH) & USART_CR1_TXEIE) != 0) && ((USART_SR(USART_MBM_PERIPH) & USART_SR_TXE) != 0))
     {
-        uart_mbm_inst->base.cb->tx_empty(uart_mbm_inst->base.arg);
-        //((MBInstance*)(((MBRTUInstance*)(uart_mbm_inst->parent))->parent))->pxMBFrameCBTransmitterEmpty((MBRTUInstance*)(uart_mbm_inst->parent));
+        mbm_inst_usart.base.cb->tx_empty(mbm_inst_usart.base.arg);
+        //((MBInstance*)(((MBRTUInstance*)(mbm_inst_usart.parent))->parent))->pxMBFrameCBTransmitterEmpty((MBRTUInstance*)(mbm_inst_usart.parent));
         /* Check if we need to disable transmitter*/
-        if(!uart_mbm_inst->tx_en)
+        if(!mbm_inst_usart.tx_en)
         {
             USART_SR (USART_MBM_PERIPH) &= ~USART_SR_TC;   /* Clear TC flag*/
             USART_CR1(USART_MBM_PERIPH) |= USART_CR1_TCIE; /* Enable transfer complete interrupt*/

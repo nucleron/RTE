@@ -84,5 +84,9 @@ void            vMBPortTimerPoll(  mb_port_ser* inst, void* caller  ); //FIXME
 BOOL            xMBPortSerialPoll( mb_port_ser* inst, void* caller ); //FIXME
 BOOL            xMBPortSerialSetTimeout(mb_port_ser* inst, DWORD dwTimeoutMs );
 
+
+extern mb_port_ser mbs_inst_usart;
+extern mb_port_ser mbm_inst_usart;
+
 PR_END_EXTERN_C
 #endif
