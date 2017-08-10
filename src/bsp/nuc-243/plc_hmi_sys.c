@@ -7,13 +7,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <iec_types_all.h>
+
 #include <noise_flt.h>
 
 #include <plc_config.h>
+#include <plc_rtc.h>
 #include <plc_ain.h>
 #include <plc_aout.h>
 #include <plc_hmi.h>
-#include <iec_std_lib.h>
+#include <plc_hw.h>
+
 #include <dbnc_flt.h>
 
 #define MIN(x,y) (((x)>(y))?(y):(x))
@@ -29,6 +33,8 @@ uint8_t din_chnl = 0;
 uint8_t ain_chnl = 0;
 
 extern plc_hmi_dm_t plc_hmi_sys;
+
+extern void plc_backup_save_brightness(uint8_t data);
 
 #define PLC_HMI_SYS_PAR_YEAR 0
 #define PLC_HMI_SYS_PAR_MMDD 1

@@ -1066,6 +1066,8 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
                     plc_iom_errno_print(PLC_ERRNO_HMI_LUSED);
                     return false;
                 }
+                default:
+                    break;
                 }
 
                 return true;

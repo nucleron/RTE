@@ -279,7 +279,7 @@ static const char plc_mb_err_extrainit[] = "Only one modbus init variable allowe
 */
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
-    uint32_t addr;
+//    uint32_t addr;
     switch (PLC_APP->l_tab[i]->v_size)
     {
     case PLC_LSZ_X:

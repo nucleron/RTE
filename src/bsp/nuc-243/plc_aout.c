@@ -165,7 +165,7 @@ void PLC_IOM_LOCAL_START(void)
 {
     int i;
     //Calibration must be valid
-    if (0 == PLC_CLB_VER & 0x1)
+    if (0 == (*PLC_CLB_VER & 0x1))
     {
         return;
     }

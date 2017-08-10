@@ -702,14 +702,14 @@ void PLC_IOM_LOCAL_START(void)
     for (i=0; i<4; i++)
     {
         int j;
-        static const other_analog_cfg[4] = {8,8,8,0};
+        static const uint8_t other_analog_cfg[4] = {8,8,8,0};
         other_analog[i].sum             = other_analog_cfg[i];
 
         analog_input[i].polling_period  = (plc_tick_time/1000000);
         analog_input[i].mode            = PLC_AIN_MODE_OFF;
         _plc_ain_cfg(i,PLC_AIN_MODE_OFF);
         //Calibration data must be valid
-        if (0 == PLC_CLB_VER & 0x1)
+        if (0 == (*PLC_CLB_VER & 0x1))
         {
             continue;
         }
