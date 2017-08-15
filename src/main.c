@@ -70,14 +70,14 @@ int main(void)
         {
             //do reset
             PLC_RESET_HOOK();
-            plc_rtc_init( (tm *)&default_date );
+            plc_rtc_init((tm *)&default_date);
             plc_backup_reset();
         }
 
         if (0 == plc_rtc_clken_and_check())
         {
             //rtc is not OK, must reset it!
-            plc_rtc_init( (tm *)&default_date );
+            plc_rtc_init((tm *)&default_date);
         }
 
         if (plc_app_is_valid())

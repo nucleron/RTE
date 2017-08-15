@@ -26,7 +26,7 @@ ai_data_t  analog_input[4];      // четыре комплекта для ко�
 adc_data_t other_analog[4];      // четыре других аналоговых - напряжения, температура и VBAT
 
 uint8_t plc_adc_clk   = 0;   // счётчик прерываний для обеспечения процесса
-uint8_t k,m;                  // счётчик для чего то там (циклы для переменных в исходное)
+uint8_t k, m;                  // счётчик для чего то там (циклы для переменных в исходное)
 
 // *** ПРОВЕРКА КОРРЕКТНОСТИ КОНФИГ. ДАННЫХ ДЛЯ АЦП ***
 static void _plc_ain_cfg_chk(ai_data_t * self)
@@ -135,7 +135,7 @@ static uint16_t temp_calc(uint32_t data, uint8_t sum)
 }
 
 // *** ВЫЧИСЛЕНИЕ VBAT ***
-static uint16_t vbat_calc(uint32_t data,uint8_t sum)
+static uint16_t vbat_calc(uint32_t data, uint8_t sum)
 {
     // не забудьте включить VBATE
     return (data * other_analog[0].calc) / (2047 *sum);
@@ -155,7 +155,7 @@ static uint16_t ai_20ma_calc(uint16_t data, ai_data_t * ch)
     /*
                              Напр.пит. CPU * N (отсчёты) * 20 000 мкА
     Ток 4-20, мкА =  ----------------------------------------------------------,
-                      4095 * 2550 (напряжение в мВ на 127,5 Ом при токе 20 мА)
+                      4095 * 2550 (напряжение в мВ на 127, 5 Ом при токе 20 мА)
 
     где: N (отсчёты) = data, напр.пит. CPU = other_analog[0].calc,
     сокращаем 20 000 / (4095 * 2550) = 80 / 41769.
@@ -163,7 +163,7 @@ static uint16_t ai_20ma_calc(uint16_t data, ai_data_t * ch)
     Множитель 80 оставляем в формуле, 41769 отправляем в переменную структуры для канала.
     */
     uint32_t i = (data * other_analog[0].calc * 80);  // толстое число, в 32 бита только входит
-    return (uint16_t)(i / ch->clb.coef._20ma ); // результат в мкА.
+    return (uint16_t)(i / ch->clb.coef._20ma); // результат в мкА.
 }
 
 static inline uint16_t ai_R_calc(uint16_t data, uint16_t calib)
@@ -177,7 +177,7 @@ static uint16_t ai_100r_calc(uint16_t data, ai_data_t * ch)
 {
 //    // Расчётный коэф: 218 мОм на разряд АЦП
 //    uint32_t i = (data * ch->clb.coef._100r);
-//    // сопротивление в 0,1 Ом. См. "Расчёты" в проекте.
+//    // сопротивление в 0, 1 Ом. См. "Расчёты" в проекте.
 //    return (uint16_t)(i / 100);
     return ai_R_calc(data, ch->clb.coef._100r);
 }
@@ -240,7 +240,7 @@ static void __plc_ain_data_calc(ai_data_t * self)
             ai_100r_calc,  // 3 - шунты отключены, измерение сопротивления 0...100R, порт "a"
             ai_4k_calc     // 4 - шунты отключены, измерение сопротивления 0...4000R, порт "a"
         };
-        //gpio_set(TxLED_PORT,TxLED_PIN);
+        //gpio_set(TxLED_PORT, TxLED_PIN);
 
         // внесенние данных в массив усредняющего фильтра
         noise_flt_write(&self->ave, noise_flt_median(&self->median, self->mbuf));
@@ -330,12 +330,12 @@ static void _other_read_end(adc_data_t * self)
         self->counter++;
         if (self->counter >= self->sum)
         {
-            // gpio_set(RxLED_PORT,RxLED_PIN);
+            // gpio_set(RxLED_PORT, RxLED_PIN);
             self->counter   = 0;
             self->flag      = 1;
             self->data_out  = self->data_in;
             self->data_in   = 0;
-            // gpio_clear(RxLED_PORT,RxLED_PIN);
+            // gpio_clear(RxLED_PORT, RxLED_PIN);
         }
     }
 }
@@ -371,9 +371,9 @@ void _plc_ain_adc_poll(void)
     case 9: // обработка данных AI раз в миллисекунду
         for (i=0; i<4; i++)
         {
-            //gpio_set(RxLED_PORT,RxLED_PIN);
+            //gpio_set(RxLED_PORT, RxLED_PIN);
             _ai_read_end(analog_input + i);
-            //gpio_clear(RxLED_PORT,RxLED_PIN);
+            //gpio_clear(RxLED_PORT, RxLED_PIN);
         }
         break;
     }
@@ -575,9 +575,9 @@ static const char plc_ain_err_ix[]     = "Analog input: this location must be in
 static const char plc_ain_err_ix9[]    = "Analog input: this location must have 8 at address end!";
 
 static const char plc_ain_err_qb[]     = "Analog input: this location must be output!";
-static const char plc_ain_err_qbx[]    = "Analog input: this location must have 1,2 or 3 at address end!";
+static const char plc_ain_err_qbx[]    = "Analog input: this location must have 1, 2 or 3 at address end!";
 
-static const char plc_ain_err_qwx[]    = "Analog input: this location must have 4,5 or 6 at address end!";
+static const char plc_ain_err_qwx[]    = "Analog input: this location must have 4, 5 or 6 at address end!";
 static const char plc_ain_err_iw7[]    = "Analog input: this location must have 7 at address end!";
 */
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
@@ -702,12 +702,12 @@ void PLC_IOM_LOCAL_START(void)
     for (i=0; i<4; i++)
     {
         int j;
-        static const uint8_t other_analog_cfg[4] = {8,8,8,0};
+        static const uint8_t other_analog_cfg[4] = {8, 8, 8, 0};
         other_analog[i].sum             = other_analog_cfg[i];
 
         analog_input[i].polling_period  = (plc_tick_time/1000000);
         analog_input[i].mode            = PLC_AIN_MODE_OFF;
-        _plc_ain_cfg(i,PLC_AIN_MODE_OFF);
+        _plc_ain_cfg(i, PLC_AIN_MODE_OFF);
         //Calibration data must be valid
         if (0 == (*PLC_CLB_VER & 0x1))
         {
@@ -745,7 +745,7 @@ void PLC_IOM_LOCAL_STOP(void)
     for (i=0; i<4; i++)
     {
         analog_input[i].mode = PLC_AIN_MODE_OFF;
-        _plc_ain_cfg(i,PLC_AIN_MODE_OFF);
+        _plc_ain_cfg(i, PLC_AIN_MODE_OFF);
     }
 }
 
@@ -792,7 +792,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     {
         uint8_t tmp;
         tmp = *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf);
-        if( 0 == analog_input[chn].mode - tmp )
+        if (0 == analog_input[chn].mode - tmp)
         {
             break;
         }
@@ -803,7 +803,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         //Set chanel processing mode
         analog_input[chn].mode = tmp;
         //Configure pins
-        _plc_ain_cfg(chn,tmp);
+        _plc_ain_cfg(chn, tmp);
         break;
     }
     case 2:

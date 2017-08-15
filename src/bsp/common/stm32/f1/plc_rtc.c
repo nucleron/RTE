@@ -42,9 +42,9 @@ uint32_t plc_rtc_clken_and_check(void)
  *  Julian Day Number computation
  *  See http://en.wikipedia.org/wiki/Julian_day
  */
-static uint32_t jdn( tm *date_time )
+static uint32_t jdn(tm *date_time)
 {
-    uint8_t a,m;
+    uint8_t a, m;
     uint16_t y;
     uint32_t ret;
 
@@ -55,11 +55,11 @@ static uint32_t jdn( tm *date_time )
 
     /* Julian day number computation */
     ret = (uint32_t)date_time->tm_day;
-    ret += ( 153ul * (uint32_t)m + 2ul )/ 5ul;
+    ret += (153ul * (uint32_t)m + 2ul)/ 5ul;
     ret += 365ul * (uint32_t)y;
-    ret += (uint32_t)( y/4   );
-    ret -= (uint32_t)( y/100 );
-    ret += (uint32_t)( y/400 );
+    ret += (uint32_t)(y/4  );
+    ret -= (uint32_t)(y/100);
+    ret += (uint32_t)(y/400);
     ret -= 32045ul;
 
     return ret;
@@ -68,7 +68,7 @@ static uint32_t jdn( tm *date_time )
 /*
  * Compute unix-time seconds
  */
-static uint32_t dt_to_sec( tm *date_time )
+static uint32_t dt_to_sec(tm *date_time)
 {
     uint32_t ret;
 
@@ -87,9 +87,9 @@ static uint32_t dt_to_sec( tm *date_time )
     return ret;
 }
 
-static void  jdn_to_dt ( uint32_t jdn, tm *date_time)
+static void  jdn_to_dt (uint32_t jdn, tm *date_time)
 {
-    uint32_t a,b,c,d,e,m;
+    uint32_t a, b, c, d, e, m;
 
     a = jdn + 32044;
     b = (4 * a + 3) /146097;
@@ -103,7 +103,7 @@ static void  jdn_to_dt ( uint32_t jdn, tm *date_time)
     date_time->tm_day = e - (153 * m + 2) /5 + 1;
 }
 
-void  sec_to_dt ( uint32_t utime, tm *date_time)
+void  sec_to_dt (uint32_t utime, tm *date_time)
 {
     date_time->tm_sec = utime%60;
     utime /= 60;
@@ -117,7 +117,7 @@ void  sec_to_dt ( uint32_t utime, tm *date_time)
 }
 
 
-void plc_rtc_init( tm* time )
+void plc_rtc_init(tm* time)
 {
     uint32_t i;
 
@@ -158,11 +158,11 @@ void plc_rtc_init( tm* time )
     /* Reset values + enter config mode*/
     RTC_CRL = RTC_CRL_CNF|RTC_CRL_RTOFF;
     RTC_CRH = 0;
-    /* We have 32,768KHz clock, set 0x7fff*/
+    /* We have 32, 768KHz clock, set 0x7fff*/
     RTC_PRLL = PLC_RTC_DIV_VAL     & 0xffff;;
     RTC_PRLH = PLC_RTC_DIV_VAL>>16 & 0x000f;;
     //Get date and time, set counters.
-    i = dt_to_sec( time );
+    i = dt_to_sec(time);
     RTC_CNTH = (i >> 16) & 0xffff;
     RTC_CNTL =         i & 0xffff;
 
@@ -187,7 +187,7 @@ lse_error:
     pwr_enable_backup_domain_write_protect();
 }
 
-void plc_rtc_dt_set( tm* time )
+void plc_rtc_dt_set(tm* time)
 {
     uint32_t i;
 
@@ -288,12 +288,12 @@ void _plc_rtc_poll(void)
     }
 }
 
-void plc_rtc_dt_get( tm* time )
+void plc_rtc_dt_get(tm* time)
 {
-    sec_to_dt( plc_rtc_cntr, time );
+    sec_to_dt(plc_rtc_cntr, time);
 }
 
-void plc_rtc_time_get( IEC_TIME *current_time )
+void plc_rtc_time_get(IEC_TIME *current_time)
 {
     int64_t rtc_corr;
 

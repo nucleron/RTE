@@ -51,7 +51,7 @@ void xputs (					/* Put a string to the default device */
 
 
 void xfputs (					/* Put a string to the specified device */
-    void(*func)(unsigned char),	/* Pointer to the output function */
+    void(*func)(unsigned char), 	/* Pointer to the output function */
     const char*	str				/* Pointer to the string */
 )
 {
@@ -71,7 +71,7 @@ void xfputs (					/* Put a string to the specified device */
 /* Formatted string output                      */
 /*----------------------------------------------*/
 /*  xprintf("%d", 1234);			"1234"
-    xprintf("%6d,%3d%%", -200, 5);	"  -200,  5%"
+    xprintf("%6d, %3d%%", -200, 5);	"  -200,  5%"
     xprintf("%-6u", 100);			"100   "
     xprintf("%ld", 12345678L);		"12345678"
     xprintf("%04x", 0xA3);			"00a3"
@@ -85,7 +85,7 @@ void xfputs (					/* Put a string to the specified device */
 */
 
 void xvprintf (
-    const char*	fmt,	/* Pointer to the format string */
+    const char*	fmt, 	/* Pointer to the format string */
     va_list arp			/* Pointer to arguments */
 )
 {
@@ -179,14 +179,14 @@ void xvprintf (
         d = (f & 1) ? '0' : ' ';
         while (!(f & 2) && j++ < w) xputc(d);
         do xputc(s[--i]);
-        while(i);
+        while (i);
         while (j++ < w) xputc(' ');
     }
 }
 
 
 void xprintf (			/* Put a formatted string to the default device */
-    const char*	fmt,	/* Pointer to the format string */
+    const char*	fmt, 	/* Pointer to the format string */
     ...					/* Optional arguments */
 )
 {
@@ -200,8 +200,8 @@ void xprintf (			/* Put a formatted string to the default device */
 
 
 void xsprintf (			/* Put a formatted string to the memory */
-    char* buff,			/* Pointer to the output buffer */
-    const char*	fmt,	/* Pointer to the format string */
+    char* buff, 			/* Pointer to the output buffer */
+    const char*	fmt, 	/* Pointer to the format string */
     ...					/* Optional arguments */
 )
 {
@@ -220,8 +220,8 @@ void xsprintf (			/* Put a formatted string to the memory */
 
 
 void xfprintf (					/* Put a formatted string to the specified device */
-    void(*func)(unsigned char),	/* Pointer to the output function */
-    const char*	fmt,			/* Pointer to the format string */
+    void(*func)(unsigned char), 	/* Pointer to the output function */
+    const char*	fmt, 			/* Pointer to the format string */
     ...							/* Optional arguments */
 )
 {
@@ -246,9 +246,9 @@ void xfprintf (					/* Put a formatted string to the specified device */
 /*----------------------------------------------*/
 
 void put_dump (
-    const void* buff,		/* Pointer to the array to be dumped */
-    unsigned long addr,		/* Heading address value */
-    int len,				/* Number of items to be dumped */
+    const void* buff, 		/* Pointer to the array to be dumped */
+    unsigned long addr, 		/* Heading address value */
+    int len, 				/* Number of items to be dumped */
     int width				/* Size of the items (DF_CHAR, DF_SHORT, DF_LONG) */
 )
 {
@@ -299,7 +299,7 @@ unsigned char (*xfunc_in)(void);	/* Pointer to the input stream */
 /*----------------------------------------------*/
 
 int xgets (		/* 0:End of stream, 1:A line arrived */
-    char* buff,	/* Pointer to the buffer */
+    char* buff, 	/* Pointer to the buffer */
     int len		/* Buffer length */
 )
 {
@@ -333,8 +333,8 @@ int xgets (		/* 0:End of stream, 1:A line arrived */
 
 
 int xfgets (	/* 0:End of stream, 1:A line arrived */
-    unsigned char (*func)(void),	/* Pointer to the input stream function */
-    char* buff,	/* Pointer to the buffer */
+    unsigned char (*func)(void), 	/* Pointer to the input stream function */
+    char* buff, 	/* Pointer to the buffer */
     int len		/* Buffer length */
 )
 {
@@ -364,7 +364,7 @@ int xfgets (	/* 0:End of stream, 1:A line arrived */
 */
 
 int xatoi (			/* 0:Failed, 1:Successful */
-    char **str,		/* Pointer to pointer to the string */
+    char **str, 		/* Pointer to pointer to the string */
     long *res		/* Pointer to the valiable to store the value */
 )
 {

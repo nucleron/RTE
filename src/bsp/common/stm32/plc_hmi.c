@@ -27,7 +27,7 @@
 #include <plc_iom.h>
 #include <plc_wait_tmr.h>
 
-#define MIN(x,y) (((x)>(y))?(y):(x))
+#define MIN(x, y) (((x)>(y))?(y):(x))
 
 //==================================================================
 //                   Keyboard related things
@@ -204,7 +204,7 @@ void plc_hmi_vout_init(void)
     //Segment lines init
     PLC_GPIO_GR_CFG_OUT(segments);
 
-    plc_hmi_bri = MIN(plc_backup_load_brightness(),PLC_HMI_BRI_LIM);
+    plc_hmi_bri = MIN(plc_backup_load_brightness(), PLC_HMI_BRI_LIM);
 }
 
 void plc_hmi_vout_poll(void)
@@ -303,12 +303,12 @@ static const uint8_t segmentLookup[] =
     0x1c, // U
     0x00, //   (space)
     0x01, // - (negative)
-    (1<<6),//upper dash      25
-    (1<<3),//underscore
-    (1<<5),//right top (b)
-    (1<<4),//right low (c)
-    (1<<2),//left low  (e)
-    (1<<1),//left top (f)    30
+    (1<<6), //upper dash      25
+    (1<<3), //underscore
+    (1<<5), //right top (b)
+    (1<<4), //right low (c)
+    (1<<2), //left low  (e)
+    (1<<1), //left top (f)    30
     0x15, // n
     0x1d, // o
     0x0f, // t
@@ -326,7 +326,7 @@ static uint8_t char_to_7seg(unsigned char c)
     {
         return segmentLookup[c-'0'];
     }
-    switch(c) //process characters that have both upper and lower case
+    switch (c) //process characters that have both upper and lower case
     {
     case 'C':
         return segmentLookup[12];
@@ -350,7 +350,7 @@ static uint8_t char_to_7seg(unsigned char c)
         return segmentLookup[c-'a'+10];
     }
 
-    switch(c) //all other
+    switch (c) //all other
     {
 
     case 'j':
@@ -379,21 +379,21 @@ static uint8_t char_to_7seg(unsigned char c)
 static const plc_hmi_led_rec led_cfg[] =
 {
     //Leds
-    {5,1<<PLC_HMI_LED_2},
-    {5,1<<PLC_HMI_LED_3},
-    {5,1<<PLC_HMI_LED_4},
-    {5,1<<PLC_HMI_LED_5},
-    {5,1<<PLC_HMI_LED_6},
-    {5,1<<PLC_HMI_LED_7},
-    {5,1<<PLC_HMI_LED_8},
-    {5,1<<PLC_HMI_LED_9},
+    {5, 1<<PLC_HMI_LED_2},
+    {5, 1<<PLC_HMI_LED_3},
+    {5, 1<<PLC_HMI_LED_4},
+    {5, 1<<PLC_HMI_LED_5},
+    {5, 1<<PLC_HMI_LED_6},
+    {5, 1<<PLC_HMI_LED_7},
+    {5, 1<<PLC_HMI_LED_8},
+    {5, 1<<PLC_HMI_LED_9},
     //Param value dots
-    {1,1<<7},
-    {2,1<<7},
-    {3,1<<7},
-    {4,1<<7},
+    {1, 1<<7},
+    {2, 1<<7},
+    {3, 1<<7},
+    {4, 1<<7},
     //Param num dot
-    {0,1<<7}
+    {0, 1<<7}
 };
 
 #define PLC_HMI_PAR_NUM_DOT (1<<12)
@@ -438,19 +438,19 @@ static void plc_hmi_convert(char * buff, uint32_t led_val)
 //==================================================================
 static void par_value_str(char* s, plc_hmi_par_t par_type, int32_t val)
 {
-    switch(par_type)
+    switch (par_type)
     {
     case PLC_HMI_BOOL_TF:
     case PLC_HMI_RO_BOOL_TF:
-        sprintf(s,(val!=0)?"True":"FAL5");
+        sprintf(s, (val!=0)?"True":"FAL5");
         break;
     case PLC_HMI_BOOL_OO:
     case PLC_HMI_RO_BOOL_OO:
-        sprintf(s,(val!=0)?" On ":" Off");
+        sprintf(s, (val!=0)?" On ":" Off");
         break;
     case PLC_HMI_UINT:
     case PLC_HMI_RO_UINT:
-        sprintf(s,"%4d",(int)val);
+        sprintf(s, "%4d", (int)val);
         break;
     case PLC_HMI_SINT:
     case PLC_HMI_RO_SINT:
@@ -468,31 +468,31 @@ static void par_value_str(char* s, plc_hmi_par_t par_type, int32_t val)
     break;
     case PLC_HMI_HEX:
     case PLC_HMI_RO_HEX:
-        sprintf(s,"%4x",(int)val);
+        sprintf(s, "%4x", (int)val);
         break;
     case PLC_HMI_MMDD:
     case PLC_HMI_HHMM:
     case PLC_HMI_RO_MMDD:
     case PLC_HMI_RO_HHMM:
-        sprintf(s,"%04d",(int)val);
+        sprintf(s, "%04d", (int)val);
         break;
     case PLC_HMI_NOT_USED:
     case PLC_HMI_EMPTY:
-        sprintf(s,"    ");
+        sprintf(s, "    ");
         break;
     default:
-        sprintf(s,"Err ");
+        sprintf(s, "Err ");
         break;
     }
 }
 
 static const char par_rep[] =
 {
-    '0','1','2','3','4','5','6','7','8','9',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 
-    'a','b','c','d','e','f','g','h',
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
 
-    'j','l','p','r','u'
+    'j', 'l', 'p', 'r', 'u'
 };
 #define PLC_HMI_GET_PAR_REP(num) ((num>22)?'?':par_rep[num])
 
@@ -754,7 +754,7 @@ static void plc_hmi_controller(char input)
 
     if (PLC_HMI_STATE_VIEW == hmi.state)
     {
-        switch(input)
+        switch (input)
         {
         case PLC_HMI_BTN_UP_L: //Move up
         case PLC_HMI_BTN_UP_S:
@@ -865,7 +865,7 @@ static void plc_hmi_controller(char input)
             switch (input)
             {
             case PLC_HMI_BTN_UP_L: //Minus
-                if(ptype==PLC_HMI_SINT)
+                if (ptype==PLC_HMI_SINT)
                 {
                     hmi.tmp -= hmi.delta;
                     if (hmi.tmp<HMI_MIN_SINT)
@@ -1114,7 +1114,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 
         ptid = PLC_APP->l_tab[i]->a_data[1];
 
-        switch(PLC_APP->l_tab[i]->v_size)
+        switch (PLC_APP->l_tab[i]->v_size)
         {
         case PLC_LSZ_X:
         {

@@ -26,8 +26,8 @@ static bool systick_set_period(uint32_t period, uint32_t ahb, uint8_t clk_source
     }
     else
     {
-        systick_set_clocksource( clk_source );
-        systick_set_reload( ahb * period - 1 );
+        systick_set_clocksource(clk_source);
+        systick_set_reload(ahb * period - 1);
         return true;
     }
 }
@@ -73,7 +73,7 @@ void plc_tick_poll(void)
     {
         plc_diag_status |= PLC_DIAG_ERR_DEADLINE;
 
-        if( dl_post_flag )
+        if (dl_post_flag)
         {
             dl_post_flag = false;
             plc_app_stop();/* Must stop the app now! */
@@ -106,7 +106,7 @@ void sys_tick_handler(void)
     case TICK_STATE_MID:
     case TICK_STATE_HIGH:
     default:
-        systick_set_reload(PLC_RCC_AHB_FREQ * (uint32_t)frac_div_icalc( &systick_ctrl ) - 1);
+        systick_set_reload(PLC_RCC_AHB_FREQ * (uint32_t)frac_div_icalc(&systick_ctrl) - 1);
         plc_tick_flag = true;
         break;
 
@@ -117,7 +117,7 @@ void sys_tick_handler(void)
 }
 
 //Tick period in ns
-void plc_tick_setup( uint64_t tick_next, uint64_t tick_period )
+void plc_tick_setup(uint64_t tick_next, uint64_t tick_period)
 {
     (void)tick_next;//disable warning
 

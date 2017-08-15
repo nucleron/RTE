@@ -84,7 +84,7 @@ void _plc_aout_dac_poll(void)
     {
         gpio_clear(PLC_DAC_SYN1_PORT, PLC_DAC_SYN1_PIN);
 
-        if ( (_plc_aout_data_dacB >> (0x000F-(((plc_aout_clk&0x001F)>>1)&0x000F)))& 0x0001)
+        if ((_plc_aout_data_dacB >> (0x000F-(((plc_aout_clk&0x001F)>>1)&0x000F)))& 0x0001)
         {
             gpio_set(PLC_DAC_DIN_PORT, PLC_DAC_DIN_PIN);
         }
@@ -158,7 +158,7 @@ void PLC_IOM_LOCAL_END(uint16_t lid)
 
 static aout_clb_t clb_data =
 {
-    .val={PLC_DEFAULT_COEF_OUT,PLC_DEFAULT_COEF_OUT}
+    .val={PLC_DEFAULT_COEF_OUT, PLC_DEFAULT_COEF_OUT}
 };
 
 void PLC_IOM_LOCAL_START(void)
@@ -215,7 +215,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 
     j = plc_curr_app->l_tab[i]->a_data[0];//j is checked in PLC_IOM_LOCAL_CHECK
 
-    switch(j)
+    switch (j)
     {
     case 0:
         plc_aout_dataA = (uint16_t)tmp;
@@ -233,7 +233,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         tmp = 4095;
     }
 
-    switch(j)
+    switch (j)
     {
     case 0:
         _plc_aout_data_dacA = (uint16_t)tmp;

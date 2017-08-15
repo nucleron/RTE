@@ -28,24 +28,24 @@ typedef struct
     uint16_t pin;
 } dio_t;
 
-#define PLC_HMI_CONCAT(a,b) a##b
-#define PLC_HMI_CONCAT2(a,b) PLC_HMI_CONCAT(a,b)
+#define PLC_HMI_CONCAT(a, b) a##b
+#define PLC_HMI_CONCAT2(a, b) PLC_HMI_CONCAT(a, b)
 
-#define PLC_HMI_THING(t,n,name) (PLC_HMI_CONCAT2(PLC_HMI_CONCAT(PLC_HMI_,t),PLC_HMI_CONCAT(n,name)))
+#define PLC_HMI_THING(t, n, name) (PLC_HMI_CONCAT2(PLC_HMI_CONCAT(PLC_HMI_, t), PLC_HMI_CONCAT(n, name)))
 
-#define PLC_HMI_PERIPH(t,n) PLC_HMI_THING(t,n,_PERIPH)
-#define PLC_HMI_PORT(t,n)   PLC_HMI_THING(t,n,_PORT)
-#define PLC_HMI_PIN(t,n)    PLC_HMI_THING(t,n,_PIN)
+#define PLC_HMI_PERIPH(t, n) PLC_HMI_THING(t, n, _PERIPH)
+#define PLC_HMI_PORT(t, n)   PLC_HMI_THING(t, n, _PORT)
+#define PLC_HMI_PIN(t, n)    PLC_HMI_THING(t, n, _PIN)
 
-#define PLC_HMI_REC(t,n) {PLC_HMI_PERIPH(t,n),PLC_HMI_PORT(t,n),PLC_HMI_PIN(t,n)}
+#define PLC_HMI_REC(t, n) {PLC_HMI_PERIPH(t, n), PLC_HMI_PORT(t, n), PLC_HMI_PIN(t, n)}
 
 static const dio_t hmi[PLC_HMI_DO_NUM] =
 {
-    PLC_HMI_REC(O,0),
-    PLC_HMI_REC(O,1),
+    PLC_HMI_REC(O, 0),
+    PLC_HMI_REC(O, 1),
 };
 
-void plc_hmi_set_dout( uint32_t i, bool val )
+void plc_hmi_set_dout(uint32_t i, bool val)
 {
     void (*do_set)(uint32_t, uint16_t);
 
@@ -66,7 +66,7 @@ void PLC_IOM_LOCAL_INIT(void)
     uint32_t i;
     for (i=0; i<PLC_HMI_DO_NUM; i++)
     {
-        rcc_periph_clock_enable(hmi[i].periph );
+        rcc_periph_clock_enable(hmi[i].periph);
         gpio_set_mode          (hmi[i].port, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, hmi[i].pin);
         gpio_clear             (hmi[i].port,                                                    hmi[i].pin);
     }
@@ -87,9 +87,9 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 
     addr = PLC_APP->l_tab[i]->a_data[0];
 
-    if( PLC_APP->l_tab[i]->v_size == PLC_LSZ_X )
+    if (PLC_APP->l_tab[i]->v_size == PLC_LSZ_X)
     {
-        if(PLC_APP->l_tab[i]->v_type == PLC_LT_Q )
+        if (PLC_APP->l_tab[i]->v_type == PLC_LT_Q)
         {
             if (PLC_HMI_DO_NUM <= addr)
             {
@@ -148,10 +148,10 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
 }
 uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 {
-    switch( plc_curr_app->l_tab[i]->v_type )
+    switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_Q:
-        plc_hmi_set_dout( plc_curr_app->l_tab[i]->a_data[0], *(bool *)(plc_curr_app->l_tab[i]->v_buf) );
+        plc_hmi_set_dout(plc_curr_app->l_tab[i]->a_data[0], *(bool *)(plc_curr_app->l_tab[i]->v_buf));
         break;
 
     default:

@@ -69,12 +69,12 @@ static const char plc_app_inf_msg[] = "Aplication posted info";
 
 static const diag_cfg_t diag_poll_cfg[]=
 {
-    DIAG_POLL_REC(PLC_DIAG_LEVEL_CRI, PLC_DIAG_ERR_DEADLINE  ,250, plc_dl_err_msg ),
-    DIAG_POLL_REC(PLC_DIAG_LEVEL_CRI, PLC_DIAG_ERR_OTHER_CRIT,250, plc_crt_err_msg),
-    DIAG_POLL_REC(PLC_DIAG_LEVEL_WRN, PLC_DIAG_ERR_LSE       ,250, plc_lse_err_msg),
-    DIAG_POLL_REC(PLC_DIAG_LEVEL_WRN, PLC_DIAG_ERR_HSE       ,125, plc_hse_err_msg),
-    DIAG_POLL_REC(PLC_DIAG_LEVEL_WRN, PLC_DIAG_ERR_APP_WARN  ,500, plc_app_wrn_msg),
-    DIAG_POLL_REC(PLC_DIAG_LEVEL_INF, PLC_DIAG_ERR_APP_INFO  ,250, plc_app_inf_msg),
+    DIAG_POLL_REC(PLC_DIAG_LEVEL_CRI, PLC_DIAG_ERR_DEADLINE  , 250, plc_dl_err_msg),
+    DIAG_POLL_REC(PLC_DIAG_LEVEL_CRI, PLC_DIAG_ERR_OTHER_CRIT, 250, plc_crt_err_msg),
+    DIAG_POLL_REC(PLC_DIAG_LEVEL_WRN, PLC_DIAG_ERR_LSE       , 250, plc_lse_err_msg),
+    DIAG_POLL_REC(PLC_DIAG_LEVEL_WRN, PLC_DIAG_ERR_HSE       , 125, plc_hse_err_msg),
+    DIAG_POLL_REC(PLC_DIAG_LEVEL_WRN, PLC_DIAG_ERR_APP_WARN  , 500, plc_app_wrn_msg),
+    DIAG_POLL_REC(PLC_DIAG_LEVEL_INF, PLC_DIAG_ERR_APP_INFO  , 250, plc_app_inf_msg),
 };
 
 static bool diag_post_flg[sizeof(diag_poll_cfg)/sizeof(diag_cfg_t)];
@@ -147,7 +147,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             return false;
         }
 
-        if(1 <= PLC_APP->l_tab[i]->a_data[0])
+        if (1 <= PLC_APP->l_tab[i]->a_data[0])
         {
             PLC_LOG_ERROR(plc_diag_err_addr_m);
             return false;
@@ -170,7 +170,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         if (PLC_LT_Q == PLC_APP->l_tab[i]->v_type)
         {
             //Debug mode and Abort locations
-            if(PLC_DIAG_Q_NUM <= PLC_APP->l_tab[i]->a_data[0])
+            if (PLC_DIAG_Q_NUM <= PLC_APP->l_tab[i]->a_data[0])
             {
                 PLC_LOG_ERROR(plc_diag_err_addr_q);
                 return false;
@@ -224,7 +224,7 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
         point =  dwt_read_cycle_counter();
         cycle_time = (point - pivot)/PLC_RCC_AHB_FREQ; //CT in us
 
-        if(plc_wcct_pivot_present && (plc_diag_wcct < cycle_time))
+        if (plc_wcct_pivot_present && (plc_diag_wcct < cycle_time))
         {
             plc_diag_wcct = cycle_time;
         }
@@ -239,7 +239,7 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
         plc_diag_status |= PLC_DIAG_ERR_LSE;
     }
 
-    if( 0!= plc_clock_hse_failure )
+    if (0!= plc_clock_hse_failure)
     {
         plc_diag_status |= PLC_DIAG_ERR_HSE;
     }
@@ -248,18 +248,18 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
     if (PLC_TIMER(blink_tmr) > (blink_thr>>1))
     {
         err_test_flg = true;
-        switch(err_level)
+        switch (err_level)
         {
         case PLC_DIAG_LEVEL_NRM:
         case PLC_DIAG_LEVEL_INF:
-            gpio_set( PLC_LED_STG_PORT, PLC_LED_STG_PIN );
+            gpio_set(PLC_LED_STG_PORT, PLC_LED_STG_PIN);
             break;
         case PLC_DIAG_LEVEL_CRI:
-            gpio_set( PLC_LED_STR_PORT, PLC_LED_STR_PIN );
+            gpio_set(PLC_LED_STR_PORT, PLC_LED_STR_PIN);
             break;
         default:
-            gpio_set( PLC_LED_STG_PORT, PLC_LED_STG_PIN );
-            gpio_set( PLC_LED_STR_PORT, PLC_LED_STR_PIN );
+            gpio_set(PLC_LED_STG_PORT, PLC_LED_STG_PIN);
+            gpio_set(PLC_LED_STR_PORT, PLC_LED_STR_PIN);
             break;
         }
     }
@@ -282,7 +282,7 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
                     if (diag_post_flg[i])
                     {
                         uint8_t log_level;
-                        switch(err_level)
+                        switch (err_level)
                         {
                         case PLC_DIAG_LEVEL_CRI:
                             log_level = LOG_CRITICAL;
@@ -308,8 +308,8 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
             }
         }
         PLC_CLEAR_TIMER(blink_tmr);
-        gpio_clear( PLC_LED_STR_PORT, PLC_LED_STR_PIN );
-        gpio_clear( PLC_LED_STG_PORT, PLC_LED_STG_PIN );
+        gpio_clear(PLC_LED_STR_PORT, PLC_LED_STR_PIN);
+        gpio_clear(PLC_LED_STG_PORT, PLC_LED_STG_PIN);
     }
 }
 
@@ -332,7 +332,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
     {
         bool tmp;
 
-        switch(plc_curr_app->l_tab[i]->a_data[0])
+        switch (plc_curr_app->l_tab[i]->a_data[0])
         {
         case PLC_DIAG_I_HSE:
             tmp = (0 != (plc_diag_status & PLC_DIAG_ERR_HSE));
@@ -364,13 +364,13 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     switch (PLC_APP->l_tab[i]->a_data[0])
     {
     case PLC_DIAG_Q_DBGM://Enter debug mode
-        if(*(bool *)(plc_curr_app->l_tab[i]->v_buf))
+        if (*(bool *)(plc_curr_app->l_tab[i]->v_buf))
         {
             plc_dbg_mode = true;
         }
         break;
     case PLC_DIAG_Q_CRIT://Abort
-        if(*(bool *)(plc_curr_app->l_tab[i]->v_buf))
+        if (*(bool *)(plc_curr_app->l_tab[i]->v_buf))
         {
             PLC_LOG_ERROR(plc_diag_abort_msg);
             plc_diag_status |= PLC_DIAG_ERR_APP_CRIT;
@@ -378,7 +378,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         }
         break;
     case PLC_DIAG_Q_WARN://Warning
-        if(*(bool *)(plc_curr_app->l_tab[i]->v_buf))
+        if (*(bool *)(plc_curr_app->l_tab[i]->v_buf))
         {
             //No message, user must do it in PLC program.
             plc_diag_status |= PLC_DIAG_ERR_APP_WARN;
@@ -390,7 +390,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         }
         break;
     case PLC_DIAG_Q_INFO://Warning
-        if(*(bool *)(plc_curr_app->l_tab[i]->v_buf))
+        if (*(bool *)(plc_curr_app->l_tab[i]->v_buf))
         {
             //No message, user must do it in PLC program.
             plc_diag_status |= PLC_DIAG_ERR_APP_INFO;

@@ -17,7 +17,7 @@ void plc_gpio_cfg_in(const plc_gpio_t * self)
 
 void plc_gpio_cfg_out(const plc_gpio_t * self)
 {
-    rcc_periph_clock_enable(self->periph );
+    rcc_periph_clock_enable(self->periph);
     gpio_set_mode          (self->port, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, self->pin);
     gpio_clear             (self->port,                                                    self->pin);
 }

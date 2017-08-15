@@ -16,7 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * File: $Id: port.h,v 1.2 2006/06/26 19:24:07 wolti Exp $
+ * File: $Id: port.h, v 1.2 2006/06/26 19:24:07 wolti Exp $
  */
 
 #ifndef _PORT_H
@@ -32,8 +32,8 @@ PR_BEGIN_EXTERN_C
 
 /* ----------------------- Defines ------------------------------------------*/
 
-#define ENTER_CRITICAL_SECTION( )
-#define EXIT_CRITICAL_SECTION( )
+#define ENTER_CRITICAL_SECTION()
+#define EXIT_CRITICAL_SECTION()
 #define MB_PORT_HAS_CLOSE	1
 #ifndef TRUE
 #define TRUE            1
@@ -54,8 +54,8 @@ typedef enum
 
 /* ----------------------- Function prototypes ------------------------------*/
 
-/*void            vMBPortLog( eMBPortLogLevel eLevel, const TCHAR * szModule, 
-                            const TCHAR * szFmt, ... );*/
+/*void            vMBPortLog(eMBPortLogLevel eLevel, const TCHAR * szModule,
+                            const TCHAR * szFmt, ...);*/
 
 #ifdef __cplusplus
 PR_END_EXTERN_C

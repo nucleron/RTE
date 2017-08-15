@@ -100,7 +100,7 @@ LGPL License Terms @ref lgpl_license
 
 #define ADC_SR_OVR			(1 << 5)
 
-/* --- ADC_CR1 values specific to STM32F2,4--------------------------------- */
+/* --- ADC_CR1 values specific to STM32F2, 4--------------------------------- */
 
 /* OVRIE: Overrun interrupt enable */
 #define ADC_CR1_OVRIE			(1 << 26)

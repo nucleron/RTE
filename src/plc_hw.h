@@ -24,8 +24,8 @@ void plc_boot_mode_enter(void);
 bool plc_get_din(uint32_t i);
 
 bool plc_get_dout(uint32_t i);
-void plc_set_dout( uint32_t i, bool val );
+void plc_set_dout(uint32_t i, bool val);
 
 uint32_t plc_get_ain(uint32_t i);
-void plc_set_aout( uint32_t i, uint32_t val );
+void plc_set_aout(uint32_t i, uint32_t val);
 #endif /* _PLC_HW_H_ */

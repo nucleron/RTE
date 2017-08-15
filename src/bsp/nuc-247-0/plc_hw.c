@@ -50,20 +50,20 @@ bool plc_rst_jmpr_get(void)
 
 void plc_boot_init(void)
 {
-    rcc_periph_clock_enable( PLC_BOOT_PERIPH );
+    rcc_periph_clock_enable(PLC_BOOT_PERIPH);
     gpio_mode_setup(PLC_BOOT_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PLC_BOOT_PIN);
     gpio_set_output_options(PLC_BOOT_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, PLC_BOOT_PIN);
-    gpio_set( PLC_BOOT_PORT, PLC_BOOT_PIN ); //Exit boot mode
+    gpio_set(PLC_BOOT_PORT, PLC_BOOT_PIN); //Exit boot mode
 }
 
 void plc_boot_mode_enter(void)
 {
     uint32_t delay;
     //Set boot pin
-    gpio_clear( PLC_BOOT_PORT, PLC_BOOT_PIN );
+    gpio_clear(PLC_BOOT_PORT, PLC_BOOT_PIN);
     //Wait boot pin voltage to set
-    PLC_CLEAR_TIMER( delay );
-    while( PLC_TIMER(delay) < 2000 );
+    PLC_CLEAR_TIMER(delay);
+    while (PLC_TIMER(delay) < 2000);
     //May reset the system now
     scb_reset_system();
 }
@@ -123,7 +123,7 @@ bool plc_get_dout(uint32_t i)
     }
 }
 
-void plc_set_dout( uint32_t i, bool val )
+void plc_set_dout(uint32_t i, bool val)
 {
     void (*do_set)(uint32_t, uint16_t);
 
@@ -142,7 +142,7 @@ uint32_t plc_get_ain(uint32_t i)
     return 0;
 }
 
-void plc_set_aout( uint32_t i, uint32_t val )
+void plc_set_aout(uint32_t i, uint32_t val)
 {
     (void)i;
     (void)val;
@@ -186,7 +186,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 
     addr = PLC_APP->l_tab[i]->a_data[0];
 
-    switch( PLC_APP->l_tab[i]->v_size )
+    switch (PLC_APP->l_tab[i]->v_size)
     {
     case PLC_LSZ_X:
         if (1 != PLC_APP->l_tab[i]->a_size)
@@ -251,7 +251,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         }
 
         addr = PLC_APP->l_tab[i]->a_data[1];
-        if( addr > 1 )
+        if (addr > 1)
         {
             //PLC_LOG_ERROR(plc_dio_err_flt_lim);
             plc_iom_errno_print(PLC_ERRNO_DIO_FLT_LIM);
@@ -303,10 +303,10 @@ uint32_t PLC_IOM_LOCAL_WEIGTH(uint16_t lid)
 }
 uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
 {
-    switch( plc_curr_app->l_tab[i]->v_type )
+    switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_I:
-        *(bool *)(plc_curr_app->l_tab[i]->v_buf) = dbnc_flt_get( in_flt + plc_curr_app->l_tab[i]->a_data[0]);
+        *(bool *)(plc_curr_app->l_tab[i]->v_buf) = dbnc_flt_get(in_flt + plc_curr_app->l_tab[i]->a_data[0]);
         break;
 
     case PLC_LT_M://Filter configuration is write only
@@ -327,11 +327,11 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
 }
 uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 {
-    switch( plc_curr_app->l_tab[i]->v_type )
+    switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_Q:
-        plc_set_dout( plc_curr_app->l_tab[i]->a_data[0], *(bool *)(plc_curr_app->l_tab[i]->v_buf) );
-        if(*(bool *)(plc_curr_app->l_tab[i]->v_buf))
+        plc_set_dout(plc_curr_app->l_tab[i]->a_data[0], *(bool *)(plc_curr_app->l_tab[i]->v_buf));
+        if (*(bool *)(plc_curr_app->l_tab[i]->v_buf))
         {
             digital_out|=(1<<(plc_curr_app->l_tab[i]->a_data[0]));
         }

@@ -107,16 +107,16 @@ static const clk_cfg cfg_hsi =
     .apb2_freq = 64000000ul
 };
 
-static void pll_setup( const clk_cfg *clock )
+static void pll_setup(const clk_cfg *clock)
 {
     /*
      * Set prescalers for AHB, ADC, ABP1, ABP2.
      * Do this before touching the PLL (TODO: why?).
      */
-    rcc_set_hpre  (clock->hpre  );
+    rcc_set_hpre  (clock->hpre );
     rcc_set_adcpre(clock->adcpre);
-    rcc_set_ppre1 (clock->ppre1 );
-    rcc_set_ppre2 (clock->ppre2 );
+    rcc_set_ppre1 (clock->ppre1);
+    rcc_set_ppre2 (clock->ppre2);
     /*
      * Sysclk runs with 72MHz -> 2 waitstates.
      * 0WS from 0-24MHz
@@ -175,7 +175,7 @@ void plc_clock_setup(void)
         {
             /* Sucess. */
             pll_is_dirty = true;
-            pll_setup( &PLC_HSE_CONFIG );
+            pll_setup(&PLC_HSE_CONFIG);
             pll_is_dirty = false;
 
             return;
@@ -183,7 +183,7 @@ void plc_clock_setup(void)
     }
     /* Fallback to HSI. */
     pll_is_dirty = true;
-    pll_setup( &cfg_hsi );
+    pll_setup(&cfg_hsi);
     pll_is_dirty = false;
     /* This is an error, but we can do some work... */
     //plc_diag_status |= PLC_DIAG_ERR_HSE;
@@ -204,7 +204,7 @@ void nmi_handler(void)
         else
         {
             /* We are already on HSI, so we need only PLL setup. */
-            pll_setup( &cfg_hsi );
+            pll_setup(&cfg_hsi);
             /* This is an error, but we can do some work... */
             //plc_diag_status |= PLC_DIAG_ERR_HSE;
             plc_clock_hse_failure = 1;

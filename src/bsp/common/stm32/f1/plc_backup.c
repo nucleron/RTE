@@ -107,18 +107,18 @@ int plc_backup_check(void)
 
 void plc_backup_remind(unsigned int offset, unsigned int count, void *p)
 {
-    if(offset + count < PLC_BKP_SIZE)
+    if (offset + count < PLC_BKP_SIZE)
     {
-        memcpy( p, (void *)plc_backup_buff + offset, count );
+        memcpy(p, (void *)plc_backup_buff + offset, count);
     }
 }
 
 void plc_backup_retain(unsigned int offset, unsigned int count, void *p)
 {
-    if(offset + count < PLC_BKP_SIZE)
+    if (offset + count < PLC_BKP_SIZE)
     {
         //pwr_disable_backup_domain_write_protect();
-        memcpy( (void *)plc_backup_buff + offset, p, count );
+        memcpy((void *)plc_backup_buff + offset, p, count);
         //pwr_enable_backup_domain_write_protect();
     }
 }

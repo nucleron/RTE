@@ -43,7 +43,7 @@ void plc_backup_init(void)
     //Wait for backup regulator ready
      for(i=0; i<1000000; i++)
     {
-        if( PWR_CSR  &  (1<<3) )
+        if (PWR_CSR  &  (1<<3))
         {
             break;
         }
@@ -67,7 +67,7 @@ uint8_t plc_backup_load_brightness(void)
 void plc_backup_invalidate(void)
 {
     BACKUP_UNLOCK();
-    if(PLC_BKP_VER_1>PLC_BKP_VER_2) //invalidate oldest bank
+    if (PLC_BKP_VER_1>PLC_BKP_VER_2) //invalidate oldest bank
     {
         PLC_BKP_VER_2 &= PLC_BKP_INVAL_MSK;
     }
@@ -94,7 +94,7 @@ void plc_backup_validate(void)
 
     BACKUP_UNLOCK();
 
-    if(PLC_BKP_VER_1<=PLC_BKP_VER_2) //Validate latest bank
+    if (PLC_BKP_VER_1<=PLC_BKP_VER_2) //Validate latest bank
     {
         PLC_BKP_VER_1 += 3;
     }
@@ -145,18 +145,18 @@ void plc_backup_remind(unsigned int offset, unsigned int count, void *p)
         }
     }
 
-    if(offset + count < PLC_BKP_SIZE)
+    if (offset + count < PLC_BKP_SIZE)
     {
-        memcpy( p, (void *)source + offset, count );
+        memcpy(p, (void *)source + offset, count);
     }
 }
 
 void plc_backup_retain(unsigned int offset, unsigned int count, void *p)
 {
     uint32_t* storage;
-    if(offset + count < PLC_BKP_SIZE)
+    if (offset + count < PLC_BKP_SIZE)
     {
-        if(PLC_BKP_VER_1<=PLC_BKP_VER_2) //store to latest bank (latest means nonvalid with lesser version!)
+        if (PLC_BKP_VER_1<=PLC_BKP_VER_2) //store to latest bank (latest means nonvalid with lesser version!)
         {
             storage = PLC_BKP_BANK1_START;
         }
@@ -166,7 +166,7 @@ void plc_backup_retain(unsigned int offset, unsigned int count, void *p)
         }
 
         BACKUP_UNLOCK();
-        memcpy( (void *)storage + offset, p, count );
+        memcpy((void *)storage + offset, p, count);
         BACKUP_LOCK();
     }
 }

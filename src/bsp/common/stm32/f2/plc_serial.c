@@ -33,8 +33,8 @@ static dbg_fifo_t usart_rx_buf, usart_tx_buf;
 
 void dbg_serial_init(void)
 {
-    dbg_fifo_flush( &usart_rx_buf );
-    dbg_fifo_flush( &usart_tx_buf );
+    dbg_fifo_flush(&usart_rx_buf);
+    dbg_fifo_flush(&usart_tx_buf);
 
     //rcc_periph_clock_enable(RCC_AFIO);
     rcc_periph_clock_enable(DBG_USART_PERIPH);
@@ -74,7 +74,7 @@ void DBG_USART_ISR(void)
     if (((USART_CR1(DBG_USART) & USART_CR1_RXNEIE) != 0) && ((USART_SR(DBG_USART) & USART_SR_RXNE) != 0))
     {
         usart_data = usart_recv(DBG_USART);
-        if( !dbg_fifo_write_byte( &usart_rx_buf, usart_data ) )
+        if (!dbg_fifo_write_byte(&usart_rx_buf, usart_data))
         {
             usart_disable_rx_interrupt(DBG_USART);
         }
@@ -83,7 +83,7 @@ void DBG_USART_ISR(void)
     if (((USART_CR1(DBG_USART) & USART_CR1_TXEIE) != 0) && ((USART_SR(DBG_USART) & USART_SR_TXE) != 0))
     {
         /* Put data into the transmit register. */
-        if( dbg_fifo_read_byte( &usart_tx_buf, &usart_data ) )
+        if (dbg_fifo_read_byte(&usart_tx_buf, &usart_data))
         {
             usart_send(DBG_USART, usart_data);
         }
@@ -95,16 +95,16 @@ void DBG_USART_ISR(void)
     }
 }
 
-int dbg_serial_write( unsigned char *d, unsigned short n )
+int dbg_serial_write(unsigned char *d, unsigned short n)
 {
     int res = 0;
     cm_disable_interrupts();
-    res = dbg_fifo_write( &usart_tx_buf, d, n );
-    if( res && !(USART_CR1(DBG_USART) & USART_CR1_TXEIE) )
+    res = dbg_fifo_write(&usart_tx_buf, d, n);
+    if (res && !(USART_CR1(DBG_USART) & USART_CR1_TXEIE))
     {
-        if( dbg_fifo_read_byte( &usart_tx_buf, &usart_data ) )
+        if (dbg_fifo_read_byte(&usart_tx_buf, &usart_data))
         {
-            while( !(USART_SR(DBG_USART) & USART_SR_TXE) );///пока буфер не пуст
+            while (!(USART_SR(DBG_USART) & USART_SR_TXE));///пока буфер не пуст
             usart_send(DBG_USART, usart_data);
             usart_enable_tx_interrupt(DBG_USART);
         }
@@ -113,14 +113,14 @@ int dbg_serial_write( unsigned char *d, unsigned short n )
     return res;
 }
 
-int dbg_serial_read( unsigned char *d, unsigned short n )
+int dbg_serial_read(unsigned char *d, unsigned short n)
 {
     int res;
     res = 0;
-    while( n-- )
+    while (n--)
     {
         cm_disable_interrupts();
-        if( dbg_fifo_read_byte( &usart_rx_buf, d ) )
+        if (dbg_fifo_read_byte(&usart_rx_buf, d))
         {
             cm_enable_interrupts();
             d++;

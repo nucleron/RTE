@@ -23,7 +23,7 @@ typedef struct
     volatile unsigned char buf[DBG_FIFO_SIZE];
 } dbg_fifo_t;
 
-void     dbg_fifo_flush(dbg_fifo_t * fifo );
+void     dbg_fifo_flush(dbg_fifo_t * fifo);
 int dbg_fifo_write_byte(dbg_fifo_t * fifo, unsigned char d);
 int      dbg_fifo_write(dbg_fifo_t * fifo, unsigned char *d, unsigned short n);
 int  dbg_fifo_read_byte(dbg_fifo_t * fifo, unsigned char *d);
@@ -31,8 +31,8 @@ int       dbg_fifo_read(dbg_fifo_t * fifo, unsigned char *d, unsigned short n);
 
 
 //Debug serial port access functions
-extern int dbg_serial_write(unsigned char *d, unsigned short n );
-extern int dbg_serial_read(unsigned char *d, unsigned short n );
+extern int dbg_serial_write(unsigned char *d, unsigned short n);
+extern int dbg_serial_read(unsigned char *d, unsigned short n);
 extern void dbg_serial_init(void);
 
 //Debug protocol handler
@@ -165,7 +165,7 @@ extern bool plc_dbg_mode;
 
 static inline void plc_app_start(void)
 {
-    plc_curr_app->start(0,0);
+    plc_curr_app->start(0, 0);
     plc_iom_start();
     plc_state = PLC_STATE_STARTED;
 }

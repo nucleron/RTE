@@ -25,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * File: $Id: portother.c,v 1.1 2010/06/05 09:57:48 wolti Exp $
+ * File: $Id: portother.c, v 1.1 2010/06/05 09:57:48 wolti Exp $
  */
 
 /* ----------------------- Modbus includes ----------------------------------*/
@@ -55,9 +55,9 @@ static inline void setprimask(uint32_t primask)
 /* Check if PRIMASK was set, and disable it on entry. On exit, if it was originally
 set then set it back again otherwise leave it unset. */
 void
-vMBPortEnterCritical( void )
+vMBPortEnterCritical(void)
 {
-    if(ulNesting == 0)
+    if (ulNesting == 0)
     {
         xOriginalState = getprimask();
     }
@@ -66,10 +66,10 @@ vMBPortEnterCritical( void )
 }
 
 void
-vMBPortExitCritical( void )
+vMBPortExitCritical(void)
 {
     ulNesting--;
-    if(ulNesting == 0)
+    if (ulNesting == 0)
     {
         setprimask(xOriginalState);
     }
@@ -77,10 +77,10 @@ vMBPortExitCritical( void )
 
 /* ----------------------- Close Ports -----------------------------*/
 void
-vMBPortClose( mb_port_ser* inst )
+vMBPortClose(mb_port_ser* inst)
 {
-    extern void vMBPortSerialClose( mb_port_ser* inst );
-    //extern void vMBPortTimersDisable( mb_port_ser* inst );
-    vMBPortSerialClose( inst );
-    vMBPortTimersDisable( inst );
+    extern void vMBPortSerialClose(mb_port_ser* inst);
+    //extern void vMBPortTimersDisable(mb_port_ser* inst);
+    vMBPortSerialClose(inst);
+    vMBPortTimersDisable(inst);
 }

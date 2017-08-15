@@ -19,7 +19,7 @@ extern void (*xfunc_out)(unsigned char);
 void xputc (char c);
 void xputs (const char* str);
 void xfputs (void (*func)(unsigned char), const char* str);
-void xvprintf ( const char*	fmt, va_list arp );
+void xvprintf (const char*	fmt, va_list arp);
 void xprintf (const char* fmt, ...);
 void xsprintf (char* buff, const char* fmt, ...);
 void xfprintf (void (*func)(unsigned char), const char*	fmt, ...);

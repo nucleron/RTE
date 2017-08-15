@@ -16,7 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * File: $Id: porttimer.c,v 1.1 2006/08/22 21:35:13 wolti Exp $
+ * File: $Id: porttimer.c, v 1.1 2006/08/22 21:35:13 wolti Exp $
  */
 
 /* ----------------------- Platform includes --------------------------------*/
@@ -37,11 +37,11 @@
 
 /* ----------------------- Initialize Timer -----------------------------*/
 BOOL
-xMBPortTimersInit(MULTIPORT_SERIAL_ARG  USHORT usTim1Timerout50us )
+xMBPortTimersInit(MULTIPORT_SERIAL_ARG  USHORT usTim1Timerout50us)
 {
-    //rcc_periph_clock_enable( RCC_GPIOA );
+    //rcc_periph_clock_enable(RCC_GPIOA);
     //gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO1);
-    //gpio_clear( GPIOA, GPIO1 );
+    //gpio_clear(GPIOA, GPIO1);
 
     /* Enable TIM clock. */
     rcc_periph_clock_enable(MB_TMR_PERIPH);
@@ -59,7 +59,7 @@ xMBPortTimersInit(MULTIPORT_SERIAL_ARG  USHORT usTim1Timerout50us )
 void
 vMBPortTimersEnable(MULTIPORT_SERIAL_ARG_VOID)
 {
-    /* Restart the timer with the period value set in xMBPortTimersInit( ) */
+    /* Restart the timer with the period value set in xMBPortTimersInit() */
     TIM_CNT(MB_TMR) = 1; /* Yes, this must be 1 !!! */
 
     timer_enable_irq     (MB_TMR, TIM_DIER_UIE);
@@ -75,7 +75,7 @@ vMBPortTimersDisable(MULTIPORT_SERIAL_ARG_VOID)
     timer_disable_counter(MB_TMR);
 }
 
-void vMBPortTimersDelay(MULTIPORT_SERIAL_ARG USHORT usTimeOutMS )
+void vMBPortTimersDelay(MULTIPORT_SERIAL_ARG USHORT usTimeOutMS)
 {
     /*Not supproted*/
 #if MB_ASCII_TIMEOUT_WAIT_BEFORE_SEND_MS > 0
@@ -86,7 +86,7 @@ void vMBPortTimersDelay(MULTIPORT_SERIAL_ARG USHORT usTimeOutMS )
 
 /* ----------------------- Timer ISR -----------------------------*/
 /* Create an ISR which is called whenever the timer has expired. This function
- * must then call pxMBPortCBTimerExpired( ) to notify the protocol stack that
+ * must then call pxMBPortCBTimerExpired() to notify the protocol stack that
  * the timer has expired.
  */
 static CHAR count;

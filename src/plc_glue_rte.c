@@ -41,7 +41,7 @@ extern uint32_t _stack;
 extern uint32_t _app_start;
 extern uint32_t _app_end;
 
-static bool plc_check_code( uint32_t * addr )
+static bool plc_check_code(uint32_t * addr)
 {
     if (addr < &_app_start)
     {
@@ -56,7 +56,7 @@ static bool plc_check_code( uint32_t * addr )
 
 #define PLC_CHECK_CODE(addr) \
     do{ \
-        if (!plc_check_code( (uint32_t *)addr )) \
+        if (!plc_check_code((uint32_t *)addr)) \
         { \
             return false; \
         } \
@@ -88,7 +88,7 @@ bool plc_app_is_valid(void)
             return false;
         }
         //Did we finish app write?
-        if( tmp != 0xff )
+        if (tmp != 0xff)
         {
             is_correct = true;
         }
@@ -109,22 +109,22 @@ bool plc_app_is_valid(void)
         return false;
     }
     //Check pa section
-    PLC_CHECK_CODE( PLC_APP->pa_start );
-    PLC_CHECK_CODE( PLC_APP->pa_end );
+    PLC_CHECK_CODE(PLC_APP->pa_start);
+    PLC_CHECK_CODE(PLC_APP->pa_end);
     if (PLC_APP->pa_end < PLC_APP->pa_start)
     {
         return false;
     }
     //Check ia section
-    PLC_CHECK_CODE( PLC_APP->ia_start );
-    PLC_CHECK_CODE( PLC_APP->ia_end );
+    PLC_CHECK_CODE(PLC_APP->ia_start);
+    PLC_CHECK_CODE(PLC_APP->ia_end);
     if (PLC_APP->ia_end < PLC_APP->ia_start)
     {
         return false;
     }
     //Check fia section
-    PLC_CHECK_CODE( PLC_APP->fia_start );
-    PLC_CHECK_CODE( PLC_APP->fia_end );
+    PLC_CHECK_CODE(PLC_APP->fia_start);
+    PLC_CHECK_CODE(PLC_APP->fia_end);
     if (PLC_APP->fia_end < PLC_APP->fia_start)
     {
         return false;
@@ -143,27 +143,27 @@ bool plc_app_is_valid(void)
     {
         return false;
     }
-//    if( PLC_APP->rte_ver_patch > PLC_RTE_VER_PATCH )
+//    if (PLC_APP->rte_ver_patch > PLC_RTE_VER_PATCH)
 //    {
 //        return false;
 //    }
     //Check PLC application ABI
-    PLC_CHECK_CODE( PLC_APP->start );
-    PLC_CHECK_CODE( PLC_APP->stop );
-    PLC_CHECK_CODE( PLC_APP->run );
+    PLC_CHECK_CODE(PLC_APP->start);
+    PLC_CHECK_CODE(PLC_APP->stop);
+    PLC_CHECK_CODE(PLC_APP->run);
 
-    PLC_CHECK_CODE( PLC_APP->dbg_resume );
-    PLC_CHECK_CODE( PLC_APP->dbg_suspend );
+    PLC_CHECK_CODE(PLC_APP->dbg_resume);
+    PLC_CHECK_CODE(PLC_APP->dbg_suspend);
 
-    PLC_CHECK_CODE( PLC_APP->dbg_data_get );
-    PLC_CHECK_CODE( PLC_APP->dbg_data_free );
+    PLC_CHECK_CODE(PLC_APP->dbg_data_get);
+    PLC_CHECK_CODE(PLC_APP->dbg_data_free);
 
-    PLC_CHECK_CODE( PLC_APP->dbg_vars_reset );
-    PLC_CHECK_CODE( PLC_APP->dbg_var_register );
+    PLC_CHECK_CODE(PLC_APP->dbg_vars_reset);
+    PLC_CHECK_CODE(PLC_APP->dbg_var_register);
 
-    PLC_CHECK_CODE( PLC_APP->log_cnt_get );
-    PLC_CHECK_CODE( PLC_APP->log_msg_get );
-    PLC_CHECK_CODE( PLC_APP->log_cnt_reset );
+    PLC_CHECK_CODE(PLC_APP->log_cnt_get);
+    PLC_CHECK_CODE(PLC_APP->log_msg_get);
+    PLC_CHECK_CODE(PLC_APP->log_cnt_reset);
     //Check plc IO manager interface
     if (PLC_APP->l_tab < (plc_loc_tbl_t *)PLC_APP->data_start)
     {

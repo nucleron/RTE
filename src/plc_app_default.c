@@ -23,18 +23,18 @@ static unsigned long __tick = 0;
 #define LOG_BUFFER_SIZE (1<<9) /*512bytes*/
 //#define LOG_BUFFER_ATTRS __attribute__ ((section(".plc_log_buf_sec")))
 
-static void PLC_GetTime( IEC_TIME *curent_time )
+static void PLC_GetTime(IEC_TIME *curent_time)
 {
     curent_time->tv_nsec = 0;
     curent_time->tv_sec = 0;
 }
 
-static long long AtomicCompareExchange64(long long* atomicvar,long long compared, long long exchange)
+static long long AtomicCompareExchange64(long long* atomicvar, long long compared, long long exchange)
 {
     /* No need for real atomic op on LPC,
      * no possible preemption between debug and PLC */
     long long res = *atomicvar;
-    if(res == compared)
+    if (res == compared)
     {
         *atomicvar = exchange;
     }
@@ -53,7 +53,7 @@ static long long AtomicCompareExchange64(long long* atomicvar,long long compared
 static char LogBuff[LOG_LEVELS][LOG_BUFFER_SIZE] LOG_BUFFER_ATTRS;
 void inline copy_to_log(uint8_t level, uint32_t buffpos, void* buf, uint32_t size)
 {
-    if(buffpos + size < LOG_BUFFER_SIZE)
+    if (buffpos + size < LOG_BUFFER_SIZE)
     {
         memcpy(&LogBuff[level][buffpos], buf, size);
     }
@@ -66,7 +66,7 @@ void inline copy_to_log(uint8_t level, uint32_t buffpos, void* buf, uint32_t siz
 }
 void inline copy_from_log(uint8_t level, uint32_t buffpos, void* buf, uint32_t size)
 {
-    if(buffpos + size < LOG_BUFFER_SIZE)
+    if (buffpos + size < LOG_BUFFER_SIZE)
     {
         memcpy(buf, &LogBuff[level][buffpos], size);
     }
@@ -96,7 +96,7 @@ typedef struct
    |63 ... 32|31 ... 0|
    | Message | Buffer |
    | counter | Index  | */
-static uint64_t LogCursor[LOG_LEVELS] LOG_BUFFER_ATTRS = {0x0,0x0,0x0,0x0};
+static uint64_t LogCursor[LOG_LEVELS] LOG_BUFFER_ATTRS = {0x0, 0x0, 0x0, 0x0};
 
 static void ResetLogCount(void)
 {
@@ -110,7 +110,7 @@ static void ResetLogCount(void)
 /* Store one log message of give size */
 static int LogMessage(uint8_t level, char* buf, uint32_t size)
 {
-    if(size < LOG_BUFFER_SIZE - sizeof(mTail))
+    if (size < LOG_BUFFER_SIZE - sizeof(mTail))
     {
         uint32_t buffpos;
         uint64_t new_cursor, old_cursor;
@@ -132,7 +132,7 @@ static int LogMessage(uint8_t level, char* buf, uint32_t size)
             new_cursor = ((uint64_t)(tail.msgidx + 1)<<32)
                          | (uint64_t)((buffpos + size + sizeof(mTail)) & LOG_BUFFER_MASK);
         }
-        while(AtomicCompareExchange64(
+        while (AtomicCompareExchange64(
                     (long long*)&LogCursor[level],
                     (long long)old_cursor,
                     (long long)new_cursor)!=(long long)old_cursor);
@@ -159,7 +159,7 @@ static uint32_t GetLogCount(uint8_t level)
 static uint32_t GetLogMessage(uint8_t level, uint32_t msgidx, char* buf, uint32_t max_size, uint32_t* tick, uint32_t* tv_sec, uint32_t* tv_nsec)
 {
     uint64_t cursor = LogCursor[level];
-    if(cursor)
+    if (cursor)
     {
         /* seach cursor */
         uint32_t stailpos = (uint32_t)cursor;
@@ -172,14 +172,14 @@ static uint32_t GetLogMessage(uint8_t level, uint32_t msgidx, char* buf, uint32_
         do
         {
             smsgidx = tail.msgidx;
-            stailpos = (stailpos - sizeof(mTail) - tail.msgsize ) & LOG_BUFFER_MASK;
+            stailpos = (stailpos - sizeof(mTail) - tail.msgsize) & LOG_BUFFER_MASK;
             copy_from_log(level, stailpos, &tail, sizeof(mTail));
         }
-        while((tail.msgidx == smsgidx - 1) && (tail.msgidx > msgidx));
+        while ((tail.msgidx == smsgidx - 1) && (tail.msgidx > msgidx));
 
-        if(tail.msgidx == msgidx)
+        if (tail.msgidx == msgidx)
         {
-            uint32_t sbuffpos = (stailpos - tail.msgsize ) & LOG_BUFFER_MASK;
+            uint32_t sbuffpos = (stailpos - tail.msgsize) & LOG_BUFFER_MASK;
             uint32_t totalsize = tail.msgsize;
             *tick = tail.tick;
             *tv_sec = tail.time.tv_sec;
@@ -202,12 +202,12 @@ void plc_app_default_init(void)
     }
 }
 
-static int startPLC(int argc,char **argv)
+static int startPLC(int argc, char **argv)
 {
     (void)argc;
     (void)argv;
 
-    plc_tick_setup( 0, 1000000ull );
+    plc_tick_setup(0, 1000000ull);
 
     return 0;
 }

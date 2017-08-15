@@ -30,9 +30,9 @@ const plc_io_metods_t plc_iom_registry[] =
 //Must be declared after plc_iom_registry
 PLC_IOM_REG_SZ_DECL;
 
-uint8_t mid_from_pid( uint16_t proto )
+uint8_t mid_from_pid(uint16_t proto)
 {
-    switch(proto)
+    switch (proto)
     {
     case 0:
         return 0;

@@ -16,7 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * File: $Id: portevent.c,v 1.1 2006/08/22 21:35:13 wolti Exp $
+ * File: $Id: portevent.c, v 1.1 2006/08/22 21:35:13 wolti Exp $
  */
 
 /* ----------------------- Modbus includes ----------------------------------*/
@@ -34,14 +34,14 @@
 
 /* ----------------------- Start implementation -----------------------------*/
 BOOL
-xMBPortEventInit( MULTIPORT_SERIAL_ARG_VOID )
+xMBPortEventInit(MULTIPORT_SERIAL_ARG_VOID)
 {
     xEventInQueue = FALSE;
     return TRUE;
 }
 
 BOOL
-xMBPortEventPost(  MULTIPORT_SERIAL_ARG eMBEventType eEvent )
+xMBPortEventPost( MULTIPORT_SERIAL_ARG eMBEventType eEvent)
 {
     xEventInQueue = TRUE;
     eQueuedEvent = eEvent;
@@ -49,11 +49,11 @@ xMBPortEventPost(  MULTIPORT_SERIAL_ARG eMBEventType eEvent )
 }
 
 BOOL
-xMBPortEventGet( MULTIPORT_SERIAL_ARG CALLER_ARG eMBEventType * eEvent )
+xMBPortEventGet(MULTIPORT_SERIAL_ARG CALLER_ARG eMBEventType * eEvent)
 {
     BOOL            xEventHappened = FALSE;
 
-    if( xEventInQueue )
+    if (xEventInQueue)
     {
         *eEvent = eQueuedEvent;
         xEventInQueue = FALSE;
@@ -72,7 +72,7 @@ xMBPortEventGet( MULTIPORT_SERIAL_ARG CALLER_ARG eMBEventType * eEvent )
  *
  * @return request error code
  */
-eMBMasterReqErrCode eMBMasterWaitRequestFinish( void ) {
+eMBMasterReqErrCode eMBMasterWaitRequestFinish(void) {
 
 	/*
 	eMBMasterReqErrCode    eErrStatus = MB_MRE_NO_ERR;

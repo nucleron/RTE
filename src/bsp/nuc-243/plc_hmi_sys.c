@@ -20,7 +20,7 @@
 
 #include <dbnc_flt.h>
 
-#define MIN(x,y) (((x)>(y))?(y):(x))
+#define MIN(x, y) (((x)>(y))?(y):(x))
 
 extern uint8_t plc_hmi_bri;
 
@@ -69,8 +69,8 @@ const plc_hmi_par_t plc_hmi_sys_ptype[] =
     PLC_HMI_HHMM, //HHMM
     PLC_HMI_UINT, //Bri
 
-    PLC_HMI_EMPTY,//Discrete inputs
-    PLC_HMI_EMPTY,//Discrete outputs
+    PLC_HMI_EMPTY, //Discrete inputs
+    PLC_HMI_EMPTY, //Discrete outputs
 
     PLC_HMI_UINT, //DI chanel number
     PLC_HMI_RO_UINT, //DI  on filter
@@ -86,7 +86,7 @@ const plc_hmi_par_t plc_hmi_sys_ptype[] =
     PLC_HMI_RO_UINT, //AO 0 val
     PLC_HMI_RO_UINT, //AO 1 val
 
-    PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,PLC_HMI_NOT_USED,
+    PLC_HMI_NOT_USED, PLC_HMI_NOT_USED, PLC_HMI_NOT_USED,
 
     PLC_HMI_RO_UINT, //MBS speed
     PLC_HMI_RO_UINT, //MBS addr
@@ -105,7 +105,7 @@ int32_t hmi_sys_get(uint8_t par)
         plc_rtc_dt_get(&now);
     }
 
-    switch(par)
+    switch (par)
     {
     case PLC_HMI_SYS_PAR_YEAR: //YYYY
         return now.tm_year;
@@ -181,9 +181,9 @@ int32_t hmi_sys_get(uint8_t par)
 
 //Спасибо Волкову Мише!!!
 static const uint8_t month_table[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};// Количество дней в месяце. количество дней = month_table[ номер месяца ]
-static uint8_t leap_year_chk( uint8_t month, uint8_t year )// Проверка на 29 февраля
+static uint8_t leap_year_chk(uint8_t month, uint8_t year)// Проверка на 29 февраля
 {
-    if( (month == 2) && (year % 4 == 0) ) return 1;
+    if ((month == 2) && (year % 4 == 0)) return 1;
     return 0;
 }
 
@@ -191,7 +191,7 @@ static void date_check_day(tm *now)
 {
     uint8_t max;
     max = month_table[now->tm_mon] + leap_year_chk(now->tm_mon, now->tm_year);
-    if( now->tm_day > max )
+    if (now->tm_day > max)
     {
         now->tm_day = 1;
     }
@@ -206,7 +206,7 @@ int32_t hmi_sys_chk(uint8_t par, int32_t val)
         plc_rtc_dt_get(&now);
     }
 
-    switch(par)
+    switch (par)
     {
     case PLC_HMI_SYS_PAR_YEAR: //YYYY
         if (val>2099)
@@ -255,14 +255,14 @@ int32_t hmi_sys_chk(uint8_t par, int32_t val)
         break;
 
     case PLC_HMI_SYS_PAR_DICN:
-        if (val >= PLC_DI_NUM )
+        if (val >= PLC_DI_NUM)
         {
             return 0;
         }
         break;
 
     case PLC_HMI_SYS_PAR_AICN:
-        if (val >= PLC_AI_NUM )
+        if (val >= PLC_AI_NUM)
         {
             return 0;
         }
@@ -278,7 +278,7 @@ void     hmi_sys_set(uint8_t par, int32_t val)
         plc_rtc_dt_get(&now);
     }
 
-    switch(par)
+    switch (par)
     {
     case PLC_HMI_SYS_PAR_YEAR: //YYYY
         now.tm_year = val;
@@ -296,16 +296,16 @@ void     hmi_sys_set(uint8_t par, int32_t val)
         break;
 
     case PLC_HMI_SYS_PAR_BRI: //hmi display plc_hmi_bri
-        plc_hmi_bri = MIN(val,PLC_HMI_BRI_LIM);
+        plc_hmi_bri = MIN(val, PLC_HMI_BRI_LIM);
         plc_backup_save_brightness(plc_hmi_bri);
         break;
 
     case PLC_HMI_SYS_PAR_DICN:
-        din_chnl = MIN(val,(PLC_DI_NUM-1));
+        din_chnl = MIN(val, (PLC_DI_NUM-1));
         break;
 
     case PLC_HMI_SYS_PAR_AICN:
-        ain_chnl = MIN(val,(PLC_AI_NUM-1));
+        ain_chnl = MIN(val, (PLC_AI_NUM-1));
         break;
     }
 }

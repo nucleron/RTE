@@ -18,7 +18,7 @@
 #include <plc_hw.h>
 
 // Debug fifo buffer
-void dbg_fifo_flush( dbg_fifo_t * fifo )
+void dbg_fifo_flush(dbg_fifo_t * fifo)
 {
     fifo->bytes = 0;
     fifo->read = 0;
@@ -74,7 +74,7 @@ int dbg_fifo_read_byte(dbg_fifo_t * fifo, uint8_t *d)
     }
 }
 
-int dbg_fifo_read( dbg_fifo_t * fifo, uint8_t *d, unsigned short n)
+int dbg_fifo_read(dbg_fifo_t * fifo, uint8_t *d, unsigned short n)
 {
     int res;
     res = 0;
@@ -104,7 +104,7 @@ plc_dbg_proto_t plc_dbg_ctrl =
 //
 //extern unsigned long __tick;
 //
-//extern int startPLC(int argc,char **argv);
+//extern int startPLC(int argc, char **argv);
 //extern int stopPLC();
 //
 //extern void resumeDebug(void);
@@ -131,7 +131,7 @@ void dbg_init(void)
 void dbg_handler(void)
 {
     //Check timer, break connection on timeout
-    if (PLC_DBG_TIMER_THR < PLC_TIMER( plc_dbg_ctrl.timer ))
+    if (PLC_DBG_TIMER_THR < PLC_TIMER(plc_dbg_ctrl.timer))
     {
         plc_dbg_ctrl.state = GET_CMD;
         PLC_CLEAR_TIMER(plc_dbg_ctrl.timer);
@@ -427,14 +427,14 @@ void dbg_handler(void)
         {
             //Must read before timeout!
             int read_res;
-            read_res = dbg_serial_read( plc_dbg_ctrl.tmp, plc_dbg_ctrl.tmp_len );
+            read_res = dbg_serial_read(plc_dbg_ctrl.tmp, plc_dbg_ctrl.tmp_len);
             plc_dbg_ctrl.tmp         += read_res;
             plc_dbg_ctrl.tmp_len     -= read_res;
             plc_dbg_ctrl.data_len    -= read_res;
         }
         else
         {
-            PLC_CLEAR_TIMER( plc_dbg_ctrl.timer );
+            PLC_CLEAR_TIMER(plc_dbg_ctrl.timer);
 
             plc_dbg_ctrl.state = GET_FORCE_LEN;
         }
@@ -567,7 +567,7 @@ void dbg_handler(void)
                                         &plc_dbg_ctrl.tr.get_log_msg.tick,
                                         &plc_dbg_ctrl.tr.get_log_msg.sec,
                                         &plc_dbg_ctrl.tr.get_log_msg.nsec
-                                    );
+                                   );
 
             plc_dbg_ctrl.data_len += 12; // Tick+Sec+NSec+Data
             plc_dbg_ctrl.data = (uint8_t *)&plc_dbg_ctrl.tr_buf.log_msg[0];
@@ -673,7 +673,7 @@ void dbg_handler(void)
         if (0 < plc_dbg_ctrl.data_len)
         {
             int write_res;
-            write_res = dbg_serial_write( plc_dbg_ctrl.data, plc_dbg_ctrl.data_len );
+            write_res = dbg_serial_write(plc_dbg_ctrl.data, plc_dbg_ctrl.data_len);
             plc_dbg_ctrl.data += write_res;
             plc_dbg_ctrl.data_len -= write_res;
         }

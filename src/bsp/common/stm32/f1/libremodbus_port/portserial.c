@@ -16,7 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * File: $Id: portserial.c,v 1.1 2006/08/22 21:35:13 wolti Exp $
+ * File: $Id: portserial.c, v 1.1 2006/08/22 21:35:13 wolti Exp $
  */
 
 /* ----------------------- Platform includes --------------------------------*/
@@ -39,7 +39,7 @@
 static volatile bool txen = false;
 /* ----------------------- Enable USART interrupts -----------------------------*/
 void
-vMBPortSerialEnable(MULTIPORT_SERIAL_ARG BOOL xRxEnable, BOOL xTxEnable )
+vMBPortSerialEnable(MULTIPORT_SERIAL_ARG BOOL xRxEnable, BOOL xTxEnable)
 {
     /* If xRXEnable enable serial receive interrupts. If xTxENable enable
      * transmitter empty interrupts.
@@ -73,14 +73,14 @@ vMBPortSerialEnable(MULTIPORT_SERIAL_ARG BOOL xRxEnable, BOOL xTxEnable )
 
 BOOL
 xMBPortSerialInit(MULTIPORT_SERIAL_ARG UCHAR ucPort, ULONG ulBaudRate, UCHAR ucDataBits,
-                   eMBParity eParity )
+                   eMBParity eParity)
 {
     BOOL bStatus;
-    rcc_periph_clock_enable(RCC_AFIO            );
-    rcc_periph_clock_enable(MB_USART_PERIPH     );
-    rcc_periph_clock_enable(MB_USART_TX_PERIPH  );
+    rcc_periph_clock_enable(RCC_AFIO           );
+    rcc_periph_clock_enable(MB_USART_PERIPH    );
+    rcc_periph_clock_enable(MB_USART_TX_PERIPH );
 #if (MB_USART_TX_PERIPH != MB_USART_RX_PERIPH)
-    rcc_periph_clock_enable(MB_USART_RX_PERIPH  );
+    rcc_periph_clock_enable(MB_USART_RX_PERIPH );
 #endif
 #if (MB_USART_TX_PERIPH != MB_USART_RX_PERIPH)
     rcc_periph_clock_enable(MB_USART_TXEN_PERIPH);
@@ -95,10 +95,10 @@ xMBPortSerialInit(MULTIPORT_SERIAL_ARG UCHAR ucPort, ULONG ulBaudRate, UCHAR ucD
     /* Enable the MB_USART interrupt. */
     nvic_enable_irq(MB_USART_VECTOR);
     /* Setup UART parameters. */
-    usart_set_baudrate    (MB_USART, ulBaudRate            );
-    usart_set_stopbits    (MB_USART, USART_STOPBITS_1      );
+    usart_set_baudrate    (MB_USART, ulBaudRate           );
+    usart_set_stopbits    (MB_USART, USART_STOPBITS_1     );
     usart_set_flow_control(MB_USART, USART_FLOWCONTROL_NONE);
-    usart_set_mode        (MB_USART, USART_MODE_TX_RX      );
+    usart_set_mode        (MB_USART, USART_MODE_TX_RX     );
 
     bStatus = TRUE;
     switch (eParity)
@@ -131,7 +131,7 @@ xMBPortSerialInit(MULTIPORT_SERIAL_ARG UCHAR ucPort, ULONG ulBaudRate, UCHAR ucD
         {
             wordLength = 9;
         }
-        usart_set_databits(MB_USART,wordLength);
+        usart_set_databits(MB_USART, wordLength);
         break;
     case 7:
         if (eParity == MB_PAR_NONE)
@@ -140,14 +140,14 @@ xMBPortSerialInit(MULTIPORT_SERIAL_ARG UCHAR ucPort, ULONG ulBaudRate, UCHAR ucD
         }
         else
         {
-            usart_set_databits(MB_USART,8);
+            usart_set_databits(MB_USART, 8);
         }
         break;
     default:
         bStatus = FALSE;
     }
 
-    if( bStatus == TRUE )
+    if (bStatus == TRUE)
     {
         /* Finally enable the USART. */
         usart_disable_rx_interrupt(MB_USART);
@@ -162,7 +162,7 @@ BOOL
 xMBPortSerialPutByte(MULTIPORT_SERIAL_ARG CHAR ucByte)
 {
     /* Put a byte in the UARTs transmit buffer. This function is called
-     * by the protocol stack if pxMBFrameCBTransmitterEmpty( ) has been
+     * by the protocol stack if pxMBFrameCBTransmitterEmpty() has been
      * called. */
     usart_send(MB_USART, ucByte);
     return TRUE;
@@ -173,7 +173,7 @@ BOOL
 xMBPortSerialGetByte(MULTIPORT_SERIAL_ARG CHAR * pucByte)
 {
     /* Return the byte in the UARTs receive buffer. This function is called
-     * by the protocol stack after pxMBFrameCBByteReceived( ) has been called.
+     * by the protocol stack after pxMBFrameCBByteReceived() has been called.
      */
     *pucByte = (CHAR)usart_recv(MB_USART);
     return TRUE;
@@ -181,7 +181,7 @@ xMBPortSerialGetByte(MULTIPORT_SERIAL_ARG CHAR * pucByte)
 
 /* ----------------------- Close Serial Port ----------------------------------*/
 void
-vMBPortSerialClose ( MULTIPORT_SERIAL_ARG_VOID )
+vMBPortSerialClose (MULTIPORT_SERIAL_ARG_VOID)
 {
     nvic_disable_irq(MB_USART_VECTOR);
     usart_disable   (MB_USART);
@@ -190,9 +190,9 @@ vMBPortSerialClose ( MULTIPORT_SERIAL_ARG_VOID )
 /* ----------------------- USART ISR ----------------------------------*/
 /* Create an interrupt handler for the transmit buffer empty interrupt
  * (or an equivalent) for your target processor. This function should then
- * call pxMBFrameCBTransmitterEmpty( ) which tells the protocol stack that
+ * call pxMBFrameCBTransmitterEmpty() which tells the protocol stack that
  * a new character can be sent. The protocol stack will then call
- * xMBPortSerialPutByte( ) to send the character.
+ * xMBPortSerialPutByte() to send the character.
  */
 /* Find out what interrupted and get or send data as appropriate */
 void MB_USART_ISR(void)
@@ -207,7 +207,7 @@ void MB_USART_ISR(void)
     {
         pxMBFrameCBTransmitterEmpty();
         /* Check if we need to disable transmitter*/
-        if(!txen)
+        if (!txen)
         {
             USART_SR (MB_USART) &= ~USART_SR_TC;   /* Clear TC flag*/
             USART_CR1(MB_USART) |= USART_CR1_TCIE; /* Enable transfer complite interrupt*/

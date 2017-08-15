@@ -48,9 +48,9 @@ uint32_t plc_rtc_clken_and_check(void)
  *  Julian Day Number computation
  *  See http://en.wikipedia.org/wiki/Julian_day
  */
-static uint32_t jdn( tm *date_time )
+static uint32_t jdn(tm *date_time)
 {
-    uint8_t a,m;
+    uint8_t a, m;
     uint16_t y;
     uint32_t ret;
 
@@ -61,11 +61,11 @@ static uint32_t jdn( tm *date_time )
 
     /* Julian day number computation */
     ret = (uint32_t)date_time->tm_day;
-    ret += ( 153ul * (uint32_t)m + 2ul )/ 5ul;
+    ret += (153ul * (uint32_t)m + 2ul)/ 5ul;
     ret += 365ul * (uint32_t)y;
-    ret += (uint32_t)( y/4   );
-    ret -= (uint32_t)( y/100 );
-    ret += (uint32_t)( y/400 );
+    ret += (uint32_t)(y/4  );
+    ret -= (uint32_t)(y/100);
+    ret += (uint32_t)(y/400);
     ret -= 32045ul;
 
     return ret;
@@ -74,7 +74,7 @@ static uint32_t jdn( tm *date_time )
 /*
  * Compute unix-time seconds
  */
-static uint64_t dt_to_sec( tm *date_time )
+static uint64_t dt_to_sec(tm *date_time)
 {
     uint64_t ret;
 
@@ -93,9 +93,9 @@ static uint64_t dt_to_sec( tm *date_time )
     return ret;
 }
 
-static void  jdn_to_dt ( uint32_t jdn, tm *date_time)
+static void  jdn_to_dt (uint32_t jdn, tm *date_time)
 {
-    uint32_t a,b,c,d,e,m;
+    uint32_t a, b, c, d, e, m;
 
     a = jdn + 32044;
     b = (4 * a + 3) /146097;
@@ -109,7 +109,7 @@ static void  jdn_to_dt ( uint32_t jdn, tm *date_time)
     date_time->tm_day = e - (153 * m + 2) /5 + 1;
 }
 
-void  sec_to_dt ( uint32_t utime, tm *date_time)
+void  sec_to_dt (uint32_t utime, tm *date_time)
 {
     date_time->tm_sec = utime%60;
     utime /= 60;
@@ -123,7 +123,7 @@ void  sec_to_dt ( uint32_t utime, tm *date_time)
 }
 
 
-void plc_rtc_init( tm* time )
+void plc_rtc_init(tm* time)
 {
     uint32_t i;
     uint32_t tmp=0;
@@ -137,18 +137,18 @@ void plc_rtc_init( tm* time )
     /* LSE oscillator clock used as the RTC clock */
     RCC_BDCR |= (1<<8);
     RCC_BDCR |= RCC_BDCR_LSEON;
-    rcc_periph_clock_enable( RCC_RTC );
+    rcc_periph_clock_enable(RCC_RTC);
 
     //Wait for LSE oscillator start
     for(i=0; i<1000000; i++)
     {
-        if( RCC_BDCR  &  RCC_BDCR_LSERDY )
+        if (RCC_BDCR  &  RCC_BDCR_LSERDY)
         {
             break;
         }
     }
 
-    if(!(RCC_BDCR  & RCC_BDCR_LSERDY))
+    if (!(RCC_BDCR  & RCC_BDCR_LSERDY))
     {
         plc_diag_status |= PLC_DIAG_ERR_LSE;
         BACKUP_LOCK();
@@ -159,17 +159,17 @@ void plc_rtc_init( tm* time )
     RTC_ISR = RTC_ISR_INIT; //Then Init mode
 
 
-    /* We have 32,768KHz clock, set 0x80*/ //Using default values
+    /* We have 32, 768KHz clock, set 0x80*/ //Using default values
 
     for(i=0; i<1000000; i++)
     {
-        if( RTC_ISR & RTC_ISR_INITF ) //waiting for INIT flag to come up
+        if (RTC_ISR & RTC_ISR_INITF) //waiting for INIT flag to come up
         {
             break;
         }
     }
 
-    if( !(RTC_ISR & RTC_ISR_INITF) ) //timeout occured
+    if (!(RTC_ISR & RTC_ISR_INITF)) //timeout occured
     {
         plc_diag_status |= PLC_DIAG_ERR_LSE;
 
@@ -217,9 +217,9 @@ void plc_rtc_init( tm* time )
 //    plc_rtc_failure = 1;
 }
 
-void plc_rtc_dt_set( tm* time )
+void plc_rtc_dt_set(tm* time)
 {
-    uint32_t i,tmp=0;
+    uint32_t i, tmp=0;
 
     if (plc_diag_status & PLC_DIAG_ERR_LSE)
     {
@@ -232,13 +232,13 @@ void plc_rtc_dt_set( tm* time )
 
     for(i=0; i<1000000; i++)
     {
-        if( RTC_ISR & RTC_ISR_INITF )
+        if (RTC_ISR & RTC_ISR_INITF)
         {
             break;
         }
     }
 
-    if( !(RTC_ISR & RTC_ISR_INITF) )
+    if (!(RTC_ISR & RTC_ISR_INITF))
     {
         goto lse_error;
     }
@@ -280,14 +280,14 @@ lse_error:
     plc_rtc_failure = 1;
 }
 
-void plc_rtc_dt_get( tm* time )
+void plc_rtc_dt_get(tm* time)
 {
     uint32_t utime;
     IEC_TIME current_time;
 
     plc_rtc_time_get(&current_time);
     utime = current_time.tv_sec;
-    sec_to_dt( utime, time );
+    sec_to_dt(utime, time);
 }
 
 
@@ -345,7 +345,7 @@ void _plc_rtc_poll(void)
     }
 }
 
-void plc_rtc_time_get( IEC_TIME *current_time )
+void plc_rtc_time_get(IEC_TIME *current_time)
 {
     static tm curr;
     static uint32_t rtc_tr, rtc_dr;
@@ -358,23 +358,23 @@ void plc_rtc_time_get( IEC_TIME *current_time )
     rtc_corr = plc_rtc_correction;
     PLC_ENABLE_INTERRUPTS();
 
-    curr.tm_sec   = (unsigned char)(  rtc_tr & 0x0000000F);
-    curr.tm_sec  += (unsigned char)(((rtc_tr & 0x000000F0) >> 4 ) * 10 );
-    curr.tm_min   = (unsigned char)( (rtc_tr & 0x00000F00) >> 8);
-    curr.tm_min  += (unsigned char)(((rtc_tr & 0x0000F000) >> 12 ) * 10 );
-    curr.tm_hour  = (unsigned char)( (rtc_tr & 0x000F0000) >> 16);
-    curr.tm_hour += (unsigned char)(((rtc_tr & 0x00F00000) >> 20 ) * 10 );
+    curr.tm_sec   = (unsigned char)( rtc_tr & 0x0000000F);
+    curr.tm_sec  += (unsigned char)(((rtc_tr & 0x000000F0) >> 4) * 10);
+    curr.tm_min   = (unsigned char)((rtc_tr & 0x00000F00) >> 8);
+    curr.tm_min  += (unsigned char)(((rtc_tr & 0x0000F000) >> 12) * 10);
+    curr.tm_hour  = (unsigned char)((rtc_tr & 0x000F0000) >> 16);
+    curr.tm_hour += (unsigned char)(((rtc_tr & 0x00F00000) >> 20) * 10);
 
-    curr.tm_day   = (unsigned char)(  rtc_dr & 0x0000000F);
-    curr.tm_day  += (unsigned char)(((rtc_dr & 0x00000030) >> 4 ) * 10 );
-    curr.tm_mon   = (unsigned char)( (rtc_dr & 0x00000F00) >> 8);
-    curr.tm_mon  += (unsigned char)(((rtc_dr & 0x00001000) >> 12 ) * 10 );
-    curr.tm_year  = (unsigned char)( (rtc_dr & 0x000F0000) >> 16);
-    curr.tm_year += (unsigned char)(((rtc_dr & 0x00F00000) >> 20 ) * 10 );
+    curr.tm_day   = (unsigned char)( rtc_dr & 0x0000000F);
+    curr.tm_day  += (unsigned char)(((rtc_dr & 0x00000030) >> 4) * 10);
+    curr.tm_mon   = (unsigned char)((rtc_dr & 0x00000F00) >> 8);
+    curr.tm_mon  += (unsigned char)(((rtc_dr & 0x00001000) >> 12) * 10);
+    curr.tm_year  = (unsigned char)((rtc_dr & 0x000F0000) >> 16);
+    curr.tm_year += (unsigned char)(((rtc_dr & 0x00F00000) >> 20) * 10);
     curr.tm_year += 2000; // 16 is actually 2016
 
     /* Convert current date/time to unix time seconds */
-    current_time->tv_sec = dt_to_sec( &curr );
+    current_time->tv_sec = dt_to_sec(&curr);
     current_time->tv_sec += (rtc_corr / 1000000000);
     current_time->tv_nsec = (rtc_corr % 1000000000);
 }

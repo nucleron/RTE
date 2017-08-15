@@ -16,7 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * File: $Id: user_mbm_app_m.c,v 1.60 2013/11/23 11:49:05 Armink $
+ * File: $Id: user_mbm_app_m.c, v 1.60 2013/11/23 11:49:05 Armink $
  */
 #include <stdbool.h>
 #include <stdint.h>
@@ -85,8 +85,8 @@ static uint8_t mbm_busy = 0xFF;
 static bool mbm_need_preread = false;
 static bool mbm_preread_finished = false;
 
-static MBInstance MBMaster;
-static MBRTUInstance MBMTransport;
+static mb_instance MBMaster;
+static mb_rtu_tr MBMTransport;
 
 static bool mbm_init_flg = false;
 static bool mbm_start = false;
@@ -141,7 +141,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     switch (PLC_APP->l_tab[i]->a_size)
     {
     case 2:
-        if (PLC_APP->l_tab[i]->v_type == PLC_LT_Q ) //init location
+        if (PLC_APP->l_tab[i]->v_type == PLC_LT_Q) //init location
         {
             if (PLC_APP->l_tab[i]->v_size != PLC_LSZ_X)
             {
@@ -151,7 +151,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             }
             if (mbm_gotinit)
             {
-                //plc_curr_app->log_msg_post(LOG_CRITICAL,(char *)plc_mbm_err_extrainit,sizeof(plc_mbm_err_extrainit));
+                //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mbm_err_extrainit, sizeof(plc_mbm_err_extrainit));
                 plc_iom_errno_print(PLC_ERRNO_MBM_EX_INIT);
                 return false;
             }
@@ -228,7 +228,7 @@ uint8_t get_full_length()
 //Do once!
 void PLC_IOM_LOCAL_END(uint16_t i)
 {
-//    int j,k,l;
+//    int j, k, l;
     if (!mbm_init_flg)
     {
         mbm_init_flg = true;
@@ -240,7 +240,7 @@ void PLC_IOM_LOCAL_END(uint16_t i)
             mbm_enabled = true;
             mbm_start = true;
         }
-        eMBMasterInitRTU(&MBMaster,&MBMTransport, (mb_port_base *)&mbm_inst_usart, mbm_baudrate, MB_PAR_NONE );
+        eMBMasterInitRTU(&MBMaster, &MBMTransport, (mb_port_base *)&mbm_inst_usart, mbm_baudrate, MB_PAR_NONE);
 
     }
 }
@@ -262,11 +262,11 @@ void execute_request(uint32_t tick)
     switch (mbm_request.type)
     {
     case RT_HOLDING_RD:
-        eMBMasterReqReadHoldingRegister(&MBMaster,mbm_request.slave_addr,mbm_request.target_addr[0],get_full_length(),0);
+        eMBMasterReqReadHoldingRegister(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
         break;
     case RT_HOLDING_WR:
         if (is_continious())
-            eMBMasterReqWriteMultipleHoldingRegister(&MBMaster,mbm_request.slave_addr,mbm_request.target_addr[0],mbm_request.registers,mbm_request.target_value,0);
+            eMBMasterReqWriteMultipleHoldingRegister(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], mbm_request.registers, mbm_request.target_value, 0);
         else
         {
             if (mbm_preread_finished) //after we got current register values, change what we have to write and send a request_t to send everything to slave
@@ -281,25 +281,25 @@ void execute_request(uint32_t tick)
             }
             else //we need to send a request_t to first read full registers range
             {
-                eMBMasterReqReadHoldingRegister(&MBMaster,mbm_request.slave_addr,mbm_request.target_addr[0],get_full_length(),0);
+                eMBMasterReqReadHoldingRegister(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
                 mbm_need_preread = true;
             }
         }
         break;
     case RT_DISCRETE:
-        eMBMasterReqReadDiscreteInputs(&MBMaster,mbm_request.slave_addr,mbm_request.target_addr[0],get_full_length(),0);
+        eMBMasterReqReadDiscreteInputs(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
         break;
     case RT_INPUTREG:
-        eMBMasterReqReadInputRegister(&MBMaster,mbm_request.slave_addr,mbm_request.target_addr[0],get_full_length(),0);
+        eMBMasterReqReadInputRegister(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
         break;
     case RT_COILS:
         //pack bits
         for (i=0;i<get_full_length();i++)
         {
-            xMBUtilSetBits(mbm_preread_buffer,i,1,(mbm_request.target_value[i]==0)?0:1);
+            xMBUtilSetBits(mbm_preread_buffer, i, 1, (mbm_request.target_value[i]==0)?0:1);
         }
         //send request_t
-        eMBMasterReqWriteMultipleCoils(&MBMaster,mbm_request.slave_addr,mbm_request.target_addr[0],get_full_length(),mbm_preread_buffer,0);
+        eMBMasterReqWriteMultipleCoils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), mbm_preread_buffer, 0);
         break;
     default:
         break;
@@ -342,7 +342,7 @@ bool request_completed(void)
 
 void PLC_IOM_LOCAL_POLL(uint32_t tick)
 {
-//    int i,j;
+//    int i, j;
 //    uint8_t max_weight_num;
 //    uint8_t max_weight=0;
 
@@ -539,7 +539,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 /**
  * This is modbus master respond timeout error process callback function.
  * @note There functions will block modbus master poll while execute OS waiting.
- * So,for real-time of system.Do not execute too much waiting process.
+ * So, for real-time of system.Do not execute too much waiting process.
  *
  * @param ucDestAddress destination salve address
  * @param pucPDUData PDU buffer data
@@ -556,7 +556,7 @@ void vMBMasterErrorCBRespondTimeout(UCHAR ucDestAddress, const UCHAR* pucPDUData
 /**
  * This is modbus master receive data error process callback function.
  * @note There functions will block modbus master poll while execute OS waiting.
- * So,for real-time of system.Do not execute too much waiting process.
+ * So, for real-time of system.Do not execute too much waiting process.
  *
  * @param ucDestAddress destination salve address
  * @param pucPDUData PDU buffer data
@@ -572,7 +572,7 @@ void vMBMasterErrorCBReceiveData(UCHAR ucDestAddress, const UCHAR* pucPDUData, U
 /**
  * This is modbus master execute function error process callback function.
  * @note There functions will block modbus master poll while execute OS waiting.
- * So,for real-time of system.Do not execute too much waiting process.
+ * So, for real-time of system.Do not execute too much waiting process.
  *
  * @param ucDestAddress destination salve address
  * @param pucPDUData PDU buffer data
@@ -588,7 +588,7 @@ void vMBMasterErrorCBExecuteFunction(UCHAR ucDestAddress, const UCHAR* pucPDUDat
 /**
  * This is modbus master request_t process success callback function.
  * @note There functions will block modbus master poll while execute OS waiting.
- * So,for real-time of system.Do not execute too much waiting process.
+ * So, for real-time of system.Do not execute too much waiting process.
  *
  */
 void vMBMasterCBRequestScuuess(void)
@@ -609,7 +609,7 @@ void vMBMasterCBRequestScuuess(void)
  *
  * @return result
  */
-eMBErrorCode eMBMasterRegInputCB(MBInstance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs )
+eMBErrorCode eMBMasterRegInputCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs)
 {
     eMBErrorCode    eStatus = MB_ENOERR;
     uint8_t reg_index;
@@ -644,7 +644,7 @@ eMBErrorCode eMBMasterRegInputCB(MBInstance* inst, UCHAR * pucRegBuffer, USHORT 
 
 
 
-eMBErrorCode eMBMasterRegHoldingCB(MBInstance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs, eMBRegisterMode eMode)
+eMBErrorCode eMBMasterRegHoldingCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs, eMBRegisterMode eMode)
 {
     eMBErrorCode    eStatus = MB_ENOERR;
 
@@ -717,7 +717,7 @@ eMBErrorCode eMBMasterRegHoldingCB(MBInstance* inst, UCHAR * pucRegBuffer, USHOR
  *
  * @return result
  */
-eMBErrorCode eMBMasterRegCoilsCB(MBInstance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils, eMBRegisterMode eMode)
+eMBErrorCode eMBMasterRegCoilsCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils, eMBRegisterMode eMode)
 {
     eMBErrorCode    eStatus = MB_ENOERR;
 
@@ -733,7 +733,7 @@ eMBErrorCode eMBMasterRegCoilsCB(MBInstance* inst, UCHAR * pucRegBuffer, USHORT 
  *
  * @return result
  */
-eMBErrorCode eMBMasterRegDiscreteCB(MBInstance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNDiscrete )
+eMBErrorCode eMBMasterRegDiscreteCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNDiscrete)
 {
     eMBErrorCode    eStatus = MB_ENOERR;
 

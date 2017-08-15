@@ -69,8 +69,8 @@
 
 /* ----------------------- Static variables ---------------------------------*/
 
-static MBInstance MBSlave;
-static MBRTUInstance MBTransport;
+static mb_instance MBSlave;
+static mb_rtu_tr MBTransport;
 
 static tm mbtime;
 static bool mbt_sflg = false;
@@ -89,7 +89,7 @@ static unsigned short usRegHoldingBuf[REG_HOLDING_NREGS-MB_REG_SEC-1];
 
 
 
-static uint16_t mb_hr_get( uint16_t reg )
+static uint16_t mb_hr_get(uint16_t reg)
 {
     uint16_t tmp, i;
     switch (reg)
@@ -176,9 +176,9 @@ static uint16_t mb_hr_get( uint16_t reg )
     return 0;
 }
 
-static void mb_hr_set( uint16_t reg, uint16_t val )
+static void mb_hr_set(uint16_t reg, uint16_t val)
 {
-    switch(reg)
+    switch (reg)
     {
         /* */
     case MB_REG_HWST:
@@ -260,7 +260,7 @@ void PLC_IOM_LOCAL_INIT(void)
 {
     int i;
 
-    for( i = 0; i < REG_HOLDING_NREGS-MB_REG_SEC-1; i++ )
+    for(i = 0; i < REG_HOLDING_NREGS-MB_REG_SEC-1; i++)
     {
         usRegHoldingBuf[i] = 0;
     }
@@ -291,13 +291,13 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         }
         if (3 != PLC_APP->l_tab[i]->a_size)
         {
-            //plc_curr_app->log_msg_post(LOG_CRITICAL,(char *)plc_mb_err_init,sizeof(plc_mb_err_init));
+            //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mb_err_init, sizeof(plc_mb_err_init));
             plc_iom_errno_print(PLC_ERRNO_MBS_INIT);
             return false;
         }
         if (mb_gotinit)
         {
-            //plc_curr_app->log_msg_post(LOG_CRITICAL,(char *)plc_mb_err_extrainit,sizeof(plc_mb_err_extrainit));
+            //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mb_err_extrainit, sizeof(plc_mb_err_extrainit));
             plc_iom_errno_print(PLC_ERRNO_MBS_EX_INIT);
             return false;
         }
@@ -330,7 +330,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         return true;
 
     default:
-        PLC_LOG_ERR_SZ();//plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_iom_err_sz, plc_iom_err_sz_sz );
+        PLC_LOG_ERR_SZ();//plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_iom_err_sz, plc_iom_err_sz_sz);
         return false;
     }
 }
@@ -362,7 +362,7 @@ void PLC_IOM_LOCAL_END(uint16_t i)
             mb_enabled = true;
             mb_start = true;
         }
-        eMBInitRTU(&MBSlave,&MBTransport, mb_slave_addr, MBS_USART, mb_baudrate, MB_PAR_NONE );
+        eMBInitRTU(&MBSlave, &MBTransport, mb_slave_addr, MBS_USART, mb_baudrate, MB_PAR_NONE);
     }
 }
 
@@ -379,7 +379,7 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
     if (mb_start)
     {
         mb_start = false;
-        if(!mb_enabled)
+        if (!mb_enabled)
         {
             eMBDisable(&MBSlave);
             return;
@@ -387,12 +387,12 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
         eMBEnable(&MBSlave);
     }
 
-    plc_rtc_dt_get( &mbtime );
+    plc_rtc_dt_get(&mbtime);
     eMBPoll(&MBSlave);
     if (mbt_sflg)
     {
         mbt_sflg = false;
-        plc_rtc_dt_set( &mbtime );
+        plc_rtc_dt_set(&mbtime);
     }
 }
 uint32_t PLC_IOM_LOCAL_WEIGTH(uint16_t i)
@@ -422,7 +422,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         usRegHoldingBuf[plc_curr_app->l_tab[i]->a_data[0]] = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
         break;
     case PLC_LT_Q:
-        if(mb_gotinit)
+        if (mb_gotinit)
         {
             mb_enabled = *(bool *)(PLC_APP->l_tab[i]->v_buf);
             mb_start = true; //Now we can start
@@ -437,32 +437,32 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 #undef LOCAL_PROTO
 
 eMBErrorCode
-eMBRegInputCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs )
+eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs)
 {
     return MB_ENOREG;
 }
 
 eMBErrorCode
-eMBRegHoldingCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs,
-                 eMBRegisterMode eMode )
+eMBRegHoldingCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs,
+                 eMBRegisterMode eMode)
 {
     eMBErrorCode    eStatus = MB_ENOERR;
     int             iRegIndex;
 
-    if( ( usAddress >= REG_HOLDING_START ) &&
-            ( usAddress + usNRegs <= REG_HOLDING_START + REG_HOLDING_NREGS ) )
+    if ((usAddress >= REG_HOLDING_START) &&
+            (usAddress + usNRegs <= REG_HOLDING_START + REG_HOLDING_NREGS))
     {
-        iRegIndex = ( int )( usAddress - usRegHoldingStart );
-        switch ( eMode )
+        iRegIndex = (int)(usAddress - usRegHoldingStart);
+        switch (eMode)
         {
             /* Pass current register values to the protocol stack. */
         case MB_REG_READ:
-            while( usNRegs > 0 )
+            while (usNRegs > 0)
             {
                 USHORT tmp;
                 tmp = mb_hr_get(iRegIndex);
-                *pucRegBuffer++ = ( unsigned char )( tmp >> 8 );
-                *pucRegBuffer++ = ( unsigned char )( tmp & 0xFF );
+                *pucRegBuffer++ = (unsigned char)(tmp >> 8);
+                *pucRegBuffer++ = (unsigned char)(tmp & 0xFF);
                 iRegIndex++;
                 usNRegs--;
             }
@@ -471,7 +471,7 @@ eMBRegHoldingCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs,
             /* Update current register values with new values from the
              * protocol stack. */
         case MB_REG_WRITE:
-            while( usNRegs > 0 )
+            while (usNRegs > 0)
             {
                 USHORT tmp;
                 tmp  = *pucRegBuffer++ << 8;
@@ -491,14 +491,14 @@ eMBRegHoldingCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs,
 
 
 eMBErrorCode
-eMBRegCoilsCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils,
-               eMBRegisterMode eMode )
+eMBRegCoilsCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils,
+               eMBRegisterMode eMode)
 {
     return MB_ENOREG;
 }
 
 eMBErrorCode
-eMBRegDiscreteCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNDiscrete )
+eMBRegDiscreteCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNDiscrete)
 {
     return MB_ENOREG;
 }

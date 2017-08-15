@@ -115,15 +115,15 @@ static const clk_cfg cfg_hsi =
     .apb2_freq =  60000000ul
 };
 
-static void pll_setup( const clk_cfg *clock )
+static void pll_setup(const clk_cfg *clock)
 {
     /*
      * Set prescalers for AHB, ABP1, ABP2.
      * Do this before touching the PLL (TODO: why?).
      */
-    rcc_set_hpre  (clock->hpre  );
-    rcc_set_ppre1 (clock->ppre1 );
-    rcc_set_ppre2 (clock->ppre2 );
+    rcc_set_hpre  (clock->hpre );
+    rcc_set_ppre1 (clock->ppre1);
+    rcc_set_ppre2 (clock->ppre2);
     /*
      * Sysclk runs with 72MHz -> 2 waitstates.
      * 0WS from 0-24MHz
@@ -135,13 +135,13 @@ static void pll_setup( const clk_cfg *clock )
      * Set the PLL multiplication factor to 9.
      * fsrc * multiplier
      */
-    if(clock->pll_src==PLL_HSE)
+    if (clock->pll_src==PLL_HSE)
     {
-        rcc_set_main_pll_hse(clock->pll_m,clock->pll_n,clock->pll_p,clock->pll_q);
+        rcc_set_main_pll_hse(clock->pll_m, clock->pll_n, clock->pll_p, clock->pll_q);
     }
     else
     {
-        rcc_set_main_pll_hsi(clock->pll_m,clock->pll_n,clock->pll_p,clock->pll_q);
+        rcc_set_main_pll_hsi(clock->pll_m, clock->pll_n, clock->pll_p, clock->pll_q);
     }
 
     /* Enable PLL oscillator and wait for it to stabilize. */
@@ -183,7 +183,7 @@ void plc_clock_setup(void)
         {
             /* Sucess. */
             pll_is_dirty = true;
-            pll_setup( &PLC_HSE_CONFIG );
+            pll_setup(&PLC_HSE_CONFIG);
             pll_is_dirty = false;
 
             return;
@@ -191,7 +191,7 @@ void plc_clock_setup(void)
     }
     /* Fallback to HSI. */
     pll_is_dirty = true;
-    pll_setup( &cfg_hsi );
+    pll_setup(&cfg_hsi);
     pll_is_dirty = false;
     /* This is an error, but we can do some work... */
     plc_clock_hse_failure = 1;
@@ -212,7 +212,7 @@ void nmi_handler(void)
         else
         {
             /* We are already on HSI, so we need only PLL setup. */
-            pll_setup( &cfg_hsi );
+            pll_setup(&cfg_hsi);
             /* This is an error, but we can do some work... */
             plc_clock_hse_failure = 1;
             //plc_diag_status |= PLC_DIAG_ERR_HSE;

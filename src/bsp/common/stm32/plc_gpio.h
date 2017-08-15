@@ -11,16 +11,16 @@ typedef struct
     uint16_t pin;
 } plc_gpio_t;
 
-#define PLC_GPIO_CONCAT(a,b) a##b
-#define PLC_GPIO_CONCAT2(a,b) PLC_GPIO_CONCAT(a,b)
+#define PLC_GPIO_CONCAT(a, b) a##b
+#define PLC_GPIO_CONCAT2(a, b) PLC_GPIO_CONCAT(a, b)
 
-#define PLC_GPIO_THING(n,name) (PLC_GPIO_CONCAT2(PLC_GPIO_CONCAT(PLC_,n),name))
+#define PLC_GPIO_THING(n, name) (PLC_GPIO_CONCAT2(PLC_GPIO_CONCAT(PLC_, n), name))
 
-#define PLC_GPIO_PERIPH(n) PLC_GPIO_THING(n,_PERIPH)
-#define PLC_GPIO_PORT(n)   PLC_GPIO_THING(n,_PORT)
-#define PLC_GPIO_PIN(n)    PLC_GPIO_THING(n,_PIN)
+#define PLC_GPIO_PERIPH(n) PLC_GPIO_THING(n, _PERIPH)
+#define PLC_GPIO_PORT(n)   PLC_GPIO_THING(n, _PORT)
+#define PLC_GPIO_PIN(n)    PLC_GPIO_THING(n, _PIN)
 
-#define PLC_GPIO_REC(n) {PLC_GPIO_PERIPH(n),PLC_GPIO_PORT(n),PLC_GPIO_PIN(n)}
+#define PLC_GPIO_REC(n) {PLC_GPIO_PERIPH(n), PLC_GPIO_PORT(n), PLC_GPIO_PIN(n)}
 
 void plc_gpio_cfg_in (const plc_gpio_t * self);
 void plc_gpio_cfg_out(const plc_gpio_t * self);

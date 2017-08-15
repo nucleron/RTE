@@ -29,9 +29,9 @@ MEMORY
 	appram    (rwx) : ORIGIN = 0x20002000, LENGTH = 84K
 }
 
-PROVIDE( _stack     = ORIGIN(appram) + LENGTH(appram) );
-PROVIDE( _app_start = ORIGIN(app_flash)               );
-PROVIDE( _app_end   = _app_start + LENGTH(app_flash)  );
+PROVIDE(_stack     = ORIGIN(appram) + LENGTH(appram));
+PROVIDE(_app_start = ORIGIN(app_flash)              );
+PROVIDE(_app_end   = _app_start + LENGTH(app_flash) );
 
 /* Include the common ld script. */
 /*

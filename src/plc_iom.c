@@ -21,7 +21,7 @@ plc_iom_t plc_iom;
 #endif
 
 /*Insertion sort*/
-static void _plc_loc_sort( uint16_t start, uint16_t end )
+static void _plc_loc_sort(uint16_t start, uint16_t end)
 {
     int32_t       i, j;
     uint32_t      p_weigth;
@@ -42,7 +42,7 @@ static void _plc_loc_sort( uint16_t start, uint16_t end )
     }
 }
 //Sort locations with the same protocol used
-static uint32_t _plc_proto_sort( uint16_t l_begin, uint16_t l_end )
+static uint32_t _plc_proto_sort(uint16_t l_begin, uint16_t l_end)
 {
     int32_t i;
     uint16_t proto;
@@ -68,9 +68,9 @@ static uint32_t _plc_proto_sort( uint16_t l_begin, uint16_t l_end )
     return l_end;
 }
 //Sort locations of the same type
-static void _plc_type_sort( uint16_t l_begin, uint16_t l_end )
+static void _plc_type_sort(uint16_t l_begin, uint16_t l_end)
 {
-    while(l_begin < l_end)
+    while (l_begin < l_end)
     {
         l_begin = _plc_proto_sort(l_begin, l_end);
     }
@@ -111,8 +111,8 @@ bool plc_iom_test_hw(void)
 }
 
 static char print_buf[128];
-static const char print_lt[] = {'I','M','Q'};
-static const char print_sz[] = {'X','B','W','D','L'};
+static const char print_lt[] = {'I', 'M', 'Q'};
+static const char print_sz[] = {'X', 'B', 'W', 'D', 'L'};
 
 void plc_iom_check_print(uint16_t i)
 {
@@ -123,13 +123,13 @@ void plc_iom_check_print(uint16_t i)
               print_lt[PLC_APP->l_tab[i]->v_type],
               print_sz[PLC_APP->l_tab[i]->v_size],
               (int)PLC_APP->l_tab[i]->proto
-          );
+         );
     if (PLC_APP->l_tab[i]->a_size)
     {
         uint16_t j;
         for (j = 0; j < PLC_APP->l_tab[i]->a_size; j++)
         {
-            cnt += sprintf( print_buf + cnt, ".%d", (int)PLC_APP->l_tab[i]->a_data[j] );
+            cnt += sprintf(print_buf + cnt, ".%d", (int)PLC_APP->l_tab[i]->a_data[j]);
             //Overflow check
             if (cnt >= 115)
             {
@@ -165,7 +165,7 @@ bool plc_iom_check_and_sort(void)
     {
         plc_iom_check_print(i);
 
-        j = mid_from_pid( PLC_APP->l_tab[i]->proto );
+        j = mid_from_pid(PLC_APP->l_tab[i]->proto);
         //Check protocol
         if (PLC_IOM_MID_ERROR == j)
         {
@@ -185,7 +185,7 @@ bool plc_iom_check_and_sort(void)
     for (i = 0; i < o_end; i++)
     {
         //Weigth locations for protocol specific sort
-        j = mid_from_pid( PLC_APP->l_tab[i]->proto );
+        j = mid_from_pid(PLC_APP->l_tab[i]->proto);
         //Check location, plc_iom_registry[j].check(i) must print all error messages!
         if (false == plc_iom_registry[j].check(i))
         {
@@ -214,9 +214,9 @@ bool plc_iom_check_and_sort(void)
     }
 
     // Protocol specific sort, each type of locations is sorted separately
-    _plc_type_sort( 0,               plc_iom.m_begin );//inputs
-    _plc_type_sort( plc_iom.m_begin, plc_iom.m_end   );//memory
-    _plc_type_sort( plc_iom.m_end,   o_end           );//outputs
+    _plc_type_sort(0,               plc_iom.m_begin);//inputs
+    _plc_type_sort(plc_iom.m_begin, plc_iom.m_end  );//memory
+    _plc_type_sort(plc_iom.m_end,   o_end          );//outputs
     // Clear weigths
     for (i = 0; i < o_end; i++)
     {
@@ -235,7 +235,7 @@ void plc_iom_get(void)
 
     for (i = 0; i < m_end; i++)
     {
-        j = mid_from_pid( plc_curr_app->l_tab[i]->proto );
+        j = mid_from_pid(plc_curr_app->l_tab[i]->proto);
         plc_curr_app->w_tab[i] += plc_iom_registry[j].get(i);
     }
 }
@@ -250,7 +250,7 @@ void plc_iom_set(void)
 
     for (i = m_begin; i < o_end; i++)
     {
-        j = mid_from_pid( plc_curr_app->l_tab[i]->proto );
+        j = mid_from_pid(plc_curr_app->l_tab[i]->proto);
         plc_curr_app->w_tab[i] += plc_iom_registry[j].set(i);
     }
 }
@@ -281,7 +281,7 @@ void plc_iom_poll(void)
 
         for (i = 0; i < o_end; i++)
         {
-            j = mid_from_pid( plc_curr_app->l_tab[i]->proto );
+            j = mid_from_pid(plc_curr_app->l_tab[i]->proto);
             plc_curr_app->w_tab[i] += plc_iom_registry[j].sched(i, tick);
         }
     }
