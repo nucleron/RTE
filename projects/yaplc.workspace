@@ -5,7 +5,6 @@
 		<Project filename="nuc-247-0-rte/nuc-247-0-rte.cbp" />
 		<Project filename="nuc-247-1-rte/nuc-247-1-rte.cbp" />
 		<Project filename="nuc-242-rte/nuc-242-rte.cbp" />
-		<Project filename="modbus_test/modbus_test.cbp" />
-		<Project filename="modbus_multi_test/modbus_multi_test.cbp" active="1" />
+		<Project filename="modbus_multi_test/modbus_multi_test.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>

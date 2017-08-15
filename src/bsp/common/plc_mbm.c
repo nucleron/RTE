@@ -86,7 +86,7 @@ static bool mbm_need_preread = false;
 static bool mbm_preread_finished = false;
 
 static mb_instance MBMaster;
-static mb_rtu_tr MBMTransport;
+static mb_trans_union MBMTransport;
 
 static bool mbm_init_flg = false;
 static bool mbm_start = false;
@@ -240,7 +240,8 @@ void PLC_IOM_LOCAL_END(uint16_t i)
             mbm_enabled = true;
             mbm_start = true;
         }
-        eMBMasterInitRTU(&MBMaster, &MBMTransport, (mb_port_base *)&mbm_inst_usart, mbm_baudrate, MB_PAR_NONE);
+        //eMBMasterInitRTU(&MBMaster, &MBMTransport, (mb_port_base *)&mbm_inst_usart, mbm_baudrate, MB_PAR_NONE);
+        eMBInit(&MBMaster, &MBMTransport, (mbm_ascii)?MB_ASCII:MB_RTU, TRUE, 0, (mb_port_base *)&mbm_inst_usart, mbm_baudrate, MB_PAR_NONE);
 
     }
 }
