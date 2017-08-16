@@ -58,7 +58,7 @@ typedef struct
 static uint8_t err_level = PLC_DIAG_LEVEL_NRM;
 
 
-static const char plc_dl_err_msg[] =  "Deadline violation detected, PLC is stoped!";
+//static const char plc_dl_err_msg[] =  "Deadline violation detected, PLC is stoped!";
 static const char plc_crt_err_msg[] = "Critical failure!";
 static const char plc_hse_err_msg[] = "HSE oscilator failed!";
 static const char plc_lse_err_msg[] = "LSE oscilator failed!";
@@ -69,7 +69,8 @@ static const char plc_app_inf_msg[] = "Aplication posted info";
 
 static const diag_cfg_t diag_poll_cfg[]=
 {
-    DIAG_POLL_REC(PLC_DIAG_LEVEL_CRI, PLC_DIAG_ERR_DEADLINE  , 250, plc_dl_err_msg),
+    //Can't indicate deadline as PLC gets reset in case of deadline violation.
+    //DIAG_POLL_REC(PLC_DIAG_LEVEL_CRI, PLC_DIAG_ERR_DEADLINE  , 250, plc_dl_err_msg),
     DIAG_POLL_REC(PLC_DIAG_LEVEL_CRI, PLC_DIAG_ERR_OTHER_CRIT, 250, plc_crt_err_msg),
     DIAG_POLL_REC(PLC_DIAG_LEVEL_WRN, PLC_DIAG_ERR_LSE       , 250, plc_lse_err_msg),
     DIAG_POLL_REC(PLC_DIAG_LEVEL_WRN, PLC_DIAG_ERR_HSE       , 125, plc_hse_err_msg),

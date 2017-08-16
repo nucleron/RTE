@@ -57,11 +57,10 @@ uint64_t plc_tick_time = PLC_TICK_MIN_PER;
 volatile bool plc_tick_flag = false;
 
 extern void plc_irq_stub(void);
-
-//extern volatile uint32_t plc_diag_status;
-
-static bool dl_post_flag = true;
-static bool dl_fail_flag = false;
+//// We need some RTOS for such behaviour
+//static bool dl_post_flag = true;
+//static bool dl_fail_flag = false;
+//// We need some RTOS for such behaviour
 
 void plc_tick_init(void)
 {
@@ -69,16 +68,18 @@ void plc_tick_init(void)
 
 void plc_tick_poll(void)
 {
-    if (dl_fail_flag)
-    {
-        plc_diag_status |= PLC_DIAG_ERR_DEADLINE;
-
-        if (dl_post_flag)
-        {
-            dl_post_flag = false;
-            plc_app_stop();/* Must stop the app now! */
-        }
-    }
+//// We need some RTOS for such behaviour
+//    if (dl_fail_flag)
+//    {
+//        plc_diag_status |= PLC_DIAG_ERR_DEADLINE;
+//
+//        if (dl_post_flag)
+//        {
+//            dl_post_flag = false;
+//            plc_app_stop();/* Must stop the app now! */
+//        }
+//    }
+//// We need some RTOS for such behaviour
 }
 
 void sys_tick_handler(void)

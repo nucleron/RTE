@@ -76,7 +76,9 @@ typedef struct request_struct request_t;
 
 static request_t mbm_request;
 
-static uint8_t mbm_preread_buffer[(MBM_REQUEST_MAX_ADDR>>3)+1];
+//static uint8_t mbm_preread_buffer[(MBM_REQUEST_MAX_ADDR>>3)+1];
+static uint16_t mbm_preread_buffer[MBM_REQUEST_MAX_ADDR];
+
 
 static uint32_t mbm_nearest_time=0xFFFFFFFF;
 static uint16_t mbm_nearest_num;
@@ -258,6 +260,7 @@ void execute_request(uint32_t tick)
     uint8_t reg_index;
 
     mbm_busy=0x00;
+    mbm_need_preread     = false;
     PLC_APP->w_tab[mbm_nearest_num] = tick;
 
     switch (mbm_request.type)
@@ -272,6 +275,7 @@ void execute_request(uint32_t tick)
         {
             if (mbm_preread_finished) //after we got current register values, change what we have to write and send a request_t to send everything to slave
             {
+                mbm_preread_finished = false;
                 for (j=0;j<get_full_length();j++)
                 {
                     reg_index = mbm_request.target_addr[j]-mbm_request.target_addr[0];
@@ -297,10 +301,10 @@ void execute_request(uint32_t tick)
         //pack bits
         for (i=0;i<get_full_length();i++)
         {
-            xMBUtilSetBits(mbm_preread_buffer, i, 1, (mbm_request.target_value[i]==0)?0:1);
+            xMBUtilSetBits((UCHAR *)mbm_preread_buffer, i, 1, (mbm_request.target_value[i]==0)?0:1);
         }
         //send request_t
-        eMBMasterReqWriteMultipleCoils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), mbm_preread_buffer, 0);
+        eMBMasterReqWriteMultipleCoils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), (UCHAR *)mbm_preread_buffer, 0);
         break;
     default:
         break;
@@ -594,11 +598,17 @@ void vMBMasterErrorCBExecuteFunction(UCHAR ucDestAddress, const UCHAR* pucPDUDat
  */
 void vMBMasterCBRequestScuuess(void)
 {
-    if (!(mbm_need_preread))
+    if (mbm_need_preread)
+    {
+        mbm_need_preread     = false;
+        mbm_preread_finished = true;
+    }
+    else
     {
         mbm_request.result=RR_SUCCESS;
         mbm_busy=0xFF;
     }
+
 }
 
 /**
@@ -657,6 +667,7 @@ eMBErrorCode eMBMasterRegHoldingCB(mb_instance* inst, UCHAR * pucRegBuffer, USHO
     {
     /* write values to slave registers*/
     case MB_REG_WRITE:
+        break;
         while (usNRegs > 0)
         {
             reg_index = req_find_reg(usAddress);
