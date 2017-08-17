@@ -109,7 +109,7 @@ void PLC_IOM_LOCAL_INIT(void)
     mbm_request.result=RR_FINISHED;
     mbm_request.slave_addr=0;
     mbm_request.uid=INVALID_UID;
-    for (i=0;i<MBM_REQUEST_MAX_ADDR;i++)
+    for (i=0; i<MBM_REQUEST_MAX_ADDR; i++)
     {
         mbm_request.target_addr[i]=0;
         mbm_request.target_value[i]=0;
@@ -166,7 +166,8 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         else if (PLC_APP->l_tab[i]->v_type == PLC_LT_M)//requested registers
         {
             if ((PLC_APP->l_tab[i]->v_size != PLC_LSZ_X) && (PLC_APP->l_tab[i]->v_size != PLC_LSZ_W)) //bool size only for coils and discrete inputs
-            {                                                                                         //word size for holding & input regs
+            {
+                //word size for holding & input regs
                 //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mbm_err_badtype, sizeof(plc_mbm_err_badtype));
                 plc_iom_errno_print(PLC_ERRNO_MBM_SZ);
                 return false;
@@ -177,7 +178,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         {
             //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mbm_err_tp, sizeof(plc_mbm_err_tp));
             plc_iom_errno_print(PLC_ERRNO_MBM_TP);
-                return false;
+            return false;
         }
         break;
 
@@ -193,8 +194,8 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         }
         break;
     default:
-            plc_iom_errno_print(PLC_ERRNO_MBM_ASZ);
-            return false;
+        plc_iom_errno_print(PLC_ERRNO_MBM_ASZ);
+        return false;
         break;
     }
     return true;
@@ -276,7 +277,7 @@ void execute_request(uint32_t tick)
             if (mbm_preread_finished) //after we got current register values, change what we have to write and send a request_t to send everything to slave
             {
                 mbm_preread_finished = false;
-                for (j=0;j<get_full_length();j++)
+                for (j=0; j<get_full_length(); j++)
                 {
                     reg_index = mbm_request.target_addr[j]-mbm_request.target_addr[0];
                     mbm_preread_buffer[reg_index] = mbm_request.target_value[j];
@@ -299,7 +300,7 @@ void execute_request(uint32_t tick)
         break;
     case RT_COILS:
         //pack bits
-        for (i=0;i<get_full_length();i++)
+        for (i=0; i<get_full_length(); i++)
         {
             xMBUtilSetBits((UCHAR *)mbm_preread_buffer, i, 1, (mbm_request.target_value[i]==0)?0:1);
         }
@@ -419,7 +420,7 @@ uint32_t PLC_IOM_LOCAL_WEIGTH(uint16_t i)
 uint8_t req_find_reg(uint16_t reg_addr)
 {
     int i;
-    for (i=0;i<mbm_request.registers;i++)
+    for (i=0; i<mbm_request.registers; i++)
     {
         if (mbm_request.target_addr[i]==reg_addr)
         {
@@ -455,7 +456,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
         {
             if (request_completed())
             {
-                 *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf) = mbm_request.result;
+                *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf) = mbm_request.result;
             }
 
         }
@@ -518,13 +519,13 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
             {
             case PLC_LSZ_W:
                 mbm_request.target_value[req_find_reg(plc_curr_app->l_tab[i]->a_data[1])] = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
-            break;
+                break;
             case PLC_LSZ_X:
                 mbm_request.target_value[req_find_reg(plc_curr_app->l_tab[i]->a_data[1])] = *(bool*)(plc_curr_app->l_tab[i]->v_buf);
-            break;
+                break;
             }
         }
-    break;
+        break;
     case PLC_LT_Q: //for init location.
         if (mbm_gotinit)
         {
@@ -551,7 +552,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
  * @param ucPDULength PDU buffer length
  *
  */
-void vMBMasterErrorCBRespondTimeout(UCHAR ucDestAddress, const UCHAR* pucPDUData, USHORT ucPDULength)
+void vMBMasterErrorCBRespondTimeout(mb_instance* inst, UCHAR ucDestAddress, const UCHAR* pucPDUData, USHORT ucPDULength)
 {
     mbm_request.result=RR_TIMEOUT;
     mbm_busy=0xFF;
@@ -568,7 +569,7 @@ void vMBMasterErrorCBRespondTimeout(UCHAR ucDestAddress, const UCHAR* pucPDUData
  * @param ucPDULength PDU buffer length
  *
  */
-void vMBMasterErrorCBReceiveData(UCHAR ucDestAddress, const UCHAR* pucPDUData, USHORT ucPDULength)
+void vMBMasterErrorCBReceiveData(mb_instance* inst, UCHAR ucDestAddress, const UCHAR* pucPDUData, USHORT ucPDULength)
 {
     mbm_request.result=RR_DATA_ERR;
     mbm_busy=0xFF;
@@ -584,7 +585,7 @@ void vMBMasterErrorCBReceiveData(UCHAR ucDestAddress, const UCHAR* pucPDUData, U
  * @param ucPDULength PDU buffer length
  *
  */
-void vMBMasterErrorCBExecuteFunction(UCHAR ucDestAddress, const UCHAR* pucPDUData, USHORT ucPDULength)
+void vMBMasterErrorCBExecuteFunction(mb_instance* inst, UCHAR ucDestAddress, const UCHAR* pucPDUData, USHORT ucPDULength)
 {
     mbm_request.result=RR_INT_ERR;
     mbm_busy=0xFF;
@@ -596,7 +597,7 @@ void vMBMasterErrorCBExecuteFunction(UCHAR ucDestAddress, const UCHAR* pucPDUDat
  * So, for real-time of system.Do not execute too much waiting process.
  *
  */
-void vMBMasterCBRequestScuuess(void)
+void vMBMasterCBRequestSuccess(mb_instance* inst)
 {
     if (mbm_need_preread)
     {
@@ -655,7 +656,7 @@ eMBErrorCode eMBMasterRegInputCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT
 
 
 
-eMBErrorCode eMBMasterRegHoldingCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs, eMBRegisterMode eMode)
+eMBErrorCode eMBMasterRegHoldingCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs)
 {
     eMBErrorCode    eStatus = MB_ENOERR;
 
@@ -663,58 +664,85 @@ eMBErrorCode eMBMasterRegHoldingCB(mb_instance* inst, UCHAR * pucRegBuffer, USHO
 
     usAddress--;
 
-    switch (eMode)
+    while (usNRegs > 0)
     {
-    /* write values to slave registers*/
-    case MB_REG_WRITE:
-        break;
-        while (usNRegs > 0)
+        if (mbm_need_preread)
+        {
+            mbm_preread_buffer[reg_index] = (uint16_t)(*pucRegBuffer++)<<8;
+            mbm_preread_buffer[reg_index]|=   *pucRegBuffer++;
+            reg_index++;
+        }
+        else
         {
             reg_index = req_find_reg(usAddress);
             if (reg_index!=0xFF)
             {
-                *pucRegBuffer++ = (UCHAR) (mbm_request.target_value[reg_index] >> 8);
-                *pucRegBuffer++ = (UCHAR) (mbm_request.target_value[reg_index] & 0xFF);
-            }
-            else //means we are trying to write registers we do not have
-            {
-                *pucRegBuffer++=0xDE; //should never end up here
-                *pucRegBuffer++=0xAD; //
-            }
-            usAddress++;
-            usNRegs--;
-        }
-        break;
-    /*Get values from slave registers */
-    case MB_REG_READ:
-        while (usNRegs > 0)
-        {
-            if (mbm_need_preread)
-            {
-                mbm_preread_buffer[reg_index] = (uint16_t)(*pucRegBuffer++)<<8;
-                mbm_preread_buffer[reg_index]|=   *pucRegBuffer++;
-                reg_index++;
+                mbm_request.target_value[reg_index] =  (uint16_t)(*pucRegBuffer++)<<8;
+                mbm_request.target_value[reg_index]|=   *pucRegBuffer++;
             }
             else
             {
-                reg_index = req_find_reg(usAddress);
-                if (reg_index!=0xFF)
-                {
-                    mbm_request.target_value[reg_index] =  (uint16_t)(*pucRegBuffer++)<<8;
-                    mbm_request.target_value[reg_index]|=   *pucRegBuffer++;
-                }
-                else
-                {
-                    pucRegBuffer++;
-                    pucRegBuffer++;
-                    //we got extra register. just ignore it for now
-                }
+                pucRegBuffer++;
+                pucRegBuffer++;
+                //we got extra register. just ignore it for now
             }
-            usAddress++;
-            usNRegs--;
         }
-        break;
+        usAddress++;
+        usNRegs--;
     }
+
+//    switch (eMode)
+//    {
+//    /* write values to slave registers*/
+//    case MB_REG_WRITE:
+//        break;
+//        while (usNRegs > 0)
+//        {
+//            reg_index = req_find_reg(usAddress);
+//            if (reg_index!=0xFF)
+//            {
+//                *pucRegBuffer++ = (UCHAR) (mbm_request.target_value[reg_index] >> 8);
+//                *pucRegBuffer++ = (UCHAR) (mbm_request.target_value[reg_index] & 0xFF);
+//            }
+//            else //means we are trying to write registers we do not have
+//            {
+//                *pucRegBuffer++=0xDE; //should never end up here
+//                *pucRegBuffer++=0xAD; //
+//            }
+//            usAddress++;
+//            usNRegs--;
+//        }
+//        break;
+//    /*Get values from slave registers */
+//    case MB_REG_READ:
+//        while (usNRegs > 0)
+//        {
+//            if (mbm_need_preread)
+//            {
+//                mbm_preread_buffer[reg_index] = (uint16_t)(*pucRegBuffer++)<<8;
+//                mbm_preread_buffer[reg_index]|=   *pucRegBuffer++;
+//                reg_index++;
+//            }
+//            else
+//            {
+//                reg_index = req_find_reg(usAddress);
+//                if (reg_index!=0xFF)
+//                {
+//                    mbm_request.target_value[reg_index] =  (uint16_t)(*pucRegBuffer++)<<8;
+//                    mbm_request.target_value[reg_index]|=   *pucRegBuffer++;
+//                }
+//                else
+//                {
+//                    pucRegBuffer++;
+//                    pucRegBuffer++;
+//                    //we got extra register. just ignore it for now
+//                }
+//            }
+//            usAddress++;
+//            usNRegs--;
+//        }
+//        break;
+//    }
 
     return eStatus;
 }
@@ -729,7 +757,7 @@ eMBErrorCode eMBMasterRegHoldingCB(mb_instance* inst, UCHAR * pucRegBuffer, USHO
  *
  * @return result
  */
-eMBErrorCode eMBMasterRegCoilsCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils, eMBRegisterMode eMode)
+eMBErrorCode eMBMasterRegCoilsCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils)
 {
     eMBErrorCode    eStatus = MB_ENOERR;
 
@@ -755,7 +783,7 @@ eMBErrorCode eMBMasterRegDiscreteCB(mb_instance* inst, UCHAR * pucRegBuffer, USH
     /* it already plus one in modbus function method. */
     usAddress--;
 
-        /* write current discrete values with new values from the protocol stack. */
+    /* write current discrete values with new values from the protocol stack. */
     while (usNDiscrete > 0)
     {
         reg_index = req_find_reg(usAddress+iNReg);
