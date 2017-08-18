@@ -300,12 +300,35 @@ void execute_request(uint32_t tick)
         break;
     case RT_COILS:
         //pack bits
-        for (i=0; i<get_full_length(); i++)
+        if(is_continious())
         {
-            xMBUtilSetBits((UCHAR *)mbm_preread_buffer, i, 1, (mbm_request.target_value[i]==0)?0:1);
+            for (i=0; i<get_full_length(); i++)
+            {
+                xMBUtilSetBits((UCHAR *)mbm_preread_buffer, i, 1, (mbm_request.target_value[i]==0)?0:1);
+            }
+            //send request_t
+            eMBMasterReqWriteMultipleCoils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), (UCHAR *)mbm_preread_buffer, 0);
         }
-        //send request_t
-        eMBMasterReqWriteMultipleCoils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), (UCHAR *)mbm_preread_buffer, 0);
+        else
+        {
+            if (mbm_preread_finished) //after we got current register values, change what we have to write and send a request_t to send everything to slave
+            {
+                mbm_preread_finished = false;
+                for (j=0; j<get_full_length(); j++)
+                {
+                    reg_index = mbm_request.target_addr[j]-mbm_request.target_addr[0];
+                    xMBUtilSetBits((UCHAR *)mbm_preread_buffer, reg_index, 1, (mbm_request.target_value[j]==0)?0:1);
+                }
+                //eMBMasterReqWriteHoldingRegister
+                eMBMasterReqWriteMultipleCoils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), (UCHAR *)mbm_preread_buffer, 0);
+            }
+            else //we need to send a request_t to first read full registers range
+            {
+                eMBMasterReqReadCoils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
+                mbm_need_preread = true;
+            }
+        }
+
         break;
     default:
         break;
@@ -469,6 +492,9 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
             {
                 read_request_info(mbm_nearest_num);
             }
+            else
+                mbm_request.result=RR_LOADING;
+
         }
 
         if (mbm_request.uid==plc_curr_app->l_tab[i]->a_data[0])
@@ -760,6 +786,24 @@ eMBErrorCode eMBMasterRegHoldingCB(mb_instance* inst, UCHAR * pucRegBuffer, USHO
 eMBErrorCode eMBMasterRegCoilsCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils)
 {
     eMBErrorCode    eStatus = MB_ENOERR;
+    uint8_t nByte=0;
+
+    if (mbm_need_preread)
+    {
+        nByte = usNCoils/8 + ((usNCoils%8)>0)?1:0;
+        memcpy(mbm_preread_buffer, pucRegBuffer, nByte);
+// Эта реализация memcpy не работает!!!
+//        while(nByte>0)
+//        {
+//            mbm_preread_buffer[nByte] = *(pucRegBuffer+nByte);
+//            nByte--;
+//        }
+// Эта реализация memcpy не работает!!!
+    }
+    else
+    {
+        //coils read callback here
+    }
 
     return eStatus;
 }
