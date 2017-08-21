@@ -18,14 +18,8 @@
  *
  * File: $Id: porttimer.c, v 1.1 2006/08/22 21:35:13 wolti Exp $
  */
-
 /* ----------------------- Platform includes --------------------------------*/
-#include "serial_port.h"
-#include "tcp_port.h"
-
-/* ----------------------- Modbus includes ----------------------------------*/
-#include "mb.h"
-#include "mbport.h"
+#include <stdbool.h>
 
 /* ----------------------- libopencm3 STM32F includes -------------------------------*/
 #include <libopencm3/cm3/nvic.h>
@@ -33,15 +27,22 @@
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/timer.h>
 
+/* ----------------------- Modbus includes ----------------------------------*/
+#include <mb.h>
+
 #include <plc_config.h>
 
 /* ----------------------- Initialize Timer -----------------------------*/
 BOOL
-xMBPortTimersInit(MULTIPORT_SERIAL_ARG  USHORT usTim1Timerout50us)
+xMBPortTimersInit(mb_port_ser* inst,  USHORT usTim1Timerout50us)
 {
     //rcc_periph_clock_enable(RCC_GPIOA);
     //gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO1);
     //gpio_clear(GPIOA, GPIO1);
+    if ((&mbs_inst_usart) != inst)
+    {
+        return false;
+    }
 
     /* Enable TIM clock. */
     rcc_periph_clock_enable(MB_TMR_PERIPH);
@@ -57,8 +58,12 @@ xMBPortTimersInit(MULTIPORT_SERIAL_ARG  USHORT usTim1Timerout50us)
 
 /* ----------------------- Enable Timer -----------------------------*/
 void
-vMBPortTimersEnable(MULTIPORT_SERIAL_ARG_VOID)
+vMBPortTimersEnable(mb_port_ser* inst)
 {
+    if ((&mbs_inst_usart) != inst)
+    {
+        return;
+    }
     /* Restart the timer with the period value set in xMBPortTimersInit() */
     TIM_CNT(MB_TMR) = 1; /* Yes, this must be 1 !!! */
 
@@ -68,14 +73,17 @@ vMBPortTimersEnable(MULTIPORT_SERIAL_ARG_VOID)
 
 /* ----------------------- Disable timer -----------------------------*/
 void
-vMBPortTimersDisable(MULTIPORT_SERIAL_ARG_VOID)
-
+vMBPortTimersDisable(mb_port_ser* inst)
 {
+    if ((&mbs_inst_usart) != inst)
+    {
+        return;
+    }
     timer_disable_irq    (MB_TMR, TIM_DIER_UIE);
     timer_disable_counter(MB_TMR);
 }
 
-void vMBPortTimersDelay(MULTIPORT_SERIAL_ARG USHORT usTimeOutMS)
+void vMBPortTimersDelay(mb_port_ser* inst, USHORT usTimeOutMS)
 {
     /*Not supproted*/
 #if MB_ASCII_TIMEOUT_WAIT_BEFORE_SEND_MS > 0
@@ -98,6 +106,7 @@ void MB_TMR_ISR(void)
         timer_clear_flag(MB_TMR, TIM_SR_UIF); /* Clear interrrupt flag. */
     }
     timer_get_flag(MB_TMR, TIM_SR_UIF);	/* Reread to force the previous (buffered) write before leaving */
-    pxMBPortCBTimerExpired();
+    mbs_inst_usart.base.cb->tmr_expired(mbs_inst_usart.base.arg);
+    //pxMBPortCBTimerExpired();
 }
 

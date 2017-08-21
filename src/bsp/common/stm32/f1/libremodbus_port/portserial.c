@@ -18,12 +18,8 @@
  *
  * File: $Id: portserial.c, v 1.1 2006/08/22 21:35:13 wolti Exp $
  */
-
 /* ----------------------- Platform includes --------------------------------*/
-#include <stdlib.h>
 #include <stdbool.h>
-#include "serial_port.h"
-#include "serial_multi.h"
 
 /* ----------------------- libopencm3 STM32F includes -------------------------------*/
 #include <libopencm3/cm3/nvic.h>
@@ -32,50 +28,59 @@
 #include <libopencm3/stm32/usart.h>
 
 /* ----------------------- Modbus includes ----------------------------------*/
-#include "mb.h"
-#include "mbport.h"
+#include <mb.h>
 
 #include <plc_config.h>
-static volatile bool txen = false;
+
+mb_port_ser mbs_inst_usart;
 /* ----------------------- Enable USART interrupts -----------------------------*/
 void
-vMBPortSerialEnable(MULTIPORT_SERIAL_ARG BOOL xRxEnable, BOOL xTxEnable)
+vMBPortSerialEnable(mb_port_ser* inst, BOOL xRxEnable, BOOL xTxEnable)
 {
     /* If xRXEnable enable serial receive interrupts. If xTxENable enable
      * transmitter empty interrupts.
      */
     if (xRxEnable)
     {
-        txen = false;
-        usart_enable_rx_interrupt(MB_USART);
+        inst->tx_en = false;
+        usart_enable_rx_interrupt(inst->uart_num);
     }
     else
     {
-        usart_disable_rx_interrupt(MB_USART);
+        usart_disable_rx_interrupt(inst->uart_num);
     }
 
     if (xTxEnable)
     {
-        txen = true;
-        gpio_set(MB_USART_TXEN_PORT, MB_USART_TXEN_PIN);
+        inst->tx_en = true;
+        if (inst->uart_num==MB_USART_PERIPH)
+        {
+            gpio_set(MB_USART_TXEN_PORT, MB_USART_TXEN_PIN);
+        }
 
-        usart_enable_tx_interrupt(MB_USART);
+        usart_enable_tx_interrupt(inst->uart_num);
     }
     else
     {
-        txen = false;
-        usart_disable_tx_interrupt(MB_USART);
+        inst->tx_en = false;
+        usart_disable_tx_interrupt(inst->uart_num);
     }
 }
 
 /* ----------------------- Initialize USART ----------------------------------*/
 /* Called with databits = 8 for RTU */
 
-BOOL
-xMBPortSerialInit(MULTIPORT_SERIAL_ARG UCHAR ucPort, ULONG ulBaudRate, UCHAR ucDataBits,
+BOOL xMBPortSerialInit(mb_port_ser* inst, ULONG ulBaudRate, UCHAR ucDataBits,
                    eMBParity eParity)
 {
     BOOL bStatus;
+    if ((&mbs_inst_usart) == inst)
+    {
+        return false;
+    }
+
+    inst->uart_num = MB_USART_PERIPH;
+
     rcc_periph_clock_enable(RCC_AFIO           );
     rcc_periph_clock_enable(MB_USART_PERIPH    );
     rcc_periph_clock_enable(MB_USART_TX_PERIPH );
@@ -157,32 +162,36 @@ xMBPortSerialInit(MULTIPORT_SERIAL_ARG UCHAR ucPort, ULONG ulBaudRate, UCHAR ucD
     return bStatus;
 }
 
+
 /* -----------------------Send character  ----------------------------------*/
 BOOL
-xMBPortSerialPutByte(MULTIPORT_SERIAL_ARG CHAR ucByte)
+xMBPortSerialPutByte(mb_port_ser* inst, CHAR ucByte)
 {
     /* Put a byte in the UARTs transmit buffer. This function is called
      * by the protocol stack if pxMBFrameCBTransmitterEmpty() has been
      * called. */
-    usart_send(MB_USART, ucByte);
+    usart_send(inst->uart_num, ucByte);
     return TRUE;
 }
 
 /* ----------------------- Get character ----------------------------------*/
 BOOL
-xMBPortSerialGetByte(MULTIPORT_SERIAL_ARG CHAR * pucByte)
+xMBPortSerialGetByte(mb_port_ser* inst, CHAR * pucByte)
 {
     /* Return the byte in the UARTs receive buffer. This function is called
      * by the protocol stack after pxMBFrameCBByteReceived() has been called.
      */
-    *pucByte = (CHAR)usart_recv(MB_USART);
+    *pucByte = (CHAR)usart_recv(inst->uart_num);
     return TRUE;
 }
-
 /* ----------------------- Close Serial Port ----------------------------------*/
 void
-vMBPortSerialClose (MULTIPORT_SERIAL_ARG_VOID)
+vMBPortSerialClose(mb_port_ser* inst)
 {
+    if ((&mbs_inst_usart) == inst)
+    {
+        return;
+    }
     nvic_disable_irq(MB_USART_VECTOR);
     usart_disable   (MB_USART);
 }
@@ -200,14 +209,14 @@ void MB_USART_ISR(void)
     /* Check if we were called because of RXNE. */
     if (((USART_CR1(MB_USART) & USART_CR1_RXNEIE) != 0) && ((USART_SR(MB_USART) & USART_SR_RXNE) != 0))
     {
-        pxMBFrameCBByteReceived();
+        mbs_inst_usart.base.cb->byte_rcvd(mbs_inst_usart.base.arg);
     }
     /* Check if we were called because of TXE. */
     if (((USART_CR1(MB_USART) & USART_CR1_TXEIE) != 0) && ((USART_SR(MB_USART) & USART_SR_TXE) != 0))
     {
-        pxMBFrameCBTransmitterEmpty();
+        mbs_inst_usart.base.cb->tx_empty(mbs_inst_usart.base.arg);
         /* Check if we need to disable transmitter*/
-        if (!txen)
+        if (!mbs_inst_usart.tx_en)
         {
             USART_SR (MB_USART) &= ~USART_SR_TC;   /* Clear TC flag*/
             USART_CR1(MB_USART) |= USART_CR1_TCIE; /* Enable transfer complite interrupt*/

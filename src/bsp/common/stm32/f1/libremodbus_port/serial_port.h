@@ -21,17 +21,13 @@
 
 #ifndef _PORT_H
 #define _PORT_H
-
 #include "serial_multi.h"
 #include <assert.h>
 
-#define	INLINE
-#define PR_BEGIN_EXTERN_C			extern "C" {
-#define	PR_END_EXTERN_C				}
-
-#ifdef __cplusplus
+#include <mb_common.h>
 PR_BEGIN_EXTERN_C
-#endif
+
+
 
 /* ----------------------- Defines ------------------------------------------*/
 
@@ -44,7 +40,31 @@ PR_BEGIN_EXTERN_C
 #ifndef FALSE
 #define FALSE           0
 #endif
+#if MB_ASCII_ENABLED == 1
+#define	BUF_SIZE	513     /* must hold a complete ASCII frame. */
+#else
+#define	BUF_SIZE	256     /* must hold a complete RTU frame. */
+#endif
 
+struct _mb_port_ser
+{
+    mb_port_base base;
+    uint32_t  uart_num;
+    bool     tx_en;
+
+	//timer
+	DWORD           dwTimeOut;
+	BOOL            bTimeoutEnable;
+	DWORD           dwTimeLast;
+
+	DWORD           defaultTimeout;
+
+	//events
+	eMBEventType eQueuedEvent;
+	BOOL     xEventInQueue;
+
+	//void* parent;
+};
 /* ----------------------- Type definitions ---------------------------------*/
 
 typedef enum
@@ -59,11 +79,13 @@ typedef enum
 /*
 void            vMBPortLog(eMBPortLogLevel eLevel, const TCHAR * szModule,
                             const TCHAR * szFmt, ...);*/
-void            vMBPortTimerPoll( MULTIPORT_SERIAL_ARG void* caller ); //FIXME
-BOOL            xMBPortSerialPoll(MULTIPORT_SERIAL_ARG void* caller); //FIXME
-BOOL            xMBPortSerialSetTimeout(MULTIPORT_SERIAL_ARG DWORD dwTimeoutMs);
+void            vMBPortTimerPoll       (mb_port_ser* inst, void* caller     ); //FIXME
+BOOL            xMBPortSerialPoll      (mb_port_ser* inst, void* caller     ); //FIXME
+BOOL            xMBPortSerialSetTimeout(mb_port_ser* inst, DWORD dwTimeoutMs);
 
-#ifdef __cplusplus
+
+extern mb_port_ser mbs_inst_usart;
+extern mb_port_ser mbm_inst_usart;
+
 PR_END_EXTERN_C
-#endif
 #endif

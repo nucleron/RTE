@@ -19,29 +19,21 @@
  * File: $Id: portevent.c, v 1.1 2006/08/22 21:35:13 wolti Exp $
  */
 
-/* ----------------------- Modbus includes ----------------------------------*/
 #include <mb.h>
-#include <mbport.h>
 
-/* ----------------------- Variables ----------------------------------------*/
-#ifndef SERIAL_MULTIPORT
-	static eMBEventType eQueuedEvent;
-	static BOOL     xEventInQueue;
-#else
-	#define xEventInQueue inst->xEventInQueue
-	#define eQueuedEvent inst->eQueuedEvent
-#endif
+#define xEventInQueue inst->xEventInQueue
+#define eQueuedEvent inst->eQueuedEvent
 
 /* ----------------------- Start implementation -----------------------------*/
 BOOL
-xMBPortEventInit(MULTIPORT_SERIAL_ARG_VOID)
+xMBPortEventInit(mb_port_ser* inst)
 {
     xEventInQueue = FALSE;
     return TRUE;
 }
 
 BOOL
-xMBPortEventPost( MULTIPORT_SERIAL_ARG eMBEventType eEvent)
+xMBPortEventPost( mb_port_ser* inst, eMBEventType eEvent)
 {
     xEventInQueue = TRUE;
     eQueuedEvent = eEvent;
@@ -49,7 +41,7 @@ xMBPortEventPost( MULTIPORT_SERIAL_ARG eMBEventType eEvent)
 }
 
 BOOL
-xMBPortEventGet(MULTIPORT_SERIAL_ARG CALLER_ARG eMBEventType * eEvent)
+xMBPortEventGet(mb_port_ser* inst, void* caller, eMBEventType * eEvent)
 {
     BOOL            xEventHappened = FALSE;
 
@@ -72,7 +64,7 @@ xMBPortEventGet(MULTIPORT_SERIAL_ARG CALLER_ARG eMBEventType * eEvent)
  *
  * @return request error code
  */
-eMBMasterReqErrCode eMBMasterWaitRequestFinish(void) {
+eMBMasterReqErrCode eMBRTUMasterWaitRequestFinish(void) {
 
 	/*
 	eMBMasterReqErrCode    eErrStatus = MB_MRE_NO_ERR;
@@ -108,4 +100,3 @@ eMBMasterReqErrCode eMBMasterWaitRequestFinish(void) {
     */
     return 0;//eErrStatus;
 }
-

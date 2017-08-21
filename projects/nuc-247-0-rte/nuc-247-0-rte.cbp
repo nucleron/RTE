@@ -68,6 +68,54 @@
 			<Add after="arm-none-eabi-objcopy -O ihex ${TARGET_OUTPUT_FILE} ${TARGET_OUTPUT_FILE}.hex" />
 			<Mode after="always" />
 		</ExtraCommands>
+		<Unit filename="../../../libremodbus/ascii/ascii_multiport.h" />
+		<Unit filename="../../../libremodbus/ascii/mbascii.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/ascii/mbascii.h" />
+		<Unit filename="../../../libremodbus/functions/mbfunccoils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbfuncdiag.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbfuncdisc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbfuncholding.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbfuncinput.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbfuncother.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbutils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/include/mb.h" />
+		<Unit filename="../../../libremodbus/include/mb_types.h" />
+		<Unit filename="../../../libremodbus/include/mbconfig.h" />
+		<Unit filename="../../../libremodbus/include/mbframe.h" />
+		<Unit filename="../../../libremodbus/include/mbfunc.h" />
+		<Unit filename="../../../libremodbus/include/mbport.h" />
+		<Unit filename="../../../libremodbus/include/mbproto.h" />
+		<Unit filename="../../../libremodbus/include/mbutils.h" />
+		<Unit filename="../../../libremodbus/mb.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/mb_master.h" />
+		<Unit filename="../../../libremodbus/mb_multiport.h" />
+		<Unit filename="../../../libremodbus/rtu/mbcrc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/rtu/mbcrc.h" />
+		<Unit filename="../../../libremodbus/rtu/mbrtu.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/rtu/mbrtu.h" />
+		<Unit filename="../../../libremodbus/rtu/rtu_multiport.h" />
 		<Unit filename="../../src/COPYING.GPL3" />
 		<Unit filename="../../src/COPYING.LGPL3" />
 		<Unit filename="../../src/License.txt" />
@@ -92,7 +140,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/tcp_port.h" />
-		<Unit filename="../../src/bsp/common/stm32/f2/mbconfig.h" />
 		<Unit filename="../../src/bsp/common/stm32/f2/plc_backup.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -174,54 +221,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../src/xprintf.h" />
-		<Unit filename="../../../libremodbus/ascii/ascii_multiport.h" />
-		<Unit filename="../../../libremodbus/ascii/mbascii.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../libremodbus/ascii/mbascii.h" />
-		<Unit filename="../../../libremodbus/functions/mbfunccoils.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../libremodbus/functions/mbfuncdiag.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../libremodbus/functions/mbfuncdisc.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../libremodbus/functions/mbfuncholding.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../libremodbus/functions/mbfuncinput.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../libremodbus/functions/mbfuncother.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../libremodbus/functions/mbutils.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../libremodbus/include/mb.h" />
-		<Unit filename="../../../libremodbus/include/mb_types.h" />
-		<Unit filename="../../../libremodbus/include/mbconfig.h" />
-		<Unit filename="../../../libremodbus/include/mbframe.h" />
-		<Unit filename="../../../libremodbus/include/mbfunc.h" />
-		<Unit filename="../../../libremodbus/include/mbport.h" />
-		<Unit filename="../../../libremodbus/include/mbproto.h" />
-		<Unit filename="../../../libremodbus/include/mbutils.h" />
-		<Unit filename="../../../libremodbus/mb.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../libremodbus/mb_master.h" />
-		<Unit filename="../../../libremodbus/mb_multiport.h" />
-		<Unit filename="../../../libremodbus/rtu/mbcrc.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../libremodbus/rtu/mbcrc.h" />
-		<Unit filename="../../../libremodbus/rtu/mbrtu.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../libremodbus/rtu/mbrtu.h" />
-		<Unit filename="../../../libremodbus/rtu/rtu_multiport.h" />
 		<Extensions>
 			<envvars />
 			<code_completion />

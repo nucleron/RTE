@@ -29,12 +29,7 @@
  */
 
 /* ----------------------- Modbus includes ----------------------------------*/
-#include "mb.h"
-#include "mbport.h"
-
-#ifndef SERIAL_MULTIPORT
-#define inst
-#endif // SERIAL_MULTIPORT
+#include <mb.h>
 
 /* ----------------------- Static variables ---------------------------------*/
 static UCHAR    xOriginalState;
@@ -82,10 +77,10 @@ vMBPortExitCritical(void)
 
 /* ----------------------- Close Ports -----------------------------*/
 void
-vMBPortClose(MULTIPORT_SERIAL_ARG_VOID)
+vMBPortClose(mb_port_ser* inst)
 {
-    extern void vMBPortSerialClose(MULTIPORT_SERIAL_ARG_VOID);
-    extern void vMBPortTimersDisable(MULTIPORT_SERIAL_ARG_VOID);
+    extern void vMBPortSerialClose(mb_port_ser* inst);
+    //extern void vMBPortTimersDisable(mb_port_ser* inst);
     vMBPortSerialClose(inst);
     vMBPortTimersDisable(inst);
 }
