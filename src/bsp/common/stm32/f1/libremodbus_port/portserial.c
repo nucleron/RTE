@@ -53,7 +53,7 @@ vMBPortSerialEnable(mb_port_ser* inst, BOOL xRxEnable, BOOL xTxEnable)
     if (xTxEnable)
     {
         inst->tx_en = true;
-        if (inst->uart_num==MB_USART_PERIPH)
+        if (inst->uart_num==MB_USART)
         {
             gpio_set(MB_USART_TXEN_PORT, MB_USART_TXEN_PIN);
         }
@@ -74,12 +74,12 @@ BOOL xMBPortSerialInit(mb_port_ser* inst, ULONG ulBaudRate, UCHAR ucDataBits,
                    eMBParity eParity)
 {
     BOOL bStatus;
-    if ((&mbs_inst_usart) == inst)
+    if ((&mbs_inst_usart) != inst)
     {
         return false;
     }
 
-    inst->uart_num = MB_USART_PERIPH;
+    inst->uart_num = MB_USART;
 
     rcc_periph_clock_enable(RCC_AFIO           );
     rcc_periph_clock_enable(MB_USART_PERIPH    );
@@ -127,6 +127,7 @@ BOOL xMBPortSerialInit(mb_port_ser* inst, ULONG ulBaudRate, UCHAR ucDataBits,
     CHAR wordLength;
     switch (ucDataBits)
     {
+    case 7:
     case 8:
         if (eParity == MB_PAR_NONE)
         {
@@ -136,18 +137,18 @@ BOOL xMBPortSerialInit(mb_port_ser* inst, ULONG ulBaudRate, UCHAR ucDataBits,
         {
             wordLength = 9;
         }
-        usart_set_databits(MB_USART, wordLength);
+        usart_set_databits(inst->uart_num, wordLength);
         break;
-    case 7:
-        if (eParity == MB_PAR_NONE)
-        {
-            bStatus = FALSE;
-        }
-        else
-        {
-            usart_set_databits(MB_USART, 8);
-        }
-        break;
+//    case 7:
+//        if (eParity == MB_PAR_NONE)
+//        {
+//            bStatus = FALSE;
+//        }
+//        else
+//        {
+//            usart_set_databits(inst->uart_num, 8);
+//        }
+//        break;
     default:
         bStatus = FALSE;
     }
@@ -188,7 +189,7 @@ xMBPortSerialGetByte(mb_port_ser* inst, CHAR * pucByte)
 void
 vMBPortSerialClose(mb_port_ser* inst)
 {
-    if ((&mbs_inst_usart) == inst)
+    if ((&mbs_inst_usart) != inst)
     {
         return;
     }
