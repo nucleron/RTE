@@ -33,7 +33,7 @@ xMBPortEventInit(mb_port_ser* inst)
 }
 
 BOOL
-xMBPortEventPost( mb_port_ser* inst, eMBEventType eEvent)
+xMBPortEventPost( mb_port_ser* inst, mb_event_enum eEvent)
 {
     xEventInQueue = TRUE;
     eQueuedEvent = eEvent;
@@ -41,7 +41,7 @@ xMBPortEventPost( mb_port_ser* inst, eMBEventType eEvent)
 }
 
 BOOL
-xMBPortEventGet(mb_port_ser* inst, void* caller, eMBEventType * eEvent)
+xMBPortEventGet(mb_port_ser* inst, void* caller, mb_event_enum * eEvent)
 {
     BOOL            xEventHappened = FALSE;
 
@@ -64,10 +64,10 @@ xMBPortEventGet(mb_port_ser* inst, void* caller, eMBEventType * eEvent)
  *
  * @return request error code
  */
-eMBMasterReqErrCode eMBRTUMasterWaitRequestFinish(void) {
+mb_err_enum eMBRTUMasterWaitRequestFinish(void) {
 
 	/*
-	eMBMasterReqErrCode    eErrStatus = MB_MRE_NO_ERR;
+	mb_err_enum    eErrStatus = MB_ENOERR;
    // rt_uint32_t recvedEvent;
      //waiting for OS event
     rt_event_recv(&xMasterOsEvent,
@@ -82,12 +82,12 @@ eMBMasterReqErrCode eMBRTUMasterWaitRequestFinish(void) {
         break;
     case EV_MASTER_ERROR_RESPOND_TIMEOUT:
     {
-        eErrStatus = MB_MRE_TIMEDOUT;
+        eErrStatus = MB_ETIMEDOUT;
         break;
     }
     case EV_MASTER_ERROR_RECEIVE_DATA:
     {
-        eErrStatus = MB_MRE_REV_DATA;
+        eErrStatus = MB_ERCV;
         break;
     }
     case EV_MASTER_ERROR_EXECUTE_FUNCTION:

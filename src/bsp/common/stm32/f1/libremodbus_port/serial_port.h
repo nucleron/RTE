@@ -60,7 +60,7 @@ struct _mb_port_ser
 	DWORD           defaultTimeout;
 
 	//events
-	eMBEventType eQueuedEvent;
+	mb_event_enum eQueuedEvent;
 	BOOL     xEventInQueue;
 
 	//void* parent;

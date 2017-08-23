@@ -426,17 +426,17 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 }
 #undef LOCAL_PROTO
 
-eMBErrorCode
+mb_err_enum
 eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs)
 {
     return MB_ENOREG;
 }
 
-eMBErrorCode
+mb_err_enum
 eMBRegHoldingCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs,
-                 eMBRegisterMode eMode)
+                 mb_reg_mode_enum eMode)
 {
-    eMBErrorCode    eStatus = MB_ENOERR;
+    mb_err_enum    eStatus = MB_ENOERR;
     int             iRegIndex;
 
     if ((usAddress >= REG_HOLDING_START) &&
@@ -480,14 +480,14 @@ eMBRegHoldingCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs,
 }
 
 
-eMBErrorCode
+mb_err_enum
 eMBRegCoilsCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils,
-               eMBRegisterMode eMode)
+               mb_reg_mode_enum eMode)
 {
     return MB_ENOREG;
 }
 
-eMBErrorCode
+mb_err_enum
 eMBRegDiscreteCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNDiscrete)
 {
     return MB_ENOREG;
