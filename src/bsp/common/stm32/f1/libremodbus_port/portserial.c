@@ -70,8 +70,8 @@ vMBPortSerialEnable(mb_port_ser* inst, BOOL xRxEnable, BOOL xTxEnable)
 /* ----------------------- Initialize USART ----------------------------------*/
 /* Called with databits = 8 for RTU */
 
-BOOL xMBPortSerialInit(mb_port_ser* inst, ULONG ulBaudRate, UCHAR ucDataBits,
-                   eMBParity eParity)
+BOOL xMBPortSerialInit(mb_port_ser* inst, ULONG baud, UCHAR ucDataBits,
+                   mb_parity_enum parity)
 {
     BOOL bStatus;
     if ((&mbs_inst_usart) != inst)
@@ -100,13 +100,13 @@ BOOL xMBPortSerialInit(mb_port_ser* inst, ULONG ulBaudRate, UCHAR ucDataBits,
     /* Enable the MB_USART interrupt. */
     nvic_enable_irq(MB_USART_VECTOR);
     /* Setup UART parameters. */
-    usart_set_baudrate    (MB_USART, ulBaudRate           );
+    usart_set_baudrate    (MB_USART, baud           );
     usart_set_stopbits    (MB_USART, USART_STOPBITS_1     );
     usart_set_flow_control(MB_USART, USART_FLOWCONTROL_NONE);
     usart_set_mode        (MB_USART, USART_MODE_TX_RX     );
 
     bStatus = TRUE;
-    switch (eParity)
+    switch (parity)
     {
     case MB_PAR_NONE:
         usart_set_parity(MB_USART, USART_PARITY_NONE);
@@ -129,7 +129,7 @@ BOOL xMBPortSerialInit(mb_port_ser* inst, ULONG ulBaudRate, UCHAR ucDataBits,
     {
     case 7:
     case 8:
-        if (eParity == MB_PAR_NONE)
+        if (parity == MB_PAR_NONE)
         {
             wordLength = 8;
         }
@@ -140,7 +140,7 @@ BOOL xMBPortSerialInit(mb_port_ser* inst, ULONG ulBaudRate, UCHAR ucDataBits,
         usart_set_databits(inst->uart_num, wordLength);
         break;
 //    case 7:
-//        if (eParity == MB_PAR_NONE)
+//        if (parity == MB_PAR_NONE)
 //        {
 //            bStatus = FALSE;
 //        }

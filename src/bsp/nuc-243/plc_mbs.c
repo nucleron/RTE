@@ -362,7 +362,7 @@ void PLC_IOM_LOCAL_END(uint16_t i)
             mb_enabled = true;
             mb_start = true;
         }
-        eMBInit(&MBSlave, &MBTransport, (mb_ascii)?MB_ASCII:MB_RTU, FALSE, mb_slave_addr, (mb_port_base *)&mbs_inst_usart, mb_baudrate, MB_PAR_NONE);
+        mb_init(&MBSlave, &MBTransport, (mb_ascii)?MB_ASCII:MB_RTU, FALSE, mb_slave_addr, (mb_port_base *)&mbs_inst_usart, mb_baudrate, MB_PAR_NONE);
     }
 }
 
@@ -381,14 +381,14 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
         mb_start = false;
         if (!mb_enabled)
         {
-            eMBDisable(&MBSlave);
+            mb_disable(&MBSlave);
             return;
         }
-        eMBEnable(&MBSlave);
+        mb_enable(&MBSlave);
     }
 
     plc_rtc_dt_get(&mbtime);
-    eMBPoll(&MBSlave);
+    mb_poll(&MBSlave);
     if (mbt_sflg)
     {
         mbt_sflg = false;
@@ -437,48 +437,48 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 #undef LOCAL_PROTO
 
 mb_err_enum
-eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs)
+mb_reg_input_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT reg_num)
 {
     return MB_ENOREG;
 }
 
 mb_err_enum
-eMBRegHoldingCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs,
-                 mb_reg_mode_enum eMode)
+mb_reg_holding_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT reg_num,
+                 mb_reg_mode_enum mode)
 {
     mb_err_enum    eStatus = MB_ENOERR;
     int             iRegIndex;
 
-    if ((usAddress >= REG_HOLDING_START) &&
-            (usAddress + usNRegs <= REG_HOLDING_START + REG_HOLDING_NREGS))
+    if ((reg_addr >= REG_HOLDING_START) &&
+            (reg_addr + reg_num <= REG_HOLDING_START + REG_HOLDING_NREGS))
     {
-        iRegIndex = (int)(usAddress - usRegHoldingStart);
-        switch (eMode)
+        iRegIndex = (int)(reg_addr - usRegHoldingStart);
+        switch (mode)
         {
             /* Pass current register values to the protocol stack. */
         case MB_REG_READ:
-            while (usNRegs > 0)
+            while (reg_num > 0)
             {
                 USHORT tmp;
                 tmp = mb_hr_get(iRegIndex);
-                *pucRegBuffer++ = (unsigned char)(tmp >> 8);
-                *pucRegBuffer++ = (unsigned char)(tmp & 0xFF);
+                *reg_buff++ = (unsigned char)(tmp >> 8);
+                *reg_buff++ = (unsigned char)(tmp & 0xFF);
                 iRegIndex++;
-                usNRegs--;
+                reg_num--;
             }
             break;
 
             /* Update current register values with new values from the
              * protocol stack. */
         case MB_REG_WRITE:
-            while (usNRegs > 0)
+            while (reg_num > 0)
             {
                 USHORT tmp;
-                tmp  = *pucRegBuffer++ << 8;
-                tmp |= *pucRegBuffer++;
+                tmp  = *reg_buff++ << 8;
+                tmp |= *reg_buff++;
                 mb_hr_set(iRegIndex, tmp);
                 iRegIndex++;
-                usNRegs--;
+                reg_num--;
             }
         }
     }
@@ -491,14 +491,14 @@ eMBRegHoldingCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs,
 
 
 mb_err_enum
-eMBRegCoilsCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils,
-               mb_reg_mode_enum eMode)
+mb_reg_coils_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT coil_num,
+               mb_reg_mode_enum mode)
 {
     return MB_ENOREG;
 }
 
 mb_err_enum
-eMBRegDiscreteCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNDiscrete)
+mb_reg_discrete_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT disc_num)
 {
     return MB_ENOREG;
 }

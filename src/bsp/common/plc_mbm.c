@@ -243,8 +243,8 @@ void PLC_IOM_LOCAL_END(uint16_t i)
             mbm_enabled = true;
             mbm_start = true;
         }
-        //eMBMasterInitRTU(&MBMaster, &MBMTransport, (mb_port_base *)&mbm_inst_usart, mbm_baudrate, MB_PAR_NONE);
-        eMBInit(&MBMaster, &MBMTransport, (mbm_ascii)?MB_ASCII:MB_RTU, TRUE, 0, (mb_port_base *)&mbm_inst_usart, mbm_baudrate, MB_PAR_NONE);
+        //mb_mstr_init_rtu(&MBMaster, &MBMTransport, (mb_port_base *)&mbm_inst_usart, mbm_baudrate, MB_PAR_NONE);
+        mb_init(&MBMaster, &MBMTransport, (mbm_ascii)?MB_ASCII:MB_RTU, TRUE, 0, (mb_port_base *)&mbm_inst_usart, mbm_baudrate, MB_PAR_NONE);
 
     }
 }
@@ -383,13 +383,13 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
         mbm_start = false;
         if (!mbm_enabled)
         {
-            eMBDisable(&MBMaster);
+            mb_disable(&MBMaster);
             return;
         }
-        eMBEnable(&MBMaster);
+        mb_enable(&MBMaster);
     }
 
-    if (eMBPoll(&MBMaster)==MB_EILLSTATE)
+    if (mb_poll(&MBMaster)==MB_EILLSTATE)
     {
         return;
     }
@@ -641,29 +641,29 @@ void vMBMasterCBRequestSuccess(mb_instance* inst)
 /**
  * Modbus master input register callback function.
  *
- * @param pucRegBuffer input register buffer
- * @param usAddress input register address
- * @param usNRegs input register number
+ * @param reg_buff input register buffer
+ * @param reg_addr input register address
+ * @param reg_num input register number
  *
  * @return result
  */
-mb_err_enum eMBMasterRegInputCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs)
+mb_err_enum eMBMasterRegInputCB(mb_instance* inst, UCHAR * reg_buff, USHORT reg_addr, USHORT reg_num)
 {
     mb_err_enum    eStatus = MB_ENOERR;
     uint8_t reg_index;
 
     /* it already plus one in modbus function method. */
-    usAddress--;
+    reg_addr--;
 
-    while (usNRegs > 0)
+    while (reg_num > 0)
     {
-        reg_index = req_find_reg(usAddress);
+        reg_index = req_find_reg(reg_addr);
 
-        mbm_request.target_value[reg_index] =  (uint16_t)(*pucRegBuffer++)<<8;
-        mbm_request.target_value[reg_index]|=   *pucRegBuffer++;
+        mbm_request.target_value[reg_index] =  (uint16_t)(*reg_buff++)<<8;
+        mbm_request.target_value[reg_index]|=   *reg_buff++;
 
-        usAddress++;
-        usNRegs--;
+        reg_addr++;
+        reg_num--;
     }
 
     return eStatus;
@@ -672,100 +672,100 @@ mb_err_enum eMBMasterRegInputCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT 
 /**
  * Modbus master holding register callback function.
  *
- * @param pucRegBuffer holding register buffer
- * @param usAddress holding register address
- * @param usNRegs holding register number
- * @param eMode read or write
+ * @param reg_buff holding register buffer
+ * @param reg_addr holding register address
+ * @param reg_num holding register number
+ * @param mode read or write
  *
  * @return result
  */
 
 
 
-mb_err_enum eMBMasterRegHoldingCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs)
+mb_err_enum eMBMasterRegHoldingCB(mb_instance* inst, UCHAR * reg_buff, USHORT reg_addr, USHORT reg_num)
 {
     mb_err_enum    eStatus = MB_ENOERR;
 
     uint8_t reg_index=0;
 
-    usAddress--;
+    reg_addr--;
 
-    while (usNRegs > 0)
+    while (reg_num > 0)
     {
         if (mbm_need_preread)
         {
-            mbm_preread_buffer[reg_index] = (uint16_t)(*pucRegBuffer++)<<8;
-            mbm_preread_buffer[reg_index]|=   *pucRegBuffer++;
+            mbm_preread_buffer[reg_index] = (uint16_t)(*reg_buff++)<<8;
+            mbm_preread_buffer[reg_index]|=   *reg_buff++;
             reg_index++;
         }
         else
         {
-            reg_index = req_find_reg(usAddress);
+            reg_index = req_find_reg(reg_addr);
             if (reg_index!=0xFF)
             {
-                mbm_request.target_value[reg_index] =  (uint16_t)(*pucRegBuffer++)<<8;
-                mbm_request.target_value[reg_index]|=   *pucRegBuffer++;
+                mbm_request.target_value[reg_index] =  (uint16_t)(*reg_buff++)<<8;
+                mbm_request.target_value[reg_index]|=   *reg_buff++;
             }
             else
             {
-                pucRegBuffer++;
-                pucRegBuffer++;
+                reg_buff++;
+                reg_buff++;
                 //we got extra register. just ignore it for now
             }
         }
-        usAddress++;
-        usNRegs--;
+        reg_addr++;
+        reg_num--;
     }
 
-//    switch (eMode)
+//    switch (mode)
 //    {
 //    /* write values to slave registers*/
 //    case MB_REG_WRITE:
 //        break;
-//        while (usNRegs > 0)
+//        while (reg_num > 0)
 //        {
-//            reg_index = req_find_reg(usAddress);
+//            reg_index = req_find_reg(reg_addr);
 //            if (reg_index!=0xFF)
 //            {
-//                *pucRegBuffer++ = (UCHAR) (mbm_request.target_value[reg_index] >> 8);
-//                *pucRegBuffer++ = (UCHAR) (mbm_request.target_value[reg_index] & 0xFF);
+//                *reg_buff++ = (UCHAR) (mbm_request.target_value[reg_index] >> 8);
+//                *reg_buff++ = (UCHAR) (mbm_request.target_value[reg_index] & 0xFF);
 //            }
 //            else //means we are trying to write registers we do not have
 //            {
-//                *pucRegBuffer++=0xDE; //should never end up here
-//                *pucRegBuffer++=0xAD; //
+//                *reg_buff++=0xDE; //should never end up here
+//                *reg_buff++=0xAD; //
 //            }
-//            usAddress++;
-//            usNRegs--;
+//            reg_addr++;
+//            reg_num--;
 //        }
 //        break;
 //    /*Get values from slave registers */
 //    case MB_REG_READ:
-//        while (usNRegs > 0)
+//        while (reg_num > 0)
 //        {
 //            if (mbm_need_preread)
 //            {
-//                mbm_preread_buffer[reg_index] = (uint16_t)(*pucRegBuffer++)<<8;
-//                mbm_preread_buffer[reg_index]|=   *pucRegBuffer++;
+//                mbm_preread_buffer[reg_index] = (uint16_t)(*reg_buff++)<<8;
+//                mbm_preread_buffer[reg_index]|=   *reg_buff++;
 //                reg_index++;
 //            }
 //            else
 //            {
-//                reg_index = req_find_reg(usAddress);
+//                reg_index = req_find_reg(reg_addr);
 //                if (reg_index!=0xFF)
 //                {
-//                    mbm_request.target_value[reg_index] =  (uint16_t)(*pucRegBuffer++)<<8;
-//                    mbm_request.target_value[reg_index]|=   *pucRegBuffer++;
+//                    mbm_request.target_value[reg_index] =  (uint16_t)(*reg_buff++)<<8;
+//                    mbm_request.target_value[reg_index]|=   *reg_buff++;
 //                }
 //                else
 //                {
-//                    pucRegBuffer++;
-//                    pucRegBuffer++;
+//                    reg_buff++;
+//                    reg_buff++;
 //                    //we got extra register. just ignore it for now
 //                }
 //            }
-//            usAddress++;
-//            usNRegs--;
+//            reg_addr++;
+//            reg_num--;
 //        }
 //        break;
 //    }
@@ -776,26 +776,26 @@ mb_err_enum eMBMasterRegHoldingCB(mb_instance* inst, UCHAR * pucRegBuffer, USHOR
 /**
  * Modbus master coils callback function.
  *
- * @param pucRegBuffer coils buffer
- * @param usAddress coils address
- * @param usNCoils coils number
- * @param eMode read or write
+ * @param reg_buff coils buffer
+ * @param reg_addr coils address
+ * @param coil_num coils number
+ * @param mode read or write
  *
  * @return result
  */
-mb_err_enum eMBMasterRegCoilsCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils)
+mb_err_enum eMBMasterRegCoilsCB(mb_instance* inst, UCHAR * reg_buff, USHORT reg_addr, USHORT coil_num)
 {
     mb_err_enum    eStatus = MB_ENOERR;
     uint8_t nByte=0;
 
     if (mbm_need_preread)
     {
-        nByte = usNCoils/8 + ((usNCoils%8)>0)?1:0;
-        memcpy(mbm_preread_buffer, pucRegBuffer, nByte);
+        nByte = coil_num/8 + ((coil_num%8)>0)?1:0;
+        memcpy(mbm_preread_buffer, reg_buff, nByte);
 // Эта реализация memcpy не работает!!!
 //        while(nByte>0)
 //        {
-//            mbm_preread_buffer[nByte] = *(pucRegBuffer+nByte);
+//            mbm_preread_buffer[nByte] = *(reg_buff+nByte);
 //            nByte--;
 //        }
 // Эта реализация memcpy не работает!!!
@@ -811,13 +811,13 @@ mb_err_enum eMBMasterRegCoilsCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT 
 /**
  * Modbus master discrete callback function.
  *
- * @param pucRegBuffer discrete buffer
- * @param usAddress discrete address
- * @param usNDiscrete discrete number
+ * @param reg_buff discrete buffer
+ * @param reg_addr discrete address
+ * @param disc_num discrete number
  *
  * @return result
  */
-mb_err_enum eMBMasterRegDiscreteCB(mb_instance* inst, UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNDiscrete)
+mb_err_enum eMBMasterRegDiscreteCB(mb_instance* inst, UCHAR * reg_buff, USHORT reg_addr, USHORT disc_num)
 {
     mb_err_enum    eStatus = MB_ENOERR;
 
@@ -825,22 +825,22 @@ mb_err_enum eMBMasterRegDiscreteCB(mb_instance* inst, UCHAR * pucRegBuffer, USHO
     uint8_t reg_index;
 
     /* it already plus one in modbus function method. */
-    usAddress--;
+    reg_addr--;
 
     /* write current discrete values with new values from the protocol stack. */
-    while (usNDiscrete > 0)
+    while (disc_num > 0)
     {
-        reg_index = req_find_reg(usAddress+iNReg);
+        reg_index = req_find_reg(reg_addr+iNReg);
         if (reg_index!=0xFF)
         {
-            mbm_request.target_value[reg_index] = (*(pucRegBuffer+(iNReg/8))) &(1<<(iNReg%8));
+            mbm_request.target_value[reg_index] = (*(reg_buff+(iNReg/8))) &(1<<(iNReg%8));
         }
 
         if ((iNReg%8)==7)
         {
-            pucRegBuffer++;
+            reg_buff++;
         }
-        usNDiscrete--;
+        disc_num--;
         iNReg++;
     }
 

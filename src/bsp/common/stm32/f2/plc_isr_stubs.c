@@ -66,6 +66,7 @@ void plc_irq_stub(void)
     BACKUP_LOCK();
 
     hfsr = SCB_HFSR;
+    (void)hfsr;
 
     scb_reset_system();
 }

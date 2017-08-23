@@ -95,7 +95,7 @@ extern "C" {
  *    </em>command.
  *
  * This number limits the maximum size of the additional segment in the
- * report slave id function. See eMBSetSlaveID() for more information on
+ * report slave id function. See mb_set_slv_id() for more information on
  * how to set this value. It is only used if MB_FUNC_OTHER_REP_SLAVEID_ENABLED
  * is set to <code>1</code>.
  */
