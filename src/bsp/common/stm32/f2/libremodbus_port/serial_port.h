@@ -49,7 +49,7 @@ PR_BEGIN_EXTERN_C
 
 struct _mb_port_ser
 {
-    mb_port_base base;
+    mb_port_base_struct base;
     uint32_t  uart_num;
     bool     tx_en;
 

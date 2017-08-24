@@ -34,7 +34,7 @@
 
 /* ----------------------- Initialize Timer -----------------------------*/
 BOOL
-xMBPortTimersInit(mb_port_ser* inst,  USHORT usTim1Timerout50us)
+mb_port_ser_tmr_init(mb_port_ser* inst,  USHORT usTim1Timerout50us)
 {
     //rcc_periph_clock_enable(RCC_GPIOA);
     //gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO1);
@@ -58,13 +58,13 @@ xMBPortTimersInit(mb_port_ser* inst,  USHORT usTim1Timerout50us)
 
 /* ----------------------- Enable Timer -----------------------------*/
 void
-vMBPortTimersEnable(mb_port_ser* inst)
+mb_port_ser_tmr_enable(mb_port_ser* inst)
 {
     if ((&mbs_inst_usart) != inst)
     {
         return;
     }
-    /* Restart the timer with the period value set in xMBPortTimersInit() */
+    /* Restart the timer with the period value set in mb_port_ser_tmr_init() */
     TIM_CNT(MB_TMR) = 1; /* Yes, this must be 1 !!! */
 
     timer_enable_irq     (MB_TMR, TIM_DIER_UIE);
@@ -73,7 +73,7 @@ vMBPortTimersEnable(mb_port_ser* inst)
 
 /* ----------------------- Disable timer -----------------------------*/
 void
-vMBPortTimersDisable(mb_port_ser* inst)
+mb_port_ser_tmr_disable(mb_port_ser* inst)
 {
     if ((&mbs_inst_usart) != inst)
     {
@@ -83,7 +83,7 @@ vMBPortTimersDisable(mb_port_ser* inst)
     timer_disable_counter(MB_TMR);
 }
 
-void vMBPortTimersDelay(mb_port_ser* inst, USHORT usTimeOutMS)
+void mb_port_ser_tmr_delay(mb_port_ser* inst, USHORT timeout_ms)
 {
     /*Not supproted*/
 #if MB_ASCII_TIMEOUT_WAIT_BEFORE_SEND_MS > 0

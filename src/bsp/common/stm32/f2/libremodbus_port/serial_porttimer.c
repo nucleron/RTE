@@ -35,7 +35,7 @@ extern mb_port_ser* uart_mbm_inst;
 
 /* ----------------------- Initialize Timer -----------------------------*/
 BOOL
-xMBPortTimersInit(mb_port_ser* inst,  USHORT usTim1Timerout50us)
+mb_port_ser_tmr_init(mb_port_ser* inst,  USHORT usTim1Timerout50us)
 {
 //    rcc_periph_clock_enable(RCC_GPIOA);
 //    gpio_mode_setup(GPIOA, GPIO_OSPEED_50MHZ, GPIO_OTYPE_PP, GPIO1);
@@ -74,11 +74,11 @@ xMBPortTimersInit(mb_port_ser* inst,  USHORT usTim1Timerout50us)
 
 /* ----------------------- Enable Timer -----------------------------*/
 void
-vMBPortTimersEnable(mb_port_ser* inst)
+mb_port_ser_tmr_enable(mb_port_ser* inst)
 {
     if ((&mbs_inst_usart) == inst)
     {
-        /* Restart the timer with the period value set in xMBPortTimersInit() */
+        /* Restart the timer with the period value set in mb_port_ser_tmr_init() */
         TIM_CNT(MBS_TMR) = 1; /* Yes, this must be 1 !!! */
 
         timer_enable_irq     (MBS_TMR, TIM_DIER_UIE);
@@ -89,7 +89,7 @@ vMBPortTimersEnable(mb_port_ser* inst)
     if ((&mbm_inst_usart) == inst)
     {
         #ifdef USART_MBM
-        /* Restart the timer with the period value set in xMBPortTimersInit() */
+        /* Restart the timer with the period value set in mb_port_ser_tmr_init() */
         TIM_CNT(MBM_TMR) = 1; /* Yes, this must be 1 !!! */
 
         timer_enable_irq     (MBM_TMR, TIM_DIER_UIE);
@@ -101,7 +101,7 @@ vMBPortTimersEnable(mb_port_ser* inst)
 
 /* ----------------------- Disable timer -----------------------------*/
 void
-vMBPortTimersDisable(mb_port_ser* inst)
+mb_port_ser_tmr_disable(mb_port_ser* inst)
 
 {
     if ((&mbs_inst_usart) == inst)
@@ -118,7 +118,7 @@ vMBPortTimersDisable(mb_port_ser* inst)
     }
 }
 
-void vMBPortTimersDelay(mb_port_ser* inst, USHORT usTimeOutMS)
+void mb_port_ser_tmr_delay(mb_port_ser* inst, USHORT timeout_ms)
 {
     /*Not supproted*/
 #if MB_ASCII_TIMEOUT_WAIT_BEFORE_SEND_MS > 0
@@ -127,12 +127,12 @@ void vMBPortTimersDelay(mb_port_ser* inst, USHORT usTimeOutMS)
 }
 
 #ifdef USART_MBM
-void vMBPortTimersConvertDelayEnable(mb_port_ser* inst)
+void mb_port_ser_tmr_convert_delay_enable(mb_port_ser* inst)
 {
     if ((&mbm_inst_usart) == inst)
     {
 
-        /* Restart the timer with the period value set in xMBPortTimersInit() */
+        /* Restart the timer with the period value set in mb_port_ser_tmr_init() */
         TIM_CNT(MBM_TMR) = 1; /* Yes, this must be 1 !!! */
         timer_set_period(MBM_TMR, 500);
         timer_enable_irq     (MBM_TMR, TIM_DIER_UIE);
@@ -140,11 +140,11 @@ void vMBPortTimersConvertDelayEnable(mb_port_ser* inst)
     }
 }
 #endif
-void vMBPortTimersRespondTimeoutEnable(mb_port_ser* inst)
+void mb_port_ser_tmr_respond_timeout_enable(mb_port_ser* inst)
 {
 	if((&mbs_inst_usart) == inst)
     {
-        /* Restart the timer with the period value set in xMBPortTimersInit() */
+        /* Restart the timer with the period value set in mb_port_ser_tmr_init() */
         TIM_CNT(MBS_TMR) = 1; /* Yes, this must be 1 !!! */
         timer_set_period(MBS_TMR, 1000);
         timer_enable_irq     (MBS_TMR, TIM_DIER_UIE);
@@ -154,7 +154,7 @@ void vMBPortTimersRespondTimeoutEnable(mb_port_ser* inst)
     if ((&mbm_inst_usart) == inst)
     {
         #ifdef USART_MBM
-        /* Restart the timer with the period value set in xMBPortTimersInit() */
+        /* Restart the timer with the period value set in mb_port_ser_tmr_init() */
         TIM_CNT(MBM_TMR) = 1; /* Yes, this must be 1 !!! */
         timer_set_period(MBM_TMR, 1000);
         timer_enable_irq     (MBM_TMR, TIM_DIER_UIE);

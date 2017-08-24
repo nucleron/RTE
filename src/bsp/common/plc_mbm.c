@@ -243,8 +243,8 @@ void PLC_IOM_LOCAL_END(uint16_t i)
             mbm_enabled = true;
             mbm_start = true;
         }
-        //mb_mstr_init_rtu(&MBMaster, &MBMTransport, (mb_port_base *)&mbm_inst_usart, mbm_baudrate, MB_PAR_NONE);
-        mb_init(&MBMaster, &MBMTransport, (mbm_ascii)?MB_ASCII:MB_RTU, TRUE, 0, (mb_port_base *)&mbm_inst_usart, mbm_baudrate, MB_PAR_NONE);
+        //mb_mstr_init_rtu(&MBMaster, &MBMTransport, (mb_port_base_struct *)&mbm_inst_usart, mbm_baudrate, MB_PAR_NONE);
+        mb_init(&MBMaster, &MBMTransport, (mbm_ascii)?MB_ASCII:MB_RTU, TRUE, 0, (mb_port_base_struct *)&mbm_inst_usart, mbm_baudrate, MB_PAR_NONE);
 
     }
 }

@@ -77,10 +77,10 @@ vMBPortExitCritical(void)
 
 /* ----------------------- Close Ports -----------------------------*/
 void
-vMBPortClose(mb_port_ser* inst)
+mb_port_ser_close(mb_port_ser* inst)
 {
     extern void vMBPortSerialClose(mb_port_ser* inst);
-    //extern void vMBPortTimersDisable(mb_port_ser* inst);
+    //extern void mb_port_ser_tmr_disable(mb_port_ser* inst);
     vMBPortSerialClose(inst);
-    vMBPortTimersDisable(inst);
+    mb_port_ser_tmr_disable(inst);
 }

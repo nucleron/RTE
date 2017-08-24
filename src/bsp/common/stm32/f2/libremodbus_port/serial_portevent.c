@@ -27,28 +27,28 @@
 
 /* ----------------------- Start implementation -----------------------------*/
 BOOL
-xMBPortEventInit(mb_port_ser* inst)
+mb_port_ser_evt_init(mb_port_ser* inst)
 {
     xEventInQueue = FALSE;
     return TRUE;
 }
 
 BOOL
-xMBPortEventPost( mb_port_ser* inst, mb_event_enum eEvent)
+mb_port_ser_evt_post( mb_port_ser* inst, mb_event_enum event)
 {
     xEventInQueue = TRUE;
-    eQueuedEvent = eEvent;
+    eQueuedEvent = event;
     return TRUE;
 }
 
 BOOL
-xMBPortEventGet(mb_port_ser* inst, void* caller, mb_event_enum * eEvent)
+mb_port_ser_evt_get(mb_port_ser* inst, void* caller, mb_event_enum * event)
 {
     BOOL            xEventHappened = FALSE;
 
     if (xEventInQueue)
     {
-        *eEvent = eQueuedEvent;
+        *event = eQueuedEvent;
         xEventInQueue = FALSE;
         xEventHappened = TRUE;
     }

@@ -35,12 +35,12 @@
 mb_port_ser mbs_inst_usart;
 /* ----------------------- Enable USART interrupts -----------------------------*/
 void
-vMBPortSerialEnable(mb_port_ser* inst, BOOL xRxEnable, BOOL xTxEnable)
+mb_port_ser_enable(mb_port_ser* inst, BOOL rx_enable, BOOL tx_enable)
 {
     /* If xRXEnable enable serial receive interrupts. If xTxENable enable
      * transmitter empty interrupts.
      */
-    if (xRxEnable)
+    if (rx_enable)
     {
         inst->tx_en = false;
         usart_enable_rx_interrupt(inst->uart_num);
@@ -50,7 +50,7 @@ vMBPortSerialEnable(mb_port_ser* inst, BOOL xRxEnable, BOOL xTxEnable)
         usart_disable_rx_interrupt(inst->uart_num);
     }
 
-    if (xTxEnable)
+    if (tx_enable)
     {
         inst->tx_en = true;
         if (inst->uart_num==MB_USART)
@@ -70,8 +70,8 @@ vMBPortSerialEnable(mb_port_ser* inst, BOOL xRxEnable, BOOL xTxEnable)
 /* ----------------------- Initialize USART ----------------------------------*/
 /* Called with databits = 8 for RTU */
 
-BOOL xMBPortSerialInit(mb_port_ser* inst, ULONG baud, UCHAR ucDataBits,
-                   mb_parity_enum parity)
+BOOL mb_port_ser_init(mb_port_ser* inst, ULONG baud, UCHAR data_bits,
+                   mb_port_ser_parity_enum parity)
 {
     BOOL bStatus;
     if ((&mbs_inst_usart) != inst)
@@ -125,7 +125,7 @@ BOOL xMBPortSerialInit(mb_port_ser* inst, ULONG baud, UCHAR ucDataBits,
     /* Oddity of STM32F series: word length includes parity. 7 bits no parity
     not possible */
     CHAR wordLength;
-    switch (ucDataBits)
+    switch (data_bits)
     {
     case 7:
     case 8:
@@ -166,23 +166,23 @@ BOOL xMBPortSerialInit(mb_port_ser* inst, ULONG baud, UCHAR ucDataBits,
 
 /* -----------------------Send character  ----------------------------------*/
 BOOL
-xMBPortSerialPutByte(mb_port_ser* inst, CHAR ucByte)
+mb_port_ser_put_byte(mb_port_ser* inst, CHAR byte_val)
 {
     /* Put a byte in the UARTs transmit buffer. This function is called
      * by the protocol stack if pxMBFrameCBTransmitterEmpty() has been
      * called. */
-    usart_send(inst->uart_num, ucByte);
+    usart_send(inst->uart_num, byte_val);
     return TRUE;
 }
 
 /* ----------------------- Get character ----------------------------------*/
 BOOL
-xMBPortSerialGetByte(mb_port_ser* inst, CHAR * pucByte)
+mb_port_ser_get_byte(mb_port_ser* inst, CHAR * byte_buf)
 {
     /* Return the byte in the UARTs receive buffer. This function is called
      * by the protocol stack after pxMBFrameCBByteReceived() has been called.
      */
-    *pucByte = (CHAR)usart_recv(inst->uart_num);
+    *byte_buf = (CHAR)usart_recv(inst->uart_num);
     return TRUE;
 }
 /* ----------------------- Close Serial Port ----------------------------------*/
@@ -202,7 +202,7 @@ vMBPortSerialClose(mb_port_ser* inst)
  * (or an equivalent) for your target processor. This function should then
  * call pxMBFrameCBTransmitterEmpty() which tells the protocol stack that
  * a new character can be sent. The protocol stack will then call
- * xMBPortSerialPutByte() to send the character.
+ * mb_port_ser_put_byte() to send the character.
  */
 /* Find out what interrupted and get or send data as appropriate */
 void MB_USART_ISR(void)
