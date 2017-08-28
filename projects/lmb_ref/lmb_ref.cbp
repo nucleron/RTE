@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="lmb_ref" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/lmb_ref" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="../../../libremodbus/ascii/mbascii.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/ascii/mbascii.h" />
+		<Unit filename="../../../libremodbus/functions/mbfunccoils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbfunccoils_master.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbfuncdiag.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbfuncdisc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbfuncdisc_master.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbfuncholding.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbfuncholding_master.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbfuncinput.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbfuncinput_master.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbfuncother.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/functions/mbutils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/include/mb.h" />
+		<Unit filename="../../../libremodbus/include/mb_common.h" />
+		<Unit filename="../../../libremodbus/include/mb_types.h" />
+		<Unit filename="../../../libremodbus/include/mbconfig_default.h" />
+		<Unit filename="../../../libremodbus/include/mbframe.h" />
+		<Unit filename="../../../libremodbus/include/mbfunc.h" />
+		<Unit filename="../../../libremodbus/include/mbport.h" />
+		<Unit filename="../../../libremodbus/include/mbproto.h" />
+		<Unit filename="../../../libremodbus/include/mbutils.h" />
+		<Unit filename="../../../libremodbus/mb.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/rtu/mbcrc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/rtu/mbcrc.h" />
+		<Unit filename="../../../libremodbus/rtu/mbrtu.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/rtu/mbrtu.h" />
+		<Unit filename="../../../libremodbus/tcp/mbtcp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libremodbus/tcp/mbtcp.h" />
+		<Unit filename="../../../libremodbus/tcp/tcp_multiport.h" />
+		<Unit filename="../../src/bsp/common/plc_mbm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/plc_mbs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/plc_mbs_single.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/plc_mbs_single_test.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/plc_mbs_test.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/plc_tick.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f1/fmb_port/port.h" />
+		<Unit filename="../../src/bsp/common/stm32/f1/libremodbus_port/portevent.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f1/libremodbus_port/portother.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f1/libremodbus_port/portserial.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f1/libremodbus_port/porttimer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f1/libremodbus_port/serial_multi.h" />
+		<Unit filename="../../src/bsp/common/stm32/f1/libremodbus_port/serial_port.h" />
+		<Unit filename="../../src/bsp/common/stm32/f1/libremodbus_port/tcp_port.h" />
+		<Unit filename="../../src/bsp/common/stm32/f1/mbconfig.h" />
+		<Unit filename="../../src/bsp/common/stm32/f1/plc_backup.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f1/plc_clock.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f1/plc_gpio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f1/plc_isr_stubs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f1/plc_rtc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f1/plc_serial.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f2/ADC/adc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f2/ADC/adc.h" />
+		<Unit filename="../../src/bsp/common/stm32/f2/ADC/adc_common_v1.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f2/fmb_port/port.h" />
+		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/serial_multi.h" />
+		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/serial_port.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/serial_port.h" />
+		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/serial_portevent.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/serial_portother.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/serial_porttimer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/tcp_port.h" />
+		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/user_mb_app.h" />
+		<Unit filename="../../src/bsp/common/stm32/f2/plc_backup.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f2/plc_clock.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f2/plc_gpio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f2/plc_isr_stubs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f2/plc_rtc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f2/plc_serial.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f4/plc_backup.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f4/plc_clock.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f4/plc_gpio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f4/plc_isr_stubs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f4/plc_rtc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/f4/plc_serial.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/plc_diag.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/plc_gpio.h" />
+		<Unit filename="../../src/bsp/common/stm32/plc_hmi.bak.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/plc_hmi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/common/stm32/plc_hmi.h" />
+		<Unit filename="../../src/bsp/common/stm32/plc_wait_tmr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-227-dev/plc_backup.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-227-dev/plc_clock.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-227-dev/plc_config.h" />
+		<Unit filename="../../src/bsp/nuc-227-dev/plc_config_bak.h" />
+		<Unit filename="../../src/bsp/nuc-227-dev/plc_hw.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-227-dev/plc_rtc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-227-dev/plc_serial.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-227-dev/plc_tick.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-227-dev/plc_wait_tmr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-242/plc_config.h" />
+		<Unit filename="../../src/bsp/nuc-242/plc_hmi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-242/plc_hw.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-242/plc_iom_reg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-242/plc_isr_stubs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-243/mbconfig.h" />
+		<Unit filename="../../src/bsp/nuc-243/plc_ain.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-243/plc_ain.h" />
+		<Unit filename="../../src/bsp/nuc-243/plc_aout.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-243/plc_aout.h" />
+		<Unit filename="../../src/bsp/nuc-243/plc_config.h" />
+		<Unit filename="../../src/bsp/nuc-243/plc_hmi_sys.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-243/plc_hw.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-243/plc_iom_reg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-243/plc_isr_stubs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-243/plc_mbs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-243/plc_wait_tmr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-247-0/mbconfig.h" />
+		<Unit filename="../../src/bsp/nuc-247-0/plc_config.h" />
+		<Unit filename="../../src/bsp/nuc-247-0/plc_hmi_sys.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-247-0/plc_hw.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-247-0/plc_iom_reg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-247-0/plc_tick.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-247-0/plc_wait_tmr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-247-1/mbconfig.h" />
+		<Unit filename="../../src/bsp/nuc-247-1/plc_config.h" />
+		<Unit filename="../../src/bsp/nuc-247-1/plc_hmi_sys.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-247-1/plc_hw.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-247-1/plc_iom_reg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-247-1/plc_isr_stubs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/nuc-247-1/plc_wait_tmr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/stm32f4/plc_backup.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/stm32f4/plc_clock.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/stm32f4/plc_config.h" />
+		<Unit filename="../../src/bsp/stm32f4/plc_config_bak.h" />
+		<Unit filename="../../src/bsp/stm32f4/plc_hw.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/stm32f4/plc_rtc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/stm32f4/plc_serial.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/stm32f4/plc_tick.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/bsp/stm32f4/plc_wait_tmr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/dbnc_flt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/dbnc_flt.h" />
+		<Unit filename="../../src/frac_div.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/frac_div.h" />
+		<Unit filename="../../src/main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/noise_flt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/noise_flt.h" />
+		<Unit filename="../../src/plc_abi.h" />
+		<Unit filename="../../src/plc_app_default.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/plc_app_default.h" />
+		<Unit filename="../../src/plc_backup.h" />
+		<Unit filename="../../src/plc_clock.h" />
+		<Unit filename="../../src/plc_dbg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/plc_dbg.h" />
+		<Unit filename="../../src/plc_diag.h" />
+		<Unit filename="../../src/plc_glue_dbg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/plc_glue_dbg.h" />
+		<Unit filename="../../src/plc_glue_rte.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/plc_hw.h" />
+		<Unit filename="../../src/plc_iom.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/plc_iom.h" />
+		<Unit filename="../../src/plc_ioproto_template.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/plc_libc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/plc_rtc.h" />
+		<Unit filename="../../src/plc_tick.h" />
+		<Unit filename="../../src/plc_wait_tmr.h" />
+		<Unit filename="../../src/xprintf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../src/xprintf.h" />
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
