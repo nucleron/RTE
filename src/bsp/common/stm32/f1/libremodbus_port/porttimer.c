@@ -34,7 +34,7 @@
 
 /* ----------------------- Initialize Timer -----------------------------*/
 BOOL
-mb_port_ser_tmr_init(mb_port_ser* inst,  USHORT usTim1Timerout50us)
+mb_port_ser_tmr_init(mb_port_ser_struct* inst,  USHORT usTim1Timerout50us)
 {
     //rcc_periph_clock_enable(RCC_GPIOA);
     //gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO1);
@@ -58,7 +58,7 @@ mb_port_ser_tmr_init(mb_port_ser* inst,  USHORT usTim1Timerout50us)
 
 /* ----------------------- Enable Timer -----------------------------*/
 void
-mb_port_ser_tmr_enable(mb_port_ser* inst)
+mb_port_ser_tmr_enable(mb_port_ser_struct* inst)
 {
     if ((&mbs_inst_usart) != inst)
     {
@@ -73,7 +73,7 @@ mb_port_ser_tmr_enable(mb_port_ser* inst)
 
 /* ----------------------- Disable timer -----------------------------*/
 void
-mb_port_ser_tmr_disable(mb_port_ser* inst)
+mb_port_ser_tmr_disable(mb_port_ser_struct* inst)
 {
     if ((&mbs_inst_usart) != inst)
     {
@@ -83,7 +83,7 @@ mb_port_ser_tmr_disable(mb_port_ser* inst)
     timer_disable_counter(MB_TMR);
 }
 
-void mb_port_ser_tmr_delay(mb_port_ser* inst, USHORT timeout_ms)
+void mb_port_ser_tmr_delay(mb_port_ser_struct* inst, USHORT timeout_ms)
 {
     /*Not supproted*/
 #if MB_ASCII_TIMEOUT_WAIT_BEFORE_SEND_MS > 0

@@ -68,7 +68,6 @@
 			<Add after="arm-none-eabi-objcopy -O ihex ${TARGET_OUTPUT_FILE} ${TARGET_OUTPUT_FILE}.hex" />
 			<Mode after="always" />
 		</ExtraCommands>
-		<Unit filename="../../../libremodbus/ascii/ascii_multiport.h" />
 		<Unit filename="../../../libremodbus/ascii/mbascii.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -105,8 +104,6 @@
 		<Unit filename="../../../libremodbus/mb.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../libremodbus/mb_master.h" />
-		<Unit filename="../../../libremodbus/mb_multiport.h" />
 		<Unit filename="../../../libremodbus/rtu/mbcrc.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -115,7 +112,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../../libremodbus/rtu/mbrtu.h" />
-		<Unit filename="../../../libremodbus/rtu/rtu_multiport.h" />
 		<Unit filename="../../src/COPYING.GPL3" />
 		<Unit filename="../../src/COPYING.LGPL3" />
 		<Unit filename="../../src/License.txt" />

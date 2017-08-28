@@ -87,7 +87,7 @@ static uint8_t mbm_busy = 0xFF;
 static bool mbm_need_preread = false;
 static bool mbm_preread_finished = false;
 
-static mb_instance MBMaster;
+static mb_inst_struct MBMaster;
 static mb_trans_union MBMTransport;
 
 static bool mbm_init_flg = false;
@@ -267,11 +267,11 @@ void execute_request(uint32_t tick)
     switch (mbm_request.type)
     {
     case RT_HOLDING_RD:
-        eMBMasterReqReadHoldingRegister(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
+        mb_mstr_rq_read_holding_reg(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
         break;
     case RT_HOLDING_WR:
         if (is_continious())
-            eMBMasterReqWriteMultipleHoldingRegister(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], mbm_request.registers, mbm_request.target_value, 0);
+            mb_mstr_rq_write_multi_holding_reg(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], mbm_request.registers, mbm_request.target_value, 0);
         else
         {
             if (mbm_preread_finished) //after we got current register values, change what we have to write and send a request_t to send everything to slave
@@ -282,21 +282,21 @@ void execute_request(uint32_t tick)
                     reg_index = mbm_request.target_addr[j]-mbm_request.target_addr[0];
                     mbm_preread_buffer[reg_index] = mbm_request.target_value[j];
                 }
-                //eMBMasterReqWriteHoldingRegister
-                eMBMasterReqWriteMultipleHoldingRegister(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), mbm_preread_buffer, 0);
+                //mb_mstr_rq_write_holding_reg
+                mb_mstr_rq_write_multi_holding_reg(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), mbm_preread_buffer, 0);
             }
             else //we need to send a request_t to first read full registers range
             {
-                eMBMasterReqReadHoldingRegister(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
+                mb_mstr_rq_read_holding_reg(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
                 mbm_need_preread = true;
             }
         }
         break;
     case RT_DISCRETE:
-        eMBMasterReqReadDiscreteInputs(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
+        mb_mstr_rq_read_discrete_inputs(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
         break;
     case RT_INPUTREG:
-        eMBMasterReqReadInputRegister(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
+        mb_mstr_rq_read_inp_reg(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
         break;
     case RT_COILS:
         //pack bits
@@ -304,10 +304,10 @@ void execute_request(uint32_t tick)
         {
             for (i=0; i<get_full_length(); i++)
             {
-                xMBUtilSetBits((UCHAR *)mbm_preread_buffer, i, 1, (mbm_request.target_value[i]==0)?0:1);
+                mb_util_set_bits((UCHAR *)mbm_preread_buffer, i, 1, (mbm_request.target_value[i]==0)?0:1);
             }
             //send request_t
-            eMBMasterReqWriteMultipleCoils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), (UCHAR *)mbm_preread_buffer, 0);
+            mb_mstr_rq_write_multi_coils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), (UCHAR *)mbm_preread_buffer, 0);
         }
         else
         {
@@ -317,14 +317,14 @@ void execute_request(uint32_t tick)
                 for (j=0; j<get_full_length(); j++)
                 {
                     reg_index = mbm_request.target_addr[j]-mbm_request.target_addr[0];
-                    xMBUtilSetBits((UCHAR *)mbm_preread_buffer, reg_index, 1, (mbm_request.target_value[j]==0)?0:1);
+                    mb_util_set_bits((UCHAR *)mbm_preread_buffer, reg_index, 1, (mbm_request.target_value[j]==0)?0:1);
                 }
-                //eMBMasterReqWriteHoldingRegister
-                eMBMasterReqWriteMultipleCoils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), (UCHAR *)mbm_preread_buffer, 0);
+                //mb_mstr_rq_write_holding_reg
+                mb_mstr_rq_write_multi_coils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), (UCHAR *)mbm_preread_buffer, 0);
             }
             else //we need to send a request_t to first read full registers range
             {
-                eMBMasterReqReadCoils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
+                mb_mstr_rq_read_coils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
                 mbm_need_preread = true;
             }
         }
@@ -573,12 +573,12 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
  * @note There functions will block modbus master poll while execute OS waiting.
  * So, for real-time of system.Do not execute too much waiting process.
  *
- * @param ucDestAddress destination salve address
- * @param pucPDUData PDU buffer data
- * @param ucPDULength PDU buffer length
+ * @param dst_addr destination salve address
+ * @param pdu_data_ptr PDU buffer data
+ * @param pdu_len PDU buffer length
  *
  */
-void vMBMasterErrorCBRespondTimeout(mb_instance* inst, UCHAR ucDestAddress, const UCHAR* pucPDUData, USHORT ucPDULength)
+void mb_mstr_error_timeout_cb(mb_inst_struct *inst, UCHAR dst_addr, const UCHAR* pdu_data_ptr, USHORT pdu_len)
 {
     mbm_request.result=RR_TIMEOUT;
     mbm_busy=0xFF;
@@ -590,12 +590,12 @@ void vMBMasterErrorCBRespondTimeout(mb_instance* inst, UCHAR ucDestAddress, cons
  * @note There functions will block modbus master poll while execute OS waiting.
  * So, for real-time of system.Do not execute too much waiting process.
  *
- * @param ucDestAddress destination salve address
- * @param pucPDUData PDU buffer data
- * @param ucPDULength PDU buffer length
+ * @param dst_addr destination salve address
+ * @param pdu_data_ptr PDU buffer data
+ * @param pdu_len PDU buffer length
  *
  */
-void vMBMasterErrorCBReceiveData(mb_instance* inst, UCHAR ucDestAddress, const UCHAR* pucPDUData, USHORT ucPDULength)
+void mb_mstr_error_rcv_data_cb(mb_inst_struct *inst, UCHAR dst_addr, const UCHAR* pdu_data_ptr, USHORT pdu_len)
 {
     mbm_request.result=RR_DATA_ERR;
     mbm_busy=0xFF;
@@ -606,12 +606,12 @@ void vMBMasterErrorCBReceiveData(mb_instance* inst, UCHAR ucDestAddress, const U
  * @note There functions will block modbus master poll while execute OS waiting.
  * So, for real-time of system.Do not execute too much waiting process.
  *
- * @param ucDestAddress destination salve address
- * @param pucPDUData PDU buffer data
- * @param ucPDULength PDU buffer length
+ * @param dst_addr destination salve address
+ * @param pdu_data_ptr PDU buffer data
+ * @param pdu_len PDU buffer length
  *
  */
-void vMBMasterErrorCBExecuteFunction(mb_instance* inst, UCHAR ucDestAddress, const UCHAR* pucPDUData, USHORT ucPDULength)
+void mb_mstr_error_exec_fn_cb(mb_inst_struct *inst, UCHAR dst_addr, const UCHAR* pdu_data_ptr, USHORT pdu_len)
 {
     mbm_request.result=RR_INT_ERR;
     mbm_busy=0xFF;
@@ -623,7 +623,7 @@ void vMBMasterErrorCBExecuteFunction(mb_instance* inst, UCHAR ucDestAddress, con
  * So, for real-time of system.Do not execute too much waiting process.
  *
  */
-void vMBMasterCBRequestSuccess(mb_instance* inst)
+void mb_mstr_rq_success_cb(mb_inst_struct *inst)
 {
     if (mbm_need_preread)
     {
@@ -647,9 +647,9 @@ void vMBMasterCBRequestSuccess(mb_instance* inst)
  *
  * @return result
  */
-mb_err_enum eMBMasterRegInputCB(mb_instance* inst, UCHAR * reg_buff, USHORT reg_addr, USHORT reg_num)
+mb_err_enum mb_mstr_reg_input_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num)
 {
-    mb_err_enum    eStatus = MB_ENOERR;
+    mb_err_enum    status = MB_ENOERR;
     uint8_t reg_index;
 
     /* it already plus one in modbus function method. */
@@ -666,7 +666,7 @@ mb_err_enum eMBMasterRegInputCB(mb_instance* inst, UCHAR * reg_buff, USHORT reg_
         reg_num--;
     }
 
-    return eStatus;
+    return status;
 }
 
 /**
@@ -682,9 +682,9 @@ mb_err_enum eMBMasterRegInputCB(mb_instance* inst, UCHAR * reg_buff, USHORT reg_
 
 
 
-mb_err_enum eMBMasterRegHoldingCB(mb_instance* inst, UCHAR * reg_buff, USHORT reg_addr, USHORT reg_num)
+mb_err_enum mb_mstr_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num)
 {
-    mb_err_enum    eStatus = MB_ENOERR;
+    mb_err_enum    status = MB_ENOERR;
 
     uint8_t reg_index=0;
 
@@ -770,7 +770,7 @@ mb_err_enum eMBMasterRegHoldingCB(mb_instance* inst, UCHAR * reg_buff, USHORT re
 //        break;
 //    }
 
-    return eStatus;
+    return status;
 }
 
 /**
@@ -783,9 +783,9 @@ mb_err_enum eMBMasterRegHoldingCB(mb_instance* inst, UCHAR * reg_buff, USHORT re
  *
  * @return result
  */
-mb_err_enum eMBMasterRegCoilsCB(mb_instance* inst, UCHAR * reg_buff, USHORT reg_addr, USHORT coil_num)
+mb_err_enum mb_mstr_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT coil_num)
 {
-    mb_err_enum    eStatus = MB_ENOERR;
+    mb_err_enum    status = MB_ENOERR;
     uint8_t nByte=0;
 
     if (mbm_need_preread)
@@ -805,7 +805,7 @@ mb_err_enum eMBMasterRegCoilsCB(mb_instance* inst, UCHAR * reg_buff, USHORT reg_
         //coils read callback here
     }
 
-    return eStatus;
+    return status;
 }
 
 /**
@@ -817,9 +817,9 @@ mb_err_enum eMBMasterRegCoilsCB(mb_instance* inst, UCHAR * reg_buff, USHORT reg_
  *
  * @return result
  */
-mb_err_enum eMBMasterRegDiscreteCB(mb_instance* inst, UCHAR * reg_buff, USHORT reg_addr, USHORT disc_num)
+mb_err_enum mb_mstr_reg_discrete_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT disc_num)
 {
-    mb_err_enum    eStatus = MB_ENOERR;
+    mb_err_enum    status = MB_ENOERR;
 
     uint8_t iNReg =  0;
     uint8_t reg_index;
@@ -844,6 +844,6 @@ mb_err_enum eMBMasterRegDiscreteCB(mb_instance* inst, UCHAR * reg_buff, USHORT r
         iNReg++;
     }
 
-    return eStatus;
+    return status;
 }
 

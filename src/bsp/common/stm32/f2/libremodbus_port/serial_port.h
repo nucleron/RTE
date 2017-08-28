@@ -54,15 +54,15 @@ struct _mb_port_ser
     bool     tx_en;
 
 	//timer
-	DWORD           dwTimeOut;
-	BOOL            bTimeoutEnable;
-	DWORD           dwTimeLast;
+	DWORD           timeout;
+	BOOL            timeout_enable;
+	DWORD           time_last;
 
-	DWORD           defaultTimeout;
+	DWORD           deafault_timeout;
 
 	//events
-	mb_event_enum eQueuedEvent;
-	BOOL     xEventInQueue;
+	mb_event_enum queued_evt;
+	BOOL     evt_in_queue;
 
 	//void* parent;
 };
@@ -80,13 +80,13 @@ typedef enum
 /*
 void            vMBPortLog(eMBPortLogLevel eLevel, const TCHAR * szModule,
                             const TCHAR * szFmt, ...);*/
-void            vMBPortTimerPoll( mb_port_ser* inst, void* caller ); //FIXME
-BOOL            xMBPortSerialPoll(mb_port_ser* inst, void* caller); //FIXME
-BOOL            xMBPortSerialSetTimeout(mb_port_ser* inst, DWORD dwTimeoutMs);
+void            vMBPortTimerPoll( mb_port_ser_struct* inst, void* caller ); //FIXME
+BOOL            xMBPortSerialPoll(mb_port_ser_struct* inst, void* caller); //FIXME
+BOOL            xMBPortSerialSetTimeout(mb_port_ser_struct* inst, DWORD dwTimeoutMs);
 
 
-extern mb_port_ser mbs_inst_usart;
-extern mb_port_ser mbm_inst_usart;
+extern mb_port_ser_struct mbs_inst_usart;
+extern mb_port_ser_struct mbm_inst_usart;
 
 PR_END_EXTERN_C
 #endif

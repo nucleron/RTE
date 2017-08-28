@@ -75,7 +75,7 @@ UCHAR    ucSCoilBuf[S_COIL_NCOILS/8+1];
 
 /* ----------------------- Static variables ---------------------------------*/
 
-static mb_instance MBSlave;
+static mb_inst_struct MBSlave;
 static mb_trans_union MBTransport;
 
 static tm mbtime;
@@ -437,10 +437,10 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 
 
 mb_err_enum
-mb_reg_holding_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT reg_num,
+mb_reg_holding_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num,
                  mb_reg_mode_enum mode)
 {
-    mb_err_enum    eStatus = MB_ENOERR;
+    mb_err_enum    status = MB_ENOERR;
     int             iRegIndex;
 
     if ((reg_addr >= REG_HOLDING_START) &&
@@ -478,17 +478,17 @@ mb_reg_holding_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT reg_num,
     }
     else
     {
-        eStatus = MB_ENOREG;
+        status = MB_ENOREG;
     }
-    return eStatus;
+    return status;
 }
 
 
 mb_err_enum
-mb_reg_coils_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT coil_num,
+mb_reg_coils_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT coil_num,
                mb_reg_mode_enum mode)
 {
-     mb_err_enum    eStatus = MB_ENOERR;
+     mb_err_enum    status = MB_ENOERR;
     USHORT          iRegIndex , iRegBitIndex , iNReg;
     USHORT          COIL_START;
     USHORT          COIL_NCOILS;
@@ -529,16 +529,16 @@ mb_reg_coils_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT coil_num,
         case MB_REG_WRITE:
             while (iNReg > 1)
             {
-                xMBUtilSetBits(&ucSCoilBuf[iRegIndex++], iRegBitIndex, 8,
+                mb_util_set_bits(&ucSCoilBuf[iRegIndex++], iRegBitIndex, 8,
                         *reg_buff++);
                 iNReg--;
             }
             /* last coils */
             coil_num = coil_num % 8;
-            /* xMBUtilSetBits has bug when ucNBits is zero */
+            /* mb_util_set_bits has bug when ucNBits is zero */
             if (coil_num != 0)
             {
-                xMBUtilSetBits(&ucSCoilBuf[iRegIndex++], iRegBitIndex, coil_num,
+                mb_util_set_bits(&ucSCoilBuf[iRegIndex++], iRegBitIndex, coil_num,
                         *reg_buff++);
             }
             break;
@@ -546,15 +546,15 @@ mb_reg_coils_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT coil_num,
     }
     else
     {
-        eStatus = MB_ENOREG;
+        status = MB_ENOREG;
     }
-    return eStatus;
+    return status;
 }
 
 mb_err_enum
-mb_reg_discrete_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT disc_num)
+mb_reg_discrete_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT disc_num)
 {
-    mb_err_enum    eStatus = MB_ENOERR;
+    mb_err_enum    status = MB_ENOERR;
     USHORT          iRegIndex , iRegBitIndex , iNReg;
     iNReg =  disc_num / 8 + 1;
 
@@ -583,16 +583,16 @@ mb_reg_discrete_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT disc_num)
     }
     else
     {
-        eStatus = MB_ENOREG;
+        status = MB_ENOREG;
     }
 
-    return eStatus;
+    return status;
 }
 
 mb_err_enum
-mb_reg_input_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT reg_num)
+mb_reg_input_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num)
 {
-    mb_err_enum    eStatus = MB_ENOERR;
+    mb_err_enum    status = MB_ENOERR;
     int             iRegIndex;
 
     if ((reg_addr >= 0)
@@ -609,9 +609,9 @@ mb_reg_input_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT reg_num)
     }
     else
     {
-        eStatus = MB_ENOREG;
+        status = MB_ENOREG;
     }
 
-    return eStatus;
+    return status;
 }
 

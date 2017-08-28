@@ -65,8 +65,8 @@
 
 /* ----------------------- Static variables ---------------------------------*/
 
-//static mb_instance MBSlave;
-//static mb_rtu_tr MBTransport;
+//static mb_inst_struct MBSlave;
+//static mb_rtu_tr_struct MBTransport;
 
 static tm mbtime;
 static bool mbt_sflg = false;
@@ -435,7 +435,7 @@ eMBErrorCode
 eMBRegHoldingCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs,
                  eMBRegisterMode eMode)
 {
-    eMBErrorCode    eStatus = MB_ENOERR;
+    eMBErrorCode    status = MB_ENOERR;
     int             iRegIndex;
 
     if ((usAddress >= REG_HOLDING_START) &&
@@ -473,9 +473,9 @@ eMBRegHoldingCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs,
     }
     else
     {
-        eStatus = MB_ENOREG;
+        status = MB_ENOREG;
     }
-    return eStatus;
+    return status;
 }
 
 

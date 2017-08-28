@@ -75,8 +75,8 @@ UCHAR    ucSCoilBuf[S_COIL_NCOILS/8+1];
 
 /* ----------------------- Static variables ---------------------------------*/
 
-//static mb_instance MBSlave;
-//static mb_rtu_tr MBTransport;
+//static mb_inst_struct MBSlave;
+//static mb_rtu_tr_struct MBTransport;
 
 static tm mbtime;
 static bool mbt_sflg = false;
@@ -438,7 +438,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 eMBErrorCode
 eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs)
 {
-    eMBErrorCode    eStatus = MB_ENOERR;
+    eMBErrorCode    status = MB_ENOERR;
     int             iRegIndex;
 
     if ((usAddress >= 0)
@@ -455,17 +455,17 @@ eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs)
     }
     else
     {
-        eStatus = MB_ENOREG;
+        status = MB_ENOREG;
     }
 
-    return eStatus;
+    return status;
 }
 
 eMBErrorCode
 eMBRegHoldingCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs,
                  eMBRegisterMode eMode)
 {
-    eMBErrorCode    eStatus = MB_ENOERR;
+    eMBErrorCode    status = MB_ENOERR;
     int             iRegIndex;
 
     if ((usAddress >= REG_HOLDING_START) &&
@@ -503,9 +503,9 @@ eMBRegHoldingCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs,
     }
     else
     {
-        eStatus = MB_ENOREG;
+        status = MB_ENOREG;
     }
-    return eStatus;
+    return status;
 }
 
 
@@ -513,7 +513,7 @@ eMBErrorCode
 eMBRegCoilsCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils,
                eMBRegisterMode eMode)
 {
-     eMBErrorCode    eStatus = MB_ENOERR;
+     eMBErrorCode    status = MB_ENOERR;
     USHORT          iRegIndex , iRegBitIndex , iNReg;
     USHORT          COIL_START;
     USHORT          COIL_NCOILS;
@@ -554,16 +554,16 @@ eMBRegCoilsCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils,
         case MB_REG_WRITE:
             while (iNReg > 1)
             {
-                xMBUtilSetBits(&ucSCoilBuf[iRegIndex++], iRegBitIndex, 8,
+                mb_util_set_bits(&ucSCoilBuf[iRegIndex++], iRegBitIndex, 8,
                         *pucRegBuffer++);
                 iNReg--;
             }
             /* last coils */
             usNCoils = usNCoils % 8;
-            /* xMBUtilSetBits has bug when ucNBits is zero */
+            /* mb_util_set_bits has bug when ucNBits is zero */
             if (usNCoils != 0)
             {
-                xMBUtilSetBits(&ucSCoilBuf[iRegIndex++], iRegBitIndex, usNCoils,
+                mb_util_set_bits(&ucSCoilBuf[iRegIndex++], iRegBitIndex, usNCoils,
                         *pucRegBuffer++);
             }
             break;
@@ -571,15 +571,15 @@ eMBRegCoilsCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils,
     }
     else
     {
-        eStatus = MB_ENOREG;
+        status = MB_ENOREG;
     }
-    return eStatus;
+    return status;
 }
 
 eMBErrorCode
 eMBRegDiscreteCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNDiscrete)
 {
-    eMBErrorCode    eStatus = MB_ENOERR;
+    eMBErrorCode    status = MB_ENOERR;
     USHORT          iRegIndex , iRegBitIndex , iNReg;
     iNReg =  usNDiscrete / 8 + 1;
 
@@ -608,9 +608,9 @@ eMBRegDiscreteCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNDiscrete)
     }
     else
     {
-        eStatus = MB_ENOREG;
+        status = MB_ENOREG;
     }
 
-    return eStatus;
+    return status;
 }
 

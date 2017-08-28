@@ -65,7 +65,7 @@
 
 /* ----------------------- Static variables ---------------------------------*/
 
-static mb_instance MBSlave;
+static mb_inst_struct MBSlave;
 static mb_trans_union MBTransport;
 
 static tm mbtime;
@@ -427,16 +427,16 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 #undef LOCAL_PROTO
 
 mb_err_enum
-mb_reg_input_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT reg_num)
+mb_reg_input_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num)
 {
     return MB_ENOREG;
 }
 
 mb_err_enum
-mb_reg_holding_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT reg_num,
+mb_reg_holding_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num,
                  mb_reg_mode_enum mode)
 {
-    mb_err_enum    eStatus = MB_ENOERR;
+    mb_err_enum    status = MB_ENOERR;
     int             iRegIndex;
 
     if ((reg_addr >= REG_HOLDING_START) &&
@@ -474,21 +474,21 @@ mb_reg_holding_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT reg_num,
     }
     else
     {
-        eStatus = MB_ENOREG;
+        status = MB_ENOREG;
     }
-    return eStatus;
+    return status;
 }
 
 
 mb_err_enum
-mb_reg_coils_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT coil_num,
+mb_reg_coils_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT coil_num,
                mb_reg_mode_enum mode)
 {
     return MB_ENOREG;
 }
 
 mb_err_enum
-mb_reg_discrete_cb(UCHAR * reg_buff, USHORT reg_addr, USHORT disc_num)
+mb_reg_discrete_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT disc_num)
 {
     return MB_ENOREG;
 }

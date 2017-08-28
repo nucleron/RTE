@@ -35,14 +35,14 @@
 
 #define SERIAL_MULTIPORT
 
-mb_port_ser mbs_inst_usart;
-mb_port_ser mbm_inst_usart;
+mb_port_ser_struct mbs_inst_usart;
+mb_port_ser_struct mbm_inst_usart;
 //
-//mb_port_ser* uart_mb_inst;
-//mb_port_ser* uart_mbm_inst;
+//mb_port_ser_struct* uart_mb_inst;
+//mb_port_ser_struct* uart_mbm_inst;
 /* ----------------------- Enable USART interrupts -----------------------------*/
 void
-mb_port_ser_enable(mb_port_ser* inst, BOOL rx_enable, BOOL tx_enable)
+mb_port_ser_enable(mb_port_ser_struct* inst, BOOL rx_enable, BOOL tx_enable)
 {
     /* If xRXEnable enable serial receive interrupts. If xTxENable enable
      * transmitter empty interrupts.
@@ -83,7 +83,7 @@ mb_port_ser_enable(mb_port_ser* inst, BOOL rx_enable, BOOL tx_enable)
 
 /* ----------------------- Initialize USART ----------------------------------*/
 /* Called with databits = 8 for RTU */
-BOOL mb_port_ser_init(mb_port_ser* inst, ULONG baud, UCHAR data_bits,
+BOOL mb_port_ser_init(mb_port_ser_struct* inst, ULONG baud, UCHAR data_bits,
                    mb_port_ser_parity_enum parity)
 {
     BOOL bStatus;
@@ -216,7 +216,7 @@ BOOL mb_port_ser_init(mb_port_ser* inst, ULONG baud, UCHAR data_bits,
 
 /* -----------------------Send character  ----------------------------------*/
 BOOL
-mb_port_ser_put_byte(mb_port_ser* inst, CHAR byte_val)
+mb_port_ser_put_byte(mb_port_ser_struct* inst, CHAR byte_val)
 {
     /* Put a byte in the UARTs transmit buffer. This function is called
      * by the protocol stack if pxMBFrameCBTransmitterEmpty() has been
@@ -227,7 +227,7 @@ mb_port_ser_put_byte(mb_port_ser* inst, CHAR byte_val)
 
 /* ----------------------- Get character ----------------------------------*/
 BOOL
-mb_port_ser_get_byte(mb_port_ser* inst, CHAR * byte_buf)
+mb_port_ser_get_byte(mb_port_ser_struct* inst, CHAR * byte_buf)
 {
     /* Return the byte in the UARTs receive buffer. This function is called
      * by the protocol stack after pxMBFrameCBByteReceived() has been called.
@@ -238,7 +238,7 @@ mb_port_ser_get_byte(mb_port_ser* inst, CHAR * byte_buf)
 
 /* ----------------------- Close Serial Port ----------------------------------*/
 void
-vMBPortSerialClose (mb_port_ser* inst)
+vMBPortSerialClose (mb_port_ser_struct* inst)
 {
     if (inst->uart_num==USART_MBS_PERIPH)
     {
@@ -269,13 +269,13 @@ void USART_MBS_ISR(void)
     if (((USART_CR1(USART_MBS_PERIPH) & USART_CR1_RXNEIE) != 0) && ((USART_SR(USART_MBS_PERIPH) & USART_SR_RXNE) != 0))
     {
         mbs_inst_usart.base.cb->byte_rcvd(mbs_inst_usart.base.arg);
-        //((mb_instance*)(((mb_rtu_tr*)(mbs_inst_usart.parent))->parent))->pxMBFrameCBByteReceived((mb_rtu_tr*)(mbs_inst_usart.parent));
+        //((mb_inst_struct*)(((mb_rtu_tr_struct*)(mbs_inst_usart.parent))->parent))->pxMBFrameCBByteReceived((mb_rtu_tr_struct*)(mbs_inst_usart.parent));
     }
     /* Check if we were called because of TXE. */
     if (((USART_CR1(USART_MBS_PERIPH) & USART_CR1_TXEIE) != 0) && ((USART_SR(USART_MBS_PERIPH) & USART_SR_TXE) != 0))
     {
        mbs_inst_usart.base.cb->tx_empty(mbs_inst_usart.base.arg);
-       //((mb_instance*)(((mb_rtu_tr*)(mbs_inst_usart.parent))->parent))->pxMBFrameCBTransmitterEmpty((mb_rtu_tr*)(mbs_inst_usart.parent));
+       //((mb_inst_struct*)(((mb_rtu_tr_struct*)(mbs_inst_usart.parent))->parent))->pxMBFrameCBTransmitterEmpty((mb_rtu_tr_struct*)(mbs_inst_usart.parent));
         /* Check if we need to disable transmitter*/
         if (!mbs_inst_usart.tx_en)
         {
@@ -300,13 +300,13 @@ void USART_MBM_ISR(void)
     if (((USART_CR1(USART_MBM_PERIPH) & USART_CR1_RXNEIE) != 0) && ((USART_SR(USART_MBM_PERIPH) & USART_SR_RXNE) != 0))
     {
         mbm_inst_usart.base.cb->byte_rcvd(mbm_inst_usart.base.arg);
-        //((mb_instance*)(((mb_rtu_tr*)(mbm_inst_usart.parent))->parent))->pxMBFrameCBByteReceived((mb_rtu_tr*)(mbm_inst_usart.parent));
+        //((mb_inst_struct*)(((mb_rtu_tr_struct*)(mbm_inst_usart.parent))->parent))->pxMBFrameCBByteReceived((mb_rtu_tr_struct*)(mbm_inst_usart.parent));
     }
     /* Check if we were called because of TXE. */
     if (((USART_CR1(USART_MBM_PERIPH) & USART_CR1_TXEIE) != 0) && ((USART_SR(USART_MBM_PERIPH) & USART_SR_TXE) != 0))
     {
         mbm_inst_usart.base.cb->tx_empty(mbm_inst_usart.base.arg);
-        //((mb_instance*)(((mb_rtu_tr*)(mbm_inst_usart.parent))->parent))->pxMBFrameCBTransmitterEmpty((mb_rtu_tr*)(mbm_inst_usart.parent));
+        //((mb_inst_struct*)(((mb_rtu_tr_struct*)(mbm_inst_usart.parent))->parent))->pxMBFrameCBTransmitterEmpty((mb_rtu_tr_struct*)(mbm_inst_usart.parent));
         /* Check if we need to disable transmitter*/
         if (!mbm_inst_usart.tx_en)
         {

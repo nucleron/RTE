@@ -30,17 +30,17 @@
 
 #include <plc_config.h>
 
-extern mb_port_ser* uart_mb_inst;
-extern mb_port_ser* uart_mbm_inst;
+extern mb_port_ser_struct* uart_mb_inst;
+extern mb_port_ser_struct* uart_mbm_inst;
 
 /* ----------------------- Initialize Timer -----------------------------*/
 BOOL
-mb_port_ser_tmr_init(mb_port_ser* inst,  USHORT usTim1Timerout50us)
+mb_port_ser_tmr_init(mb_port_ser_struct* inst,  USHORT usTim1Timerout50us)
 {
 //    rcc_periph_clock_enable(RCC_GPIOA);
 //    gpio_mode_setup(GPIOA, GPIO_OSPEED_50MHZ, GPIO_OTYPE_PP, GPIO1);
 //    gpio_clear(GPIOA, GPIO1);
-    inst->defaultTimeout = usTim1Timerout50us;
+    inst->deafault_timeout = usTim1Timerout50us;
     if ((&mbs_inst_usart) == inst)
     {
         /* Enable TIM clock. */
@@ -74,7 +74,7 @@ mb_port_ser_tmr_init(mb_port_ser* inst,  USHORT usTim1Timerout50us)
 
 /* ----------------------- Enable Timer -----------------------------*/
 void
-mb_port_ser_tmr_enable(mb_port_ser* inst)
+mb_port_ser_tmr_enable(mb_port_ser_struct* inst)
 {
     if ((&mbs_inst_usart) == inst)
     {
@@ -83,7 +83,7 @@ mb_port_ser_tmr_enable(mb_port_ser* inst)
 
         timer_enable_irq     (MBS_TMR, TIM_DIER_UIE);
         timer_enable_counter (MBS_TMR);
-        timer_set_period(MBS_TMR, inst->defaultTimeout);
+        timer_set_period(MBS_TMR, inst->deafault_timeout);
     }
 
     if ((&mbm_inst_usart) == inst)
@@ -94,14 +94,14 @@ mb_port_ser_tmr_enable(mb_port_ser* inst)
 
         timer_enable_irq     (MBM_TMR, TIM_DIER_UIE);
         timer_enable_counter (MBM_TMR);
-        timer_set_period(MBM_TMR, inst->defaultTimeout);
+        timer_set_period(MBM_TMR, inst->deafault_timeout);
         #endif
     }
 }
 
 /* ----------------------- Disable timer -----------------------------*/
 void
-mb_port_ser_tmr_disable(mb_port_ser* inst)
+mb_port_ser_tmr_disable(mb_port_ser_struct* inst)
 
 {
     if ((&mbs_inst_usart) == inst)
@@ -118,7 +118,7 @@ mb_port_ser_tmr_disable(mb_port_ser* inst)
     }
 }
 
-void mb_port_ser_tmr_delay(mb_port_ser* inst, USHORT timeout_ms)
+void mb_port_ser_tmr_delay(mb_port_ser_struct* inst, USHORT timeout_ms)
 {
     /*Not supproted*/
 #if MB_ASCII_TIMEOUT_WAIT_BEFORE_SEND_MS > 0
@@ -127,7 +127,7 @@ void mb_port_ser_tmr_delay(mb_port_ser* inst, USHORT timeout_ms)
 }
 
 #ifdef USART_MBM
-void mb_port_ser_tmr_convert_delay_enable(mb_port_ser* inst)
+void mb_port_ser_tmr_convert_delay_enable(mb_port_ser_struct* inst)
 {
     if ((&mbm_inst_usart) == inst)
     {
@@ -140,7 +140,7 @@ void mb_port_ser_tmr_convert_delay_enable(mb_port_ser* inst)
     }
 }
 #endif
-void mb_port_ser_tmr_respond_timeout_enable(mb_port_ser* inst)
+void mb_port_ser_tmr_respond_timeout_enable(mb_port_ser_struct* inst)
 {
 	if((&mbs_inst_usart) == inst)
     {
@@ -171,8 +171,8 @@ void mb_port_ser_tmr_respond_timeout_enable(mb_port_ser* inst)
  * the timer has expired.
  */
 
-//extern mb_port_ser* uart_mb_inst;
-//extern mb_port_ser* uart_mbm_inst;
+//extern mb_port_ser_struct* uart_mb_inst;
+//extern mb_port_ser_struct* uart_mbm_inst;
 
 static CHAR count;
 void MBS_TMR_ISR(void)
@@ -185,7 +185,7 @@ void MBS_TMR_ISR(void)
     timer_get_flag(MBS_TMR, TIM_SR_UIF);	/* Reread to force the previous (buffered) write before leaving */
 
     mbs_inst_usart.base.cb->tmr_expired(mbs_inst_usart.base.arg);
-    //((mb_instance*)(((mb_rtu_tr*)(uart_mb_inst->parent))->parent))->pxMBPortCBTimerExpired(uart_mb_inst->parent);
+    //((mb_inst_struct*)(((mb_rtu_tr_struct*)(uart_mb_inst->parent))->parent))->pxMBPortCBTimerExpired(uart_mb_inst->parent);
 }
 #ifdef USART_MBM
 static CHAR countm;
@@ -198,6 +198,6 @@ void MBM_TMR_ISR(void)
     }
     timer_get_flag(MBM_TMR, TIM_SR_UIF);	/* Reread to force the previous (buffered) write before leaving */
     mbm_inst_usart.base.cb->tmr_expired(mbm_inst_usart.base.arg);
-    //((mb_instance*)(((mb_rtu_tr*)(uart_mbm_inst->parent))->parent))->pxMBPortCBTimerExpired(uart_mbm_inst->parent);
+    //((mb_inst_struct*)(((mb_rtu_tr_struct*)(uart_mbm_inst->parent))->parent))->pxMBPortCBTimerExpired(uart_mbm_inst->parent);
 }
 #endif

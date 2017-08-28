@@ -22,34 +22,34 @@
 /* ----------------------- Modbus includes ----------------------------------*/
 #include <mb.h>
 
-#define xEventInQueue inst->xEventInQueue
-#define eQueuedEvent inst->eQueuedEvent
+#define evt_in_queue inst->evt_in_queue
+#define queued_evt inst->queued_evt
 
 /* ----------------------- Start implementation -----------------------------*/
 BOOL
-mb_port_ser_evt_init(mb_port_ser* inst)
+mb_port_ser_evt_init(mb_port_ser_struct* inst)
 {
-    xEventInQueue = FALSE;
+    evt_in_queue = FALSE;
     return TRUE;
 }
 
 BOOL
-mb_port_ser_evt_post( mb_port_ser* inst, mb_event_enum event)
+mb_port_ser_evt_post( mb_port_ser_struct* inst, mb_event_enum event)
 {
-    xEventInQueue = TRUE;
-    eQueuedEvent = event;
+    evt_in_queue = TRUE;
+    queued_evt = event;
     return TRUE;
 }
 
 BOOL
-mb_port_ser_evt_get(mb_port_ser* inst, void* caller, mb_event_enum * event)
+mb_port_ser_evt_get(mb_port_ser_struct* inst, void* caller, mb_event_enum * event)
 {
     BOOL            xEventHappened = FALSE;
 
-    if (xEventInQueue)
+    if (evt_in_queue)
     {
-        *event = eQueuedEvent;
-        xEventInQueue = FALSE;
+        *event = queued_evt;
+        evt_in_queue = FALSE;
         xEventHappened = TRUE;
     }
     return xEventHappened;
