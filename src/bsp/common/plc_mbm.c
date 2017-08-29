@@ -510,7 +510,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
                 switch (PLC_APP->l_tab[i]->v_size)
                 {
                 case PLC_LSZ_W:
-                    *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf) = mbm_request.target_value[req_find_reg(plc_curr_app->l_tab[i]->a_data[1])];
+                    *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf) = mbm_request.target_value[req_find_reg(plc_curr_app->l_tab[i]->a_data[1])];
                     break;
                 case PLC_LSZ_X:
                     *(bool *)(plc_curr_app->l_tab[i]->v_buf) = mbm_request.target_value[req_find_reg(plc_curr_app->l_tab[i]->a_data[1])];
@@ -544,7 +544,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
             switch (PLC_APP->l_tab[i]->v_size)
             {
             case PLC_LSZ_W:
-                mbm_request.target_value[req_find_reg(plc_curr_app->l_tab[i]->a_data[1])] = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+                mbm_request.target_value[req_find_reg(plc_curr_app->l_tab[i]->a_data[1])] = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
                 break;
             case PLC_LSZ_X:
                 mbm_request.target_value[req_find_reg(plc_curr_app->l_tab[i]->a_data[1])] = *(bool*)(plc_curr_app->l_tab[i]->v_buf);

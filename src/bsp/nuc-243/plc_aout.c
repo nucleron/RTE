@@ -211,7 +211,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     int j;
     uint32_t tmp;
 
-    tmp = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+    tmp = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
 
     j = plc_curr_app->l_tab[i]->a_data[0];//j is checked in PLC_IOM_LOCAL_CHECK
 

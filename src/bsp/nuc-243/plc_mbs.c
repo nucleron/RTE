@@ -405,7 +405,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
     switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_M:
-        *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf) = usRegHoldingBuf[plc_curr_app->l_tab[i]->a_data[0]];
+        *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf) = usRegHoldingBuf[plc_curr_app->l_tab[i]->a_data[0]];
         break;
     case PLC_LT_Q://Write only access to init location
     default:
@@ -419,7 +419,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_M:
-        usRegHoldingBuf[plc_curr_app->l_tab[i]->a_data[0]] = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+        usRegHoldingBuf[plc_curr_app->l_tab[i]->a_data[0]] = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
         break;
     case PLC_LT_Q:
         if (mb_gotinit)

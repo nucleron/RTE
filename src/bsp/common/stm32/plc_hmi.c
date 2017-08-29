@@ -1243,7 +1243,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
         case PLC_HMI_HEX:
         case PLC_HMI_RO_UINT:
         case PLC_HMI_RO_HEX:
-            *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf) =  (uint16_t)hmi_app_pdata[(plc_curr_app->l_tab[i]->a_data[0])];
+            *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf) =  (uint16_t)hmi_app_pdata[(plc_curr_app->l_tab[i]->a_data[0])];
             break;
         default:
             break;
@@ -1302,7 +1302,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
             {
             case 1:
             {
-                ss_thr = 1000ul * *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+                ss_thr = 1000ul * *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
                 break;
             }
             case 2:
@@ -1328,7 +1328,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
                 case PLC_HMI_HEX:
                 case PLC_HMI_RO_UINT:
                 case PLC_HMI_RO_HEX:
-                    lim[addr] = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+                    lim[addr] = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
                     break;
                 default:
                     break;
@@ -1363,7 +1363,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         case PLC_HMI_HEX:
         case PLC_HMI_RO_UINT:
         case PLC_HMI_RO_HEX:
-            hmi_app_pdata[addr] = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+            hmi_app_pdata[addr] = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
             break;
         default:
             break;

@@ -766,7 +766,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
     {
     case 7:
     {
-        *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf) = analog_input[chn].signal_level;
+        *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf) = analog_input[chn].signal_level;
         break;
     }
     case 8:
@@ -841,7 +841,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     case 4:
     {
         uint16_t tmp;
-        tmp = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+        tmp = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
         if (1 > tmp)
         {
             tmp = 1;
@@ -858,7 +858,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     case 5:
     {
         uint16_t tmp;
-        tmp = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+        tmp = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
         if (1 > tmp)
         {
             tmp = 1;
@@ -874,7 +874,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     case 6:
     {
         uint16_t tmp;
-        tmp = *(uint16_t *)(plc_curr_app->l_tab[i]->v_buf);
+        tmp = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
         if (1 > tmp)
         {
             tmp = 1;
