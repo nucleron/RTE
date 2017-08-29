@@ -423,7 +423,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     case PLC_LT_Q:
         if (mb_gotinit)
         {
-            mb_enabled = *(bool *)(PLC_APP->l_tab[i]->v_buf);
+            mb_enabled = *(IEC_BOOL *)(PLC_APP->l_tab[i]->v_buf);
             mb_start = true; //Now we can start
             mb_gotinit = false; //Do not check locationy any more
         }

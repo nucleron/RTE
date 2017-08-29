@@ -151,7 +151,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_Q:
-        plc_hmi_set_dout(plc_curr_app->l_tab[i]->a_data[0], *(bool *)(plc_curr_app->l_tab[i]->v_buf));
+        plc_hmi_set_dout(plc_curr_app->l_tab[i]->a_data[0], *(IEC_BOOL *)(plc_curr_app->l_tab[i]->v_buf));
         break;
 
     default:

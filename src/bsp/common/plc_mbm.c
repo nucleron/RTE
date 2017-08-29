@@ -513,7 +513,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
                     *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf) = mbm_request.target_value[req_find_reg(plc_curr_app->l_tab[i]->a_data[1])];
                     break;
                 case PLC_LSZ_X:
-                    *(bool *)(plc_curr_app->l_tab[i]->v_buf) = mbm_request.target_value[req_find_reg(plc_curr_app->l_tab[i]->a_data[1])];
+                    *(IEC_BOOL *)(plc_curr_app->l_tab[i]->v_buf) = mbm_request.target_value[req_find_reg(plc_curr_app->l_tab[i]->a_data[1])];
                     break;
                 }
 
@@ -547,7 +547,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
                 mbm_request.target_value[req_find_reg(plc_curr_app->l_tab[i]->a_data[1])] = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
                 break;
             case PLC_LSZ_X:
-                mbm_request.target_value[req_find_reg(plc_curr_app->l_tab[i]->a_data[1])] = *(bool*)(plc_curr_app->l_tab[i]->v_buf);
+                mbm_request.target_value[req_find_reg(plc_curr_app->l_tab[i]->a_data[1])] = *(IEC_BOOL *)(plc_curr_app->l_tab[i]->v_buf);
                 break;
             }
         }
@@ -555,7 +555,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     case PLC_LT_Q: //for init location.
         if (mbm_gotinit)
         {
-            mbm_enabled = *(bool *)(PLC_APP->l_tab[i]->v_buf);
+            mbm_enabled = *(IEC_BOOL *)(PLC_APP->l_tab[i]->v_buf);
             mbm_start = true; //Now we can start
             mbm_gotinit = false; //Do not check locationy any more
         }

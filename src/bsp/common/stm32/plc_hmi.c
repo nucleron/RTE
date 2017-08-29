@@ -1233,11 +1233,11 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
         case PLC_HMI_BOOL_TF:
         case PLC_HMI_RO_BOOL_OO:
         case PLC_HMI_RO_BOOL_TF:
-            *(bool *)(plc_curr_app->l_tab[i]->v_buf) = (0 != hmi_app_pdata[(plc_curr_app->l_tab[i]->a_data[0])]);
+            *(IEC_BOOL *)(plc_curr_app->l_tab[i]->v_buf) = (0 != hmi_app_pdata[(plc_curr_app->l_tab[i]->a_data[0])]);
             break;
         case PLC_HMI_SINT:
         case PLC_HMI_RO_SINT:
-            *(int16_t *)(plc_curr_app->l_tab[i]->v_buf) =  (int16_t)hmi_app_pdata[(plc_curr_app->l_tab[i]->a_data[0])];
+            *(IEC_INT *)(plc_curr_app->l_tab[i]->v_buf) =  (int16_t)hmi_app_pdata[(plc_curr_app->l_tab[i]->a_data[0])];
             break;
         case PLC_HMI_UINT:
         case PLC_HMI_HEX:
@@ -1274,12 +1274,12 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         {
             if (addr<PLC_HMI_DO_NUM) //RxTx led
             {
-                plc_hmi_set_dout(plc_curr_app->l_tab[i]->a_data[0], *(bool *)(plc_curr_app->l_tab[i]->v_buf));
+                plc_hmi_set_dout(plc_curr_app->l_tab[i]->a_data[0], *(IEC_BOOL *)(plc_curr_app->l_tab[i]->v_buf));
             }
             else if ((PLC_HMI_DO_NUM <= addr) && (addr< (PLC_HMI_DO_NUM+PLC_HMI_DISPLAY_LEDS+PLC_HMI_DISPLAY_DOTS))) //main leds
             {
 #define         PLC_HMI_LED_MSK(a) (1<<(a-PLC_HMI_DO_NUM))
-                if (*(bool *)(plc_curr_app->l_tab[i]->v_buf)==true)
+                if (*(IEC_BOOL *)(plc_curr_app->l_tab[i]->v_buf)==TRUE)
                 {
                     plc_hmi_app.leds |= PLC_HMI_LED_MSK(addr);
                 }
@@ -1322,7 +1322,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
                 {
                 case PLC_HMI_SINT:
                 case PLC_HMI_RO_SINT:
-                    lim[addr] = *(int16_t *)(plc_curr_app->l_tab[i]->v_buf);
+                    lim[addr] = *(IEC_INT *)(plc_curr_app->l_tab[i]->v_buf);
                     break;
                 case PLC_HMI_UINT:
                 case PLC_HMI_HEX:
@@ -1353,11 +1353,11 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         case PLC_HMI_BOOL_TF:
         case PLC_HMI_RO_BOOL_OO:
         case PLC_HMI_RO_BOOL_TF:
-            hmi_app_pdata[addr] = *(bool *)(plc_curr_app->l_tab[i]->v_buf);
+            hmi_app_pdata[addr] = *(IEC_BOOL *)(plc_curr_app->l_tab[i]->v_buf);
             break;
         case PLC_HMI_SINT:
         case PLC_HMI_RO_SINT:
-            hmi_app_pdata[addr] = *(int16_t *)(plc_curr_app->l_tab[i]->v_buf);
+            hmi_app_pdata[addr] = *(IEC_INT *)(plc_curr_app->l_tab[i]->v_buf);
             break;
         case PLC_HMI_UINT:
         case PLC_HMI_HEX:

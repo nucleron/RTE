@@ -417,7 +417,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
     switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_I:
-        *(bool *)(plc_curr_app->l_tab[i]->v_buf) = dbnc_flt_get(in_flt + plc_curr_app->l_tab[i]->a_data[0]);
+        *(IEC_BOOL *)(plc_curr_app->l_tab[i]->v_buf) = dbnc_flt_get(in_flt + plc_curr_app->l_tab[i]->a_data[0]);
         break;
 
     case PLC_LT_M://Filter configuration is write only
@@ -441,7 +441,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_Q:
-        plc_set_dout(plc_curr_app->l_tab[i]->a_data[0], *(bool *)(plc_curr_app->l_tab[i]->v_buf));
+        plc_set_dout(plc_curr_app->l_tab[i]->a_data[0], *(IEC_BOOL *)(plc_curr_app->l_tab[i]->v_buf));
         break;
 
     case PLC_LT_M:

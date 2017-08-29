@@ -771,7 +771,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
     }
     case 8:
     {
-        *(bool *)(plc_curr_app->l_tab[i]->v_buf) = analog_input[chn].signal_schmitt;
+        *(IEC_BOOL *)(plc_curr_app->l_tab[i]->v_buf) = (0 != analog_input[chn].signal_schmitt);
         break;
     }
     default:

@@ -327,7 +327,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
 {
     if (PLC_LT_M == PLC_APP->l_tab[i]->v_type)
     {
-        *(uint32_t *)(plc_curr_app->l_tab[i]->v_buf) = plc_diag_wcct;
+        *(IEC_DWORD *)(plc_curr_app->l_tab[i]->v_buf) = plc_diag_wcct;
     }
     else
     {
@@ -347,7 +347,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
             tmp = false;
         }
 
-        *(bool *)(plc_curr_app->l_tab[i]->v_buf) = tmp;
+        *(IEC_BOOL *)(plc_curr_app->l_tab[i]->v_buf) = tmp;
     }
     return 0;
 }
@@ -365,13 +365,13 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     switch (PLC_APP->l_tab[i]->a_data[0])
     {
     case PLC_DIAG_Q_DBGM://Enter debug mode
-        if (*(bool *)(plc_curr_app->l_tab[i]->v_buf))
+        if (*(IEC_BOOL *)(plc_curr_app->l_tab[i]->v_buf))
         {
             plc_dbg_mode = true;
         }
         break;
     case PLC_DIAG_Q_CRIT://Abort
-        if (*(bool *)(plc_curr_app->l_tab[i]->v_buf))
+        if (*(IEC_BOOL *)(plc_curr_app->l_tab[i]->v_buf))
         {
             PLC_LOG_ERROR(plc_diag_abort_msg);
             plc_diag_status |= PLC_DIAG_ERR_APP_CRIT;
@@ -379,7 +379,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         }
         break;
     case PLC_DIAG_Q_WARN://Warning
-        if (*(bool *)(plc_curr_app->l_tab[i]->v_buf))
+        if (*(IEC_BOOL *)(plc_curr_app->l_tab[i]->v_buf))
         {
             //No message, user must do it in PLC program.
             plc_diag_status |= PLC_DIAG_ERR_APP_WARN;
@@ -391,7 +391,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         }
         break;
     case PLC_DIAG_Q_INFO://Warning
-        if (*(bool *)(plc_curr_app->l_tab[i]->v_buf))
+        if (*(IEC_BOOL *)(plc_curr_app->l_tab[i]->v_buf))
         {
             //No message, user must do it in PLC program.
             plc_diag_status |= PLC_DIAG_ERR_APP_INFO;
