@@ -423,11 +423,11 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
     case PLC_LT_M://Filter configuration is write only
 //        if (plc_curr_app->l_tab[i]->a_data[1])
 //        {
-//            *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf) = (uint8_t)in_flt[plc_curr_app->l_tab[i]->a_data[0]].thr_on;
+//            *(IEC_USINT *)(plc_curr_app->l_tab[i]->v_buf) = (uint8_t)in_flt[plc_curr_app->l_tab[i]->a_data[0]].thr_on;
 //        }
 //        else
 //        {
-//            *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf) = (uint8_t)in_flt[plc_curr_app->l_tab[i]->a_data[0]].thr_off;
+//            *(IEC_USINT *)(plc_curr_app->l_tab[i]->v_buf) = (uint8_t)in_flt[plc_curr_app->l_tab[i]->a_data[0]].thr_off;
 //        }
         break;
 
@@ -447,11 +447,11 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     case PLC_LT_M:
         if (plc_curr_app->l_tab[i]->a_data[1])
         {
-            in_flt[plc_curr_app->l_tab[i]->a_data[0]].thr_on = (uint32_t)*(uint8_t *)(plc_curr_app->l_tab[i]->v_buf);
+            in_flt[plc_curr_app->l_tab[i]->a_data[0]].thr_on = (uint32_t)*(IEC_USINT *)(plc_curr_app->l_tab[i]->v_buf);
         }
         else
         {
-            in_flt[plc_curr_app->l_tab[i]->a_data[0]].thr_off = (uint32_t)*(uint8_t *)(plc_curr_app->l_tab[i]->v_buf);
+            in_flt[plc_curr_app->l_tab[i]->a_data[0]].thr_off = (uint32_t)*(IEC_USINT *)(plc_curr_app->l_tab[i]->v_buf);
         }
         break;
 

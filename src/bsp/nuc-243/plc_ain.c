@@ -791,7 +791,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     case 1:
     {
         uint8_t tmp;
-        tmp = *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf);
+        tmp = *(IEC_USINT *)(plc_curr_app->l_tab[i]->v_buf);
         if (0 == analog_input[chn].mode - tmp)
         {
             break;
@@ -809,7 +809,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     case 2:
     {
         uint8_t tmp;
-        tmp = *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf);
+        tmp = *(IEC_USINT *)(plc_curr_app->l_tab[i]->v_buf);
         if (3 > tmp)
         {
             tmp = 3;
@@ -825,7 +825,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     case 3:
     {
         uint8_t tmp;
-        tmp = *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf);
+        tmp = *(IEC_USINT *)(plc_curr_app->l_tab[i]->v_buf);
         if (3 > tmp)
         {
             tmp = 3;

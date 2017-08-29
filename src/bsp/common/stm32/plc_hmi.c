@@ -1251,7 +1251,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
     }
     else if (plc_curr_app->l_tab[i]->v_type == PLC_LT_I)
     {
-        *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf) = hmi.cur_par;
+        *(IEC_USINT *)(plc_curr_app->l_tab[i]->v_buf) = hmi.cur_par;
     }
     return 0;
 }
@@ -1292,7 +1292,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
         }
         case PLC_LSZ_B: //screensaver parameter is the only byte value for now
         {
-            ss_par = *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf);
+            ss_par = *(IEC_USINT *)(plc_curr_app->l_tab[i]->v_buf);
             break;
         }
         case PLC_LSZ_W:

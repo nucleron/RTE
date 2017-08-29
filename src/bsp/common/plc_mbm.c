@@ -479,7 +479,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
         {
             if (request_completed())
             {
-                *(uint8_t *)(plc_curr_app->l_tab[i]->v_buf) = mbm_request.result;
+                *(IEC_USINT *)(plc_curr_app->l_tab[i]->v_buf) = mbm_request.result;
             }
 
         }
