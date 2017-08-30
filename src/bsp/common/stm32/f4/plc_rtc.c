@@ -98,14 +98,14 @@ void plc_rtc_init(tm* time)
 
 void plc_rtc_dt_set(tm* time)
 {
-    uint32_t i,tmp=0;
+    uint32_t i;
+    uint32_t tr;
+    uint32_t dr;
 
     if (plc_diag_status & PLC_DIAG_ERR_LSE)
     {
         return;
     }
-
-    start_flg = true;
 
     pwr_disable_backup_domain_write_protect(); //Disable backup domain write protect
     rtc_unlock();
@@ -125,28 +125,32 @@ void plc_rtc_dt_set(tm* time)
         goto lse_error;
     }
 
-    tmp |= (time->tm_sec%10);
-    tmp |= (time->tm_sec/10)<< 4;
+    tr  = 0;
+    tr |= (time->tm_sec%10);
+    tr |= (time->tm_sec/10)<< 4;
 
-    tmp |= (time->tm_min%10)<< 8;
-    tmp |= (time->tm_min/10)<< 12;
+    tr |= (time->tm_min%10)<< 8;
+    tr |= (time->tm_min/10)<< 12;
 
-    tmp |= (time->tm_hour%10)<< 16;
-    tmp |= (time->tm_hour/10)<< 20;
-
-    RTC_TR = tmp;
+    tr |= (time->tm_hour%10)<< 16;
+    tr |= (time->tm_hour/10)<< 20;
     //set date
-    tmp=0;
-    tmp = 1<<RTC_DR_WDU_SHIFT;
-    tmp |= (time->tm_day%10);
-    tmp |= (time->tm_day/10) << 4;
+    dr  = 0;
+    dr |= 1<<RTC_DR_WDU_SHIFT;
+    dr |= (time->tm_day%10);
+    dr |= (time->tm_day/10) << 4;
 
-    tmp |= (time->tm_mon%10) << 8;
-    tmp |= (time->tm_mon/10) << 12;
+    dr |= (time->tm_mon%10) << 8;
+    dr |= (time->tm_mon/10) << 12;
 
-    tmp |= (time->tm_year%10) << 16;
-    tmp |= ((time->tm_year%100)/10) << 20;
-    RTC_DR = tmp;
+    dr |= (time->tm_year%10) << 16;
+    dr |= ((time->tm_year%100)/10) << 20;
+
+    PLC_DISABLE_INTERRUPTS();
+    RTC_TR = tr;
+    RTC_DR = dr;
+    start_flg = true;
+    PLC_ENABLE_INTERRUPTS();
 
     RTC_ISR &= ~RTC_ISR_INIT;
 

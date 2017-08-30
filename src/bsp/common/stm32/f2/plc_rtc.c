@@ -223,7 +223,9 @@ void plc_rtc_init(tm* time)
 
 void plc_rtc_dt_set(tm* time)
 {
-    uint32_t i, tmp=0;
+    uint32_t i;
+    uint32_t dr;
+    uint32_t tr;
 
     if (plc_diag_status & PLC_DIAG_ERR_LSE)
     {
@@ -250,28 +252,32 @@ void plc_rtc_dt_set(tm* time)
         goto lse_error;
     }
 
-    tmp |= (time->tm_sec%10)<< RTC_TR_SU_SHIFT;
-    tmp |= (time->tm_sec/10)<< RTC_TR_ST_SHIFT;
+    tr = 0;
+    tr |= (time->tm_sec%10)<< RTC_TR_SU_SHIFT;
+    tr |= (time->tm_sec/10)<< RTC_TR_ST_SHIFT;
 
-    tmp |= (time->tm_min%10)<< RTC_TR_MNU_SHIFT;
-    tmp |= (time->tm_min/10)<< RTC_TR_MNT_SHIFT;
+    tr |= (time->tm_min%10)<< RTC_TR_MNU_SHIFT;
+    tr |= (time->tm_min/10)<< RTC_TR_MNT_SHIFT;
 
-    tmp |= (time->tm_hour%10)<< RTC_TR_HU_SHIFT;
-    tmp |= (time->tm_hour/10)<< RTC_TR_HT_SHIFT;
-
-    RTC_TR = tmp;
+    tr |= (time->tm_hour%10)<< RTC_TR_HU_SHIFT;
+    tr |= (time->tm_hour/10)<< RTC_TR_HT_SHIFT;
     //set date
-    tmp=0;
-    tmp = 1<<RTC_DR_WDU_SHIFT;
-    tmp |= (time->tm_day%10) << RTC_DR_DU_SHIFT;
-    tmp |= (time->tm_day/10) << RTC_DR_DT_SHIFT;
+    dr=0;
+    dr = 1<<RTC_DR_WDU_SHIFT;
+    dr |= (time->tm_day%10) << RTC_DR_DU_SHIFT;
+    dr |= (time->tm_day/10) << RTC_DR_DT_SHIFT;
 
-    tmp |= (time->tm_mon%10) << RTC_DR_MU_SHIFT;
-    tmp |= (time->tm_mon/10) << RTC_DR_MT_SHIFT;
+    dr |= (time->tm_mon%10) << RTC_DR_MU_SHIFT;
+    dr |= (time->tm_mon/10) << RTC_DR_MT_SHIFT;
 
-    tmp |= (time->tm_year%10) << RTC_DR_YU_SHIFT;
-    tmp |= ((time->tm_year%100)/10) << RTC_DR_YT_SHIFT;
-    RTC_DR = tmp;
+    dr |= (time->tm_year%10) << RTC_DR_YU_SHIFT;
+    dr |= ((time->tm_year%100)/10) << RTC_DR_YT_SHIFT;
+
+    PLC_DISABLE_INTERRUPTS();
+    RTC_TR = tr;
+    RTC_DR = dr;
+    start_flg = true;
+    PLC_ENABLE_INTERRUPTS();
 
     RTC_ISR &= ~RTC_ISR_INIT;
 

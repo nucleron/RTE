@@ -199,8 +199,6 @@ void plc_rtc_dt_set(tm* time)
         return;
     }
 
-    start_flg = true;
-
     pwr_disable_backup_domain_write_protect();
 
 
@@ -220,8 +218,12 @@ void plc_rtc_dt_set(tm* time)
         time->tm_year += 2000;
     }
     i = dt_to_sec(time);
+
+    PLC_DISABLE_INTERRUPTS();
     RTC_CNTH = (i >> 16) & 0xffff;
     RTC_CNTL =         i & 0xffff;
+    start_flg = true;
+    PLC_ENABLE_INTERRUPTS();
 
     /* Exit config mode */
     RTC_CRL &= ~RTC_CRL_CNF;
