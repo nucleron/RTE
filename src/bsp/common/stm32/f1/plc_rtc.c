@@ -116,10 +116,13 @@ void  sec_to_dt (uint32_t utime, tm *date_time)
     jdn_to_dt(utime, date_time);
 }
 
+static bool start_flg = true;
 
 void plc_rtc_init(tm* time)
 {
     uint32_t i;
+
+    start_flg = true;
 
     rcc_periph_clock_enable(RCC_PWR);
     rcc_periph_clock_enable(RCC_BKP);
@@ -196,6 +199,8 @@ void plc_rtc_dt_set(tm* time)
         return;
     }
 
+    start_flg = true;
+
     pwr_disable_backup_domain_write_protect();
 
 
@@ -248,7 +253,6 @@ static uint32_t plc_rtc_cntr = 0;
 void _plc_rtc_poll(void)
 {
     static uint32_t last_sec = 0;
-    static bool start_flg = true;
 
     uint32_t current_sec;
 

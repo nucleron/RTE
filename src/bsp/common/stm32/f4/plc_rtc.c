@@ -25,11 +25,15 @@ uint32_t plc_rtc_clken_and_check(void)
     return PLC_BKP_RTC_IS_OK;
 }
 
+static bool start_flg = true;
+
 void plc_rtc_init(tm* time)
 {
     uint32_t tmp=0;
     uint32_t year;
     uint32_t i;
+
+    start_flg = true;
 
     rcc_periph_clock_enable(RCC_PWR);
 
@@ -100,6 +104,9 @@ void plc_rtc_dt_set(tm* time)
     {
         return;
     }
+
+    start_flg = true;
+
     pwr_disable_backup_domain_write_protect(); //Disable backup domain write protect
     rtc_unlock();
 
@@ -214,7 +221,6 @@ static uint32_t plc_rtc_tr = 0;
 void _plc_rtc_poll(void)
 {
     static uint32_t last_sec = 0;
-    static bool start_flg = true;
 
     uint32_t current_sec;
 

@@ -123,10 +123,14 @@ void  sec_to_dt (uint32_t utime, tm *date_time)
 }
 
 
+static bool start_flg = true;
+
 void plc_rtc_init(tm* time)
 {
     uint32_t i;
     uint32_t tmp=0;
+
+    start_flg = true;
 
     rcc_periph_clock_enable(RCC_PWR);
 
@@ -225,6 +229,9 @@ void plc_rtc_dt_set(tm* time)
     {
         return;
     }
+
+    start_flg = true;
+
     BACKUP_UNLOCK(); //Disable backup domain write protect
     rtc_unlock();
 
@@ -303,7 +310,6 @@ static uint32_t plc_rtc_tr = 0;
 void _plc_rtc_poll(void)
 {
     static uint32_t last_sec = 0;
-    static bool start_flg = true;
 
     uint32_t current_sec;
 
