@@ -158,7 +158,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../src/bsp/common/stm32/f2/libremodbus_port/tcp_port.h" />
-		<Unit filename="../../src/bsp/common/stm32/f2/mbconfig.h" />
 		<Unit filename="../../src/bsp/common/stm32/f2/plc_backup.c">
 			<Option compilerVar="CC" />
 		</Unit>

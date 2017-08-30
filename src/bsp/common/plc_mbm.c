@@ -272,11 +272,11 @@ void execute_request(uint32_t tick)
     switch (mbm_request.type)
     {
     case RT_HOLDING_RD:
-        mb_mstr_rq_read_holding_reg(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
+        mb_mstr_rq_read_holding_reg(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length());
         break;
     case RT_HOLDING_WR:
         if (is_continious())
-            mb_mstr_rq_write_multi_holding_reg(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], mbm_request.registers, mbm_request.target_value, 0);
+            mb_mstr_rq_write_multi_holding_reg(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], mbm_request.registers, mbm_request.target_value);
         else
         {
             if (mbm_preread_finished) //after we got current register values, change what we have to write and send a request_t to send everything to slave
@@ -288,20 +288,20 @@ void execute_request(uint32_t tick)
                     mbm_preread_buffer[reg_index] = mbm_request.target_value[j];
                 }
                 //mb_mstr_rq_write_holding_reg
-                mb_mstr_rq_write_multi_holding_reg(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), mbm_preread_buffer, 0);
+                mb_mstr_rq_write_multi_holding_reg(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), mbm_preread_buffer);
             }
             else //we need to send a request_t to first read full registers range
             {
-                mb_mstr_rq_read_holding_reg(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
+                mb_mstr_rq_read_holding_reg(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length());
                 mbm_need_preread = true;
             }
         }
         break;
     case RT_DISCRETE:
-        mb_mstr_rq_read_discrete_inputs(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
+        mb_mstr_rq_read_discrete_inputs(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length());
         break;
     case RT_INPUTREG:
-        mb_mstr_rq_read_inp_reg(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
+        mb_mstr_rq_read_inp_reg(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length());
         break;
     case RT_COILS:
         //pack bits
@@ -312,7 +312,7 @@ void execute_request(uint32_t tick)
                 mb_util_set_bits((UCHAR *)mbm_preread_buffer, i, 1, (mbm_request.target_value[i]==0)?0:1);
             }
             //send request_t
-            mb_mstr_rq_write_multi_coils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), (UCHAR *)mbm_preread_buffer, 0);
+            mb_mstr_rq_write_multi_coils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), (UCHAR *)mbm_preread_buffer);
         }
         else
         {
@@ -325,11 +325,11 @@ void execute_request(uint32_t tick)
                     mb_util_set_bits((UCHAR *)mbm_preread_buffer, reg_index, 1, (mbm_request.target_value[j]==0)?0:1);
                 }
                 //mb_mstr_rq_write_holding_reg
-                mb_mstr_rq_write_multi_coils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), (UCHAR *)mbm_preread_buffer, 0);
+                mb_mstr_rq_write_multi_coils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), (UCHAR *)mbm_preread_buffer);
             }
             else //we need to send a request_t to first read full registers range
             {
-                mb_mstr_rq_read_coils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length(), 0);
+                mb_mstr_rq_read_coils(&MBMaster, mbm_request.slave_addr, mbm_request.target_addr[0], get_full_length());
                 mbm_need_preread = true;
             }
         }

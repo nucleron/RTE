@@ -136,7 +136,7 @@ void mb_port_ser_tmr_convert_delay_enable(mb_port_ser_struct* inst)
 
         /* Restart the timer with the period value set in mb_port_ser_tmr_init() */
         TIM_CNT(MBM_TMR) = 1; /* Yes, this must be 1 !!! */
-        timer_set_period(MBM_TMR, 500);
+        timer_set_period(MBM_TMR, MB_MASTER_DELAY_MS_CONVERT*20UL); //20 ticks per ms
         timer_enable_irq     (MBM_TMR, TIM_DIER_UIE);
         timer_enable_counter (MBM_TMR);
     }
@@ -148,7 +148,7 @@ void mb_port_ser_tmr_respond_timeout_enable(mb_port_ser_struct* inst)
     {
         /* Restart the timer with the period value set in mb_port_ser_tmr_init() */
         TIM_CNT(MBS_TMR) = 1; /* Yes, this must be 1 !!! */
-        timer_set_period(MBS_TMR, 1000);
+        timer_set_period(MBS_TMR, MB_MASTER_TIMEOUT_MS_RESPOND*20UL); //20 ticks per ms
         timer_enable_irq     (MBS_TMR, TIM_DIER_UIE);
         timer_enable_counter (MBS_TMR);
     }
@@ -158,7 +158,7 @@ void mb_port_ser_tmr_respond_timeout_enable(mb_port_ser_struct* inst)
         #ifdef USART_MBM
         /* Restart the timer with the period value set in mb_port_ser_tmr_init() */
         TIM_CNT(MBM_TMR) = 1; /* Yes, this must be 1 !!! */
-        timer_set_period(MBM_TMR, 1000);
+        timer_set_period(MBM_TMR, MB_MASTER_TIMEOUT_MS_RESPOND*20UL); //20 ticks per ms
         timer_enable_irq     (MBM_TMR, TIM_DIER_UIE);
         timer_enable_counter (MBM_TMR);
         #endif
