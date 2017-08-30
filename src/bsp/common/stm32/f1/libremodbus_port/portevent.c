@@ -45,6 +45,8 @@ mb_port_ser_evt_get(mb_port_ser_struct* inst, void* caller, mb_event_enum * even
 {
     BOOL            xEventHappened = FALSE;
 
+    (void)caller;
+
     if (evt_in_queue)
     {
         *event = queued_evt;

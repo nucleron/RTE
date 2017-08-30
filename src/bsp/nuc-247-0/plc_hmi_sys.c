@@ -1,9 +1,12 @@
 #include <plc_config.h>
 #include <plc_hmi.h>
-#include <iec_std_lib.h>
+#include <plc_hw.h>
+#include <plc_rtc.h>
 #include <dbnc_flt.h>
 
 #define MIN(x, y) (((x)>(y))?(y):(x))
+
+extern void plc_backup_save_brightness(uint8_t data);
 
 extern uint8_t plc_hmi_bri;
 

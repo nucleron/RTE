@@ -267,9 +267,11 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 
 void PLC_IOM_LOCAL_BEGIN(uint16_t lid)
 {
+    (void)lid;
 }
 void PLC_IOM_LOCAL_END(uint16_t lid)
 {
+    (void)lid;
 }
 
 void PLC_IOM_LOCAL_START(void)
@@ -287,6 +289,8 @@ void PLC_IOM_LOCAL_STOP(void)
 
 uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
 {
+    (void)lid;
+    (void)tick;
     return 0;
 }
 void PLC_IOM_LOCAL_POLL(uint32_t tick)

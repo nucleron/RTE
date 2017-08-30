@@ -51,7 +51,7 @@ static long long AtomicCompareExchange64(long long* atomicvar, long long compare
 #define LOG_BUFFER_MASK (LOG_BUFFER_SIZE-1)
 
 static char LogBuff[LOG_LEVELS][LOG_BUFFER_SIZE] LOG_BUFFER_ATTRS;
-void inline copy_to_log(uint8_t level, uint32_t buffpos, void* buf, uint32_t size)
+inline void copy_to_log(uint8_t level, uint32_t buffpos, void* buf, uint32_t size)
 {
     if (buffpos + size < LOG_BUFFER_SIZE)
     {
@@ -64,7 +64,7 @@ void inline copy_to_log(uint8_t level, uint32_t buffpos, void* buf, uint32_t siz
         memcpy(LogBuff[level], (char*)buf + remaining, size - remaining);
     }
 }
-void inline copy_from_log(uint8_t level, uint32_t buffpos, void* buf, uint32_t size)
+ inline void copy_from_log(uint8_t level, uint32_t buffpos, void* buf, uint32_t size)
 {
     if (buffpos + size < LOG_BUFFER_SIZE)
     {
@@ -226,6 +226,7 @@ static void resumeDebug(void)
 }
 static void suspendDebug(int disable)
 {
+    (void)disable;
     return;
 }
 

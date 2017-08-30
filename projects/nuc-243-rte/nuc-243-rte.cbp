@@ -33,6 +33,7 @@
 		<Compiler>
 			<Add option="-mcpu=cortex-m3" />
 			<Add option="-mthumb" />
+			<Add option="-Wextra" />
 			<Add option="-Wall" />
 			<Add option="-std=gnu90" />
 			<Add option="-fmessage-length=0" />

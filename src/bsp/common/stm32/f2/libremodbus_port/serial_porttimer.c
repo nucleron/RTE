@@ -120,6 +120,8 @@ mb_port_ser_tmr_disable(mb_port_ser_struct* inst)
 
 void mb_port_ser_tmr_delay(mb_port_ser_struct* inst, USHORT timeout_ms)
 {
+    (void)inst;
+    (void)timeout_ms;
     /*Not supproted*/
 #if MB_ASCII_TIMEOUT_WAIT_BEFORE_SEND_MS > 0
 #   error "MB_ASCII_TIMEOUT_WAIT_BEFORE_SEND_MS > 0 is not supported!!!"

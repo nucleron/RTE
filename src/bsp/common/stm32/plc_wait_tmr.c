@@ -14,8 +14,10 @@
 
 
 #include <plc_config.h>
-#include <plc_wait_tmr.h>
 #include <plc_iom.h>
+#include <plc_rtc.h>
+#include <plc_wait_tmr.h>
+
 
 void plc_wait_tmr_init(void)
 {

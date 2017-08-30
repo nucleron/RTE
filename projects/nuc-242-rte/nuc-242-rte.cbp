@@ -33,9 +33,11 @@
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-mcpu=cortex-m3" />
 			<Add option="-mthumb" />
 			<Add option="-Os" />
-			<Add option="-mcpu=cortex-m3" />
+			<Add option="-Wextra" />
+			<Add option="-Wall" />
 			<Add option="-std=gnu90" />
 			<Add option="-fmessage-length=0" />
 			<Add option="-fno-builtin" />

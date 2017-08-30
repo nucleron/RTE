@@ -436,9 +436,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 #undef LOCAL_PROTO
 
 
-mb_err_enum
-mb_reg_holding_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num,
-                 mb_reg_mode_enum mode)
+mb_err_enum  mb_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num, mb_reg_mode_enum mode)
 {
     mb_err_enum    status = MB_ENOERR;
     int             iRegIndex;
@@ -484,9 +482,7 @@ mb_reg_holding_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num,
 }
 
 
-mb_err_enum
-mb_reg_coils_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT coil_num,
-               mb_reg_mode_enum mode)
+mb_err_enum  mb_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT coil_num, mb_reg_mode_enum mode)
 {
      mb_err_enum    status = MB_ENOERR;
     USHORT          iRegIndex , iRegBitIndex , iNReg;
@@ -551,8 +547,7 @@ mb_reg_coils_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT coil_num,
     return status;
 }
 
-mb_err_enum
-mb_reg_discrete_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT disc_num)
+mb_err_enum  mb_reg_discrete_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT disc_num)
 {
     mb_err_enum    status = MB_ENOERR;
     USHORT          iRegIndex , iRegBitIndex , iNReg;
@@ -589,8 +584,7 @@ mb_reg_discrete_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT disc_num)
     return status;
 }
 
-mb_err_enum
-mb_reg_input_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num)
+mb_err_enum mb_reg_input_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num)
 {
     mb_err_enum    status = MB_ENOERR;
     int             iRegIndex;

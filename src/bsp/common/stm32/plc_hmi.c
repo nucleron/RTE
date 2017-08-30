@@ -412,7 +412,7 @@ static void plc_hmi_convert(char * buff, uint32_t led_val)
 
 
     led_msk = 1;
-    for (i=0; i<sizeof(led_cfg)/sizeof(plc_hmi_led_rec); i++)
+    for (i=0; i<(int)(sizeof(led_cfg)/sizeof(plc_hmi_led_rec)); i++)
     {
         const plc_hmi_led_rec * cfg;
 
@@ -873,7 +873,7 @@ static void plc_hmi_controller(char input)
                         hmi.tmp = HMI_MAX_SINT;
                     }
                 }
-                else if (hmi.tmp < hmi.delta)
+                else if (hmi.tmp < (int32_t)hmi.delta)
                 {
                     hmi.tmp += hmi.delta*(mul-1);
                 }
@@ -893,7 +893,7 @@ static void plc_hmi_controller(char input)
                         hmi.tmp = HMI_MIN_SINT;
                     }
                 }
-                else if (max_val <= hmi.tmp)
+                else if (max_val <= (uint32_t)hmi.tmp)
                 {
                     hmi.tmp %= max_val;
                 }
@@ -1119,7 +1119,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         case PLC_LSZ_X:
         {
             static const plc_hmi_par_t ptype[] = {PLC_HMI_BOOL_TF, PLC_HMI_BOOL_OO, PLC_HMI_RO_BOOL_TF, PLC_HMI_RO_BOOL_OO};
-            if (ptid < sizeof(ptype)/sizeof(plc_hmi_par_t))
+            if (ptid < (int)(sizeof(ptype)/sizeof(plc_hmi_par_t)))
             {
                 plc_hmi_app_ptype[addr] = ptype[ptid];
                 return true;
@@ -1134,7 +1134,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         case PLC_LSZ_W:
         {
             static const plc_hmi_par_t ptype[] = {PLC_HMI_UINT, PLC_HMI_SINT, PLC_HMI_HEX, PLC_HMI_RO_UINT, PLC_HMI_RO_SINT, PLC_HMI_RO_HEX};
-            if (ptid < sizeof(ptype)/sizeof(plc_hmi_par_t))
+            if (ptid < (int)(sizeof(ptype)/sizeof(plc_hmi_par_t)))
             {
                 plc_hmi_app_ptype[addr] = ptype[ptid];
                 return true;
@@ -1187,9 +1187,11 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 
 void PLC_IOM_LOCAL_BEGIN(uint16_t lid)
 {
+    (void)lid;
 }
 void PLC_IOM_LOCAL_END(uint16_t lid)
 {
+    (void)lid;
 }
 
 void PLC_IOM_LOCAL_START(void)
@@ -1204,6 +1206,8 @@ void PLC_IOM_LOCAL_STOP(void)
 
 uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
 {
+    (void)lid;
+    (void)tick;
     return 0;
 }
 

@@ -337,6 +337,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 
 void PLC_IOM_LOCAL_START(uint16_t i)
 {
+    (void)i;
 }
 
 void PLC_IOM_LOCAL_STOP(void)
@@ -345,11 +346,13 @@ void PLC_IOM_LOCAL_STOP(void)
 
 void PLC_IOM_LOCAL_BEGIN(uint16_t i)
 {
+    (void)i;
 }
 
 //Do once!
 void PLC_IOM_LOCAL_END(uint16_t i)
 {
+    (void)i;
     if (!mb_init_flg)
     {
         mb_init_flg = true;
@@ -368,11 +371,14 @@ void PLC_IOM_LOCAL_END(uint16_t i)
 
 uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
 {
+    (void)lid;
+    (void)tick;
     return 0;
 }
 
 void PLC_IOM_LOCAL_POLL(uint32_t tick)
 {
+    (void)tick;
     //Do once!
     if (!mb_init_flg) return;
 
@@ -437,17 +443,23 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 #undef LOCAL_PROTO
 
 mb_err_enum
-mb_reg_input_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num)
+mb_reg_input_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num)
 {
+    (void)inst;
+    (void)reg_buff;
+    (void)reg_addr;
+    (void)reg_num;
     return MB_ENOREG;
 }
 
 mb_err_enum
-mb_reg_holding_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num,
+mb_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num,
                  mb_reg_mode_enum mode)
 {
     mb_err_enum    status = MB_ENOERR;
     int             iRegIndex;
+
+    (void)inst;
 
     if ((reg_addr >= REG_HOLDING_START) &&
             (reg_addr + reg_num <= REG_HOLDING_START + REG_HOLDING_NREGS))
@@ -491,15 +503,24 @@ mb_reg_holding_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num,
 
 
 mb_err_enum
-mb_reg_coils_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT coil_num,
+mb_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT coil_num,
                mb_reg_mode_enum mode)
 {
+    (void)inst;
+    (void)reg_buff;
+    (void)reg_addr;
+    (void)coil_num;
+    (void)mode;
     return MB_ENOREG;
 }
 
 mb_err_enum
-mb_reg_discrete_cb(UCHAR *reg_buff, USHORT reg_addr, USHORT disc_num)
+mb_reg_discrete_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT disc_num)
 {
+    (void)inst;
+    (void)reg_buff;
+    (void)reg_addr;
+    (void)disc_num;
     return MB_ENOREG;
 }
 

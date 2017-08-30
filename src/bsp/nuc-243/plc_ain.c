@@ -546,7 +546,7 @@ void _plc_ain_init(void)
         PLC_GPIO_REC(AIN3)
     };
 
-    for(i=0; i<sizeof(ain_pin)/sizeof(plc_gpio_t); i++)
+    for(i=0; i<(int)(sizeof(ain_pin)/sizeof(plc_gpio_t)); i++)
     {
         rcc_periph_clock_enable(ain_pin[i].periph);
         gpio_mode_setup(ain_pin[i].port, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, ain_pin[i].pin);
@@ -671,28 +671,36 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 }
 void PLC_IOM_LOCAL_BEGIN(uint16_t lid)
 {
+    (void)lid;
 }
 
 void PLC_IOM_LOCAL_END(uint16_t lid)
 {
+    (void)lid;
 }
 
 static ai_clb_t clb_data;
 
 static const ai_clb_t clb_data_min =
 {
-    .coef._10v  = PLC_DEFAULT_COEF_10V  - PLC_COEF_DELTA_10V,
-    .coef._20ma = PLC_DEFAULT_COEF_20MA - PLC_COEF_DELTA_20MA,
-    .coef._100r = PLC_DEFAULT_COEF_100R - PLC_COEF_DELTA_100R,
-    .coef._4k   = PLC_DEFAULT_COEF_4K   - PLC_COEF_DELTA_4K,
+    .coef =
+    {
+        ._10v  = PLC_DEFAULT_COEF_10V  - PLC_COEF_DELTA_10V,
+        ._20ma = PLC_DEFAULT_COEF_20MA - PLC_COEF_DELTA_20MA,
+        ._100r = PLC_DEFAULT_COEF_100R - PLC_COEF_DELTA_100R,
+        ._4k   = PLC_DEFAULT_COEF_4K   - PLC_COEF_DELTA_4K
+    }
 };
 
 static const ai_clb_t clb_data_max =
 {
-    .coef._10v  = PLC_DEFAULT_COEF_10V  + PLC_COEF_DELTA_10V,
-    .coef._20ma = PLC_DEFAULT_COEF_20MA + PLC_COEF_DELTA_20MA,
-    .coef._100r = PLC_DEFAULT_COEF_100R + PLC_COEF_DELTA_100R,
-    .coef._4k   = PLC_DEFAULT_COEF_4K   + PLC_COEF_DELTA_4K,
+    .coef =
+    {
+        ._10v  = PLC_DEFAULT_COEF_10V  + PLC_COEF_DELTA_10V,
+        ._20ma = PLC_DEFAULT_COEF_20MA + PLC_COEF_DELTA_20MA,
+        ._100r = PLC_DEFAULT_COEF_100R + PLC_COEF_DELTA_100R,
+        ._4k   = PLC_DEFAULT_COEF_4K   + PLC_COEF_DELTA_4K,
+    }
 };
 
 
@@ -730,11 +738,14 @@ void PLC_IOM_LOCAL_START(void)
 
 uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
 {
+    (void)lid;
+    (void)tick;
     return 0;
 }
 
 void PLC_IOM_LOCAL_POLL(uint32_t tick)
 {
+    (void)tick;
     _plc_ain_other_data_calc();  // пересчёт данных АЦП в напряжения и температуру раз в sum мс
     _plc_ain_data_calc();     // раз в необходимо кол-во мс фильтрация, пересчёт данных с АЦП аналоговых входов
 }

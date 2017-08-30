@@ -203,6 +203,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 
 void PLC_IOM_LOCAL_START(uint16_t i)
 {
+    (void)i;
 }
 
 void PLC_IOM_LOCAL_STOP(void)
@@ -211,6 +212,7 @@ void PLC_IOM_LOCAL_STOP(void)
 
 void PLC_IOM_LOCAL_BEGIN(uint16_t i)
 {
+    (void)i;
 }
 
 bool is_continious()
@@ -232,6 +234,7 @@ uint8_t get_full_length()
 void PLC_IOM_LOCAL_END(uint16_t i)
 {
 //    int j, k, l;
+    (void)i;
     if (!mbm_init_flg)
     {
         mbm_init_flg = true;
@@ -251,6 +254,8 @@ void PLC_IOM_LOCAL_END(uint16_t i)
 
 uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
 {
+    (void)lid;
+    (void)tick;
     return 0;
 }
 
@@ -580,6 +585,10 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
  */
 void mb_mstr_error_timeout_cb(mb_inst_struct *inst, UCHAR dst_addr, const UCHAR* pdu_data_ptr, USHORT pdu_len)
 {
+    (void)inst;
+    (void)dst_addr;
+    (void)pdu_data_ptr;
+    (void)pdu_len;
     mbm_request.result=RR_TIMEOUT;
     mbm_busy=0xFF;
 }
@@ -597,6 +606,10 @@ void mb_mstr_error_timeout_cb(mb_inst_struct *inst, UCHAR dst_addr, const UCHAR*
  */
 void mb_mstr_error_rcv_data_cb(mb_inst_struct *inst, UCHAR dst_addr, const UCHAR* pdu_data_ptr, USHORT pdu_len)
 {
+    (void)inst;
+    (void)dst_addr;
+    (void)pdu_data_ptr;
+    (void)pdu_len;
     mbm_request.result=RR_DATA_ERR;
     mbm_busy=0xFF;
 }
@@ -613,6 +626,10 @@ void mb_mstr_error_rcv_data_cb(mb_inst_struct *inst, UCHAR dst_addr, const UCHAR
  */
 void mb_mstr_error_exec_fn_cb(mb_inst_struct *inst, UCHAR dst_addr, const UCHAR* pdu_data_ptr, USHORT pdu_len)
 {
+    (void)inst;
+    (void)dst_addr;
+    (void)pdu_data_ptr;
+    (void)pdu_len;
     mbm_request.result=RR_INT_ERR;
     mbm_busy=0xFF;
 }
@@ -625,6 +642,8 @@ void mb_mstr_error_exec_fn_cb(mb_inst_struct *inst, UCHAR dst_addr, const UCHAR*
  */
 void mb_mstr_rq_success_cb(mb_inst_struct *inst)
 {
+    (void)inst;
+
     if (mbm_need_preread)
     {
         mbm_need_preread     = false;
@@ -651,6 +670,8 @@ mb_err_enum mb_mstr_reg_input_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT r
 {
     mb_err_enum    status = MB_ENOERR;
     uint8_t reg_index;
+
+    (void)inst;
 
     /* it already plus one in modbus function method. */
     reg_addr--;
@@ -687,6 +708,8 @@ mb_err_enum mb_mstr_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT
     mb_err_enum    status = MB_ENOERR;
 
     uint8_t reg_index=0;
+
+    (void)inst;
 
     reg_addr--;
 
@@ -788,6 +811,9 @@ mb_err_enum mb_mstr_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT r
     mb_err_enum    status = MB_ENOERR;
     uint8_t nByte=0;
 
+    (void)inst;
+    (void)reg_addr;
+
     if (mbm_need_preread)
     {
         nByte = coil_num/8 + ((coil_num%8)>0)?1:0;
@@ -823,6 +849,8 @@ mb_err_enum mb_mstr_reg_discrete_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHOR
 
     uint8_t iNReg =  0;
     uint8_t reg_index;
+
+    (void)inst;
 
     /* it already plus one in modbus function method. */
     reg_addr--;

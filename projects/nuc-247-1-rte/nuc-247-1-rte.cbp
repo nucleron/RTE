@@ -39,6 +39,7 @@
 			<Add option="-Wcast-align" />
 			<Add option="-Wunreachable-code" />
 			<Add option="-Wmissing-include-dirs" />
+			<Add option="-Wextra" />
 			<Add option="-Wall" />
 			<Add option="-std=gnu90" />
 			<Add option="-fmessage-length=0" />
