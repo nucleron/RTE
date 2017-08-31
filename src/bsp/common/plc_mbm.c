@@ -217,6 +217,10 @@ void PLC_IOM_LOCAL_BEGIN(uint16_t i)
 
 bool is_continious()
 {
+    if (!mbm_request.registers)
+    {
+        return false;
+    }
     if ((mbm_request.target_addr[mbm_request.registers-1]-mbm_request.target_addr[0])==(mbm_request.registers-1))
     {
         return true;
@@ -226,6 +230,10 @@ bool is_continious()
 
 uint8_t get_full_length()
 {
+    if (!mbm_request.registers)
+    {
+        return 0;
+    }
     return mbm_request.target_addr[mbm_request.registers-1] - mbm_request.target_addr[0]+1;
 }
 
@@ -412,13 +420,22 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
 
     if (mbm_request.result==RR_LOADING)
     {
-        if ((mbm_request.type==RT_COILS) || (mbm_request.type==RT_HOLDING_WR)) //write request_t, set values to write first
+        if (mbm_request.registers)
         {
-            mbm_request.result=RR_NEXTSTEP;
+            if ((mbm_request.type==RT_COILS) || (mbm_request.type==RT_HOLDING_WR)) //write request_t, set values to write first
+            {
+                mbm_request.result=RR_NEXTSTEP;
+            }
+            else
+            {
+                mbm_request.result=RR_PENDING;
+            }
         }
         else
         {
-            mbm_request.result=RR_PENDING;
+            //Skip empty request.
+            mbm_request.result=RR_INT_ERR;
+            PLC_APP->w_tab[mbm_nearest_num] = tick;
         }
     }
 
