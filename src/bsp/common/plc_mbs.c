@@ -65,8 +65,8 @@
 
 /* ----------------------- Static variables ---------------------------------*/
 
-static mb_inst_struct MBSlave;
-static mb_trans_union MBTransport;
+static mb_inst_struct mb_slave;
+static mb_trans_union mb_slave_transport;
 
 static tm mbtime;
 static bool mbt_sflg = false;
@@ -80,8 +80,8 @@ static bool mb_ascii = false;
 uint32_t mb_baudrate = 9600;
 uint8_t mb_slave_addr = 1;
 
-static unsigned short usRegHoldingStart = REG_HOLDING_START;
-static unsigned short usRegHoldingBuf[REG_HOLDING_NREGS-MB_REG_SEC-1];
+static unsigned short reg_holding_start = REG_HOLDING_START;
+static unsigned short reg_holding_buf[REG_HOLDING_NREGS-MB_REG_SEC-1];
 
 
 
@@ -160,7 +160,7 @@ static uint16_t mb_hr_get(uint16_t reg)
         return (uint16_t)mbtime.tm_sec;
 
     default:
-        return usRegHoldingBuf[reg-MB_REG_SEC-1];
+        return reg_holding_buf[reg-MB_REG_SEC-1];
     }
     return 0;
 }
@@ -239,7 +239,7 @@ static void mb_hr_set(uint16_t reg, uint16_t val)
         break;
 
     default:
-        usRegHoldingBuf[reg-MB_REG_SEC-1] = val;
+        reg_holding_buf[reg-MB_REG_SEC-1] = val;
         break;
     }
 }
@@ -251,7 +251,7 @@ void PLC_IOM_LOCAL_INIT(void)
 
     for(i = 0; i < REG_HOLDING_NREGS-MB_REG_SEC-1; i++)
     {
-        usRegHoldingBuf[i] = 0;
+        reg_holding_buf[i] = 0;
     }
 }
 bool PLC_IOM_LOCAL_TEST_HW(void)
@@ -354,8 +354,8 @@ void PLC_IOM_LOCAL_END(uint16_t i)
             mb_enabled = true;
             mb_start = true;
         }
-        //mb_init_rtu(&MBSlave, &MBTransport, mb_slave_addr, (mb_port_base_struct *)&mbs_inst_usart, mb_baudrate, MB_PAR_NONE);
-        mb_init(&MBSlave, &MBTransport, (mb_ascii)?MB_ASCII:MB_RTU, FALSE, mb_slave_addr, (mb_port_base_struct *)&mbs_inst_usart, mb_baudrate, MB_PAR_NONE);
+        //mb_init_rtu(&mb_slave, &mb_slave_transport, mb_slave_addr, (mb_port_base_struct *)&mbs_inst_usart, mb_baudrate, MB_PAR_NONE);
+        mb_init(&mb_slave, &mb_slave_transport, (mb_ascii)?MB_ASCII:MB_RTU, FALSE, mb_slave_addr, (mb_port_base_struct *)&mbs_inst_usart, mb_baudrate, MB_PAR_NONE);
     }
 }
 
@@ -377,14 +377,14 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
         mb_start = false;
         if (!mb_enabled)
         {
-            mb_disable(&MBSlave);
+            mb_disable(&mb_slave);
             return;
         }
-        mb_enable(&MBSlave);
+        mb_enable(&mb_slave);
     }
 
     plc_rtc_dt_get(&mbtime);
-    mb_poll(&MBSlave);
+    mb_poll(&mb_slave);
     if (mbt_sflg)
     {
         mbt_sflg = false;
@@ -401,7 +401,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
     switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_M:
-        *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf) = usRegHoldingBuf[plc_curr_app->l_tab[i]->a_data[0]];
+        *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf) = reg_holding_buf[plc_curr_app->l_tab[i]->a_data[0]];
         break;
     case PLC_LT_Q://Write only access to init location
     default:
@@ -415,7 +415,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_M:
-        usRegHoldingBuf[plc_curr_app->l_tab[i]->a_data[0]] = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
+        reg_holding_buf[plc_curr_app->l_tab[i]->a_data[0]] = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
         break;
     case PLC_LT_Q:
         if (mb_gotinit)
@@ -447,14 +447,14 @@ mb_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT
                  mb_reg_mode_enum mode)
 {
     mb_err_enum    status = MB_ENOERR;
-    int             iRegIndex;
+    int             reg_index;
 
     (void)inst;
 
     if ((reg_addr >= REG_HOLDING_START) &&
             (reg_addr + reg_num <= REG_HOLDING_START + REG_HOLDING_NREGS))
     {
-        iRegIndex = (int)(reg_addr - usRegHoldingStart);
+        reg_index = (int)(reg_addr - reg_holding_start);
         switch (mode)
         {
             /* Pass current register values to the protocol stack. */
@@ -462,10 +462,10 @@ mb_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT
             while (reg_num > 0)
             {
                 USHORT tmp;
-                tmp = mb_hr_get(iRegIndex);
+                tmp = mb_hr_get(reg_index);
                 *reg_buff++ = (unsigned char)(tmp >> 8);
                 *reg_buff++ = (unsigned char)(tmp & 0xFF);
-                iRegIndex++;
+                reg_index++;
                 reg_num--;
             }
             break;
@@ -478,8 +478,8 @@ mb_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT
                 USHORT tmp;
                 tmp  = *reg_buff++ << 8;
                 tmp |= *reg_buff++;
-                mb_hr_set(iRegIndex, tmp);
-                iRegIndex++;
+                mb_hr_set(reg_index, tmp);
+                reg_index++;
                 reg_num--;
             }
         }

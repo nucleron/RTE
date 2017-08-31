@@ -71,12 +71,12 @@
 
 UCHAR    ucSDiscInBuf[S_DISCRETE_INPUT_NDISCRETES/8+1];
 //Master mode:Coils variables
-UCHAR    ucSCoilBuf[S_COIL_NCOILS/8+1];
+UCHAR    coil_buffer[S_COIL_NCOILS/8+1];
 
 /* ----------------------- Static variables ---------------------------------*/
 
-static mb_inst_struct MBSlave;
-static mb_trans_union MBTransport;
+static mb_inst_struct mb_slave;
+static mb_trans_union mb_slave_transport;
 
 static tm mbtime;
 static bool mbt_sflg = false;
@@ -90,8 +90,8 @@ static bool mb_ascii = false;
 uint32_t mb_baudrate = 9600;
 uint8_t mb_slave_addr = 1;
 
-static unsigned short usRegHoldingStart = REG_HOLDING_START;
-static unsigned short usRegHoldingBuf[REG_HOLDING_NREGS-MB_REG_SEC-1];
+static unsigned short reg_holding_start = REG_HOLDING_START;
+static unsigned short reg_holding_buf[REG_HOLDING_NREGS-MB_REG_SEC-1];
 
 
 
@@ -170,7 +170,7 @@ static uint16_t mb_hr_get(uint16_t reg)
         return (uint16_t)mbtime.tm_sec;
 
     default:
-        return usRegHoldingBuf[reg-MB_REG_SEC-1];
+        return reg_holding_buf[reg-MB_REG_SEC-1];
     }
     return 0;
 }
@@ -249,7 +249,7 @@ static void mb_hr_set(uint16_t reg, uint16_t val)
         break;
 
     default:
-        usRegHoldingBuf[reg-MB_REG_SEC-1] = val;
+        reg_holding_buf[reg-MB_REG_SEC-1] = val;
         break;
     }
 }
@@ -261,7 +261,7 @@ void PLC_IOM_LOCAL_INIT(void)
 
     for(i = 0; i < REG_HOLDING_NREGS-MB_REG_SEC-1; i++)
     {
-        usRegHoldingBuf[i] = 0;
+        reg_holding_buf[i] = 0;
     }
 }
 bool PLC_IOM_LOCAL_TEST_HW(void)
@@ -361,7 +361,7 @@ void PLC_IOM_LOCAL_END(uint16_t i)
             mb_enabled = true;
             mb_start = true;
         }
-        mb_init(&MBSlave, &MBTransport, (mb_ascii)?MB_ASCII:MB_RTU, FALSE, mb_slave_addr, (mb_port_base_struct *)&mbs_inst_usart, mb_baudrate, MB_PAR_NONE);
+        mb_init(&mb_slave, &mb_slave_transport, (mb_ascii)?MB_ASCII:MB_RTU, FALSE, mb_slave_addr, (mb_port_base_struct *)&mbs_inst_usart, mb_baudrate, MB_PAR_NONE);
     }
 }
 
@@ -380,14 +380,14 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
         mb_start = false;
         if (!mb_enabled)
         {
-            mb_disable(&MBSlave);
+            mb_disable(&mb_slave);
             return;
         }
-        mb_enable(&MBSlave);
+        mb_enable(&mb_slave);
     }
 
     plc_rtc_dt_get(&mbtime);
-    mb_poll(&MBSlave);
+    mb_poll(&mb_slave);
     if (mbt_sflg)
     {
         mbt_sflg = false;
@@ -404,7 +404,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
     switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_M:
-        *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf) = usRegHoldingBuf[plc_curr_app->l_tab[i]->a_data[0]];
+        *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf) = reg_holding_buf[plc_curr_app->l_tab[i]->a_data[0]];
         break;
     case PLC_LT_Q://Write only access to init location
     default:
@@ -418,7 +418,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_M:
-        usRegHoldingBuf[plc_curr_app->l_tab[i]->a_data[0]] = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
+        reg_holding_buf[plc_curr_app->l_tab[i]->a_data[0]] = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
         break;
     case PLC_LT_Q:
         if (mb_gotinit)
@@ -439,12 +439,12 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 mb_err_enum  mb_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num, mb_reg_mode_enum mode)
 {
     mb_err_enum    status = MB_ENOERR;
-    int             iRegIndex;
+    int             reg_index;
 
     if ((reg_addr >= REG_HOLDING_START) &&
             (reg_addr + reg_num <= REG_HOLDING_START + REG_HOLDING_NREGS))
     {
-        iRegIndex = (int)(reg_addr - usRegHoldingStart);
+        reg_index = (int)(reg_addr - reg_holding_start);
         switch (mode)
         {
             /* Pass current register values to the protocol stack. */
@@ -452,10 +452,10 @@ mb_err_enum  mb_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg
             while (reg_num > 0)
             {
                 USHORT tmp;
-                tmp = mb_hr_get(iRegIndex);
+                tmp = mb_hr_get(reg_index);
                 *reg_buff++ = (unsigned char)(tmp >> 8);
                 *reg_buff++ = (unsigned char)(tmp & 0xFF);
-                iRegIndex++;
+                reg_index++;
                 reg_num--;
             }
             break;
@@ -468,8 +468,8 @@ mb_err_enum  mb_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg
                 USHORT tmp;
                 tmp  = *reg_buff++ << 8;
                 tmp |= *reg_buff++;
-                mb_hr_set(iRegIndex, tmp);
-                iRegIndex++;
+                mb_hr_set(reg_index, tmp);
+                reg_index++;
                 reg_num--;
             }
         }
@@ -485,15 +485,15 @@ mb_err_enum  mb_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg
 mb_err_enum  mb_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT coil_num, mb_reg_mode_enum mode)
 {
      mb_err_enum    status = MB_ENOERR;
-    USHORT          iRegIndex , iRegBitIndex , iNReg;
+    USHORT          reg_index , reg_bit_index , reg_num;
     USHORT          COIL_START;
     USHORT          COIL_NCOILS;
-    USHORT          usCoilStart;
-    iNReg =  coil_num / 8 + 1;
+    USHORT          coil_start;
+    reg_num =  coil_num / 8 + 1;
 
     COIL_START = S_COIL_START;
     COIL_NCOILS = S_COIL_NCOILS;
-    usCoilStart = S_COIL_START;
+    coil_start = S_COIL_START;
 
     /* it already plus one in modbus function method. */
     reg_addr--;
@@ -501,17 +501,17 @@ mb_err_enum  mb_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_a
     if ((reg_addr >= COIL_START)
             && (reg_addr + coil_num <= COIL_START + COIL_NCOILS))
     {
-        iRegIndex = (USHORT) (reg_addr - usCoilStart) / 8;
-        iRegBitIndex = (USHORT) (reg_addr - usCoilStart) % 8;
+        reg_index = (USHORT) (reg_addr - coil_start) / 8;
+        reg_bit_index = (USHORT) (reg_addr - coil_start) % 8;
         switch (mode)
         {
          /* read current coil values from the protocol stack. */
         case MB_REG_READ:
-            while (iNReg > 0)
+            while (reg_num > 0)
             {
-                *reg_buff++ = mb_util_get_bits(&ucSCoilBuf[iRegIndex++],
-                        iRegBitIndex, 8);
-                iNReg--;
+                *reg_buff++ = mb_util_get_bits(&coil_buffer[reg_index++],
+                        reg_bit_index, 8);
+                reg_num--;
             }
             reg_buff--;
             /* last coils */
@@ -523,18 +523,18 @@ mb_err_enum  mb_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_a
 
         /* write current coil values with new values from the protocol stack. */
         case MB_REG_WRITE:
-            while (iNReg > 1)
+            while (reg_num > 1)
             {
-                mb_util_set_bits(&ucSCoilBuf[iRegIndex++], iRegBitIndex, 8,
+                mb_util_set_bits(&coil_buffer[reg_index++], reg_bit_index, 8,
                         *reg_buff++);
-                iNReg--;
+                reg_num--;
             }
             /* last coils */
             coil_num = coil_num % 8;
             /* mb_util_set_bits has bug when ucNBits is zero */
             if (coil_num != 0)
             {
-                mb_util_set_bits(&ucSCoilBuf[iRegIndex++], iRegBitIndex, coil_num,
+                mb_util_set_bits(&coil_buffer[reg_index++], reg_bit_index, coil_num,
                         *reg_buff++);
             }
             break;
@@ -550,8 +550,8 @@ mb_err_enum  mb_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_a
 mb_err_enum  mb_reg_discrete_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT disc_num)
 {
     mb_err_enum    status = MB_ENOERR;
-    USHORT          iRegIndex , iRegBitIndex , iNReg;
-    iNReg =  disc_num / 8 + 1;
+    USHORT          reg_index , reg_bit_index , reg_num;
+    reg_num =  disc_num / 8 + 1;
 
     /* it already plus one in modbus function method. */
     reg_addr--;
@@ -559,14 +559,14 @@ mb_err_enum  mb_reg_discrete_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT re
     if ((reg_addr >= S_DISCRETE_INPUT_START)
             && (reg_addr + disc_num    <= S_DISCRETE_INPUT_START + S_DISCRETE_INPUT_NDISCRETES))
     {
-        iRegIndex = (USHORT) (reg_addr - S_DISCRETE_INPUT_START) / 8;
-        iRegBitIndex = (USHORT) (reg_addr - S_DISCRETE_INPUT_START) % 8;
+        reg_index = (USHORT) (reg_addr - S_DISCRETE_INPUT_START) / 8;
+        reg_bit_index = (USHORT) (reg_addr - S_DISCRETE_INPUT_START) % 8;
 
-         while (iNReg > 0)
+         while (reg_num > 0)
         {
-            *reg_buff++ = mb_util_get_bits(&ucSCoilBuf[iRegIndex++],
-                    iRegBitIndex, 8);
-            iNReg--;
+            *reg_buff++ = mb_util_get_bits(&coil_buffer[reg_index++],
+                    reg_bit_index, 8);
+            reg_num--;
         }
         reg_buff--;
         /* last coils */
@@ -587,17 +587,17 @@ mb_err_enum  mb_reg_discrete_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT re
 mb_err_enum mb_reg_input_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num)
 {
     mb_err_enum    status = MB_ENOERR;
-    int             iRegIndex;
+    int             reg_index;
 
     if ((reg_addr >= 0)
         && (reg_addr + reg_num <= REG_HOLDING_NREGS))
     {
-        iRegIndex = (int)(reg_addr - S_DISCRETE_INPUT_START);
+        reg_index = (int)(reg_addr - S_DISCRETE_INPUT_START);
         while (reg_num > 0)
         {
-            *reg_buff++ = (unsigned char)(usRegHoldingBuf[iRegIndex] >> 8);
-            *reg_buff++ = (unsigned char)(usRegHoldingBuf[iRegIndex] & 0xFF);
-            iRegIndex++;
+            *reg_buff++ = (unsigned char)(reg_holding_buf[reg_index] >> 8);
+            *reg_buff++ = (unsigned char)(reg_holding_buf[reg_index] & 0xFF);
+            reg_index++;
             reg_num--;
         }
     }

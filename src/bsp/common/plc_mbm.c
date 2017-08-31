@@ -864,7 +864,7 @@ mb_err_enum mb_mstr_reg_discrete_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHOR
 {
     mb_err_enum    status = MB_ENOERR;
 
-    uint8_t iNReg =  0;
+    uint8_t reg_num =  0;
     uint8_t reg_index;
 
     (void)inst;
@@ -875,18 +875,18 @@ mb_err_enum mb_mstr_reg_discrete_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHOR
     /* write current discrete values with new values from the protocol stack. */
     while (disc_num > 0)
     {
-        reg_index = req_find_reg(reg_addr+iNReg);
+        reg_index = req_find_reg(reg_addr+reg_num);
         if (reg_index!=0xFF)
         {
-            mbm_request.target_value[reg_index] = (*(reg_buff+(iNReg/8))) &(1<<(iNReg%8));
+            mbm_request.target_value[reg_index] = (*(reg_buff+(reg_num/8))) &(1<<(reg_num%8));
         }
 
-        if ((iNReg%8)==7)
+        if ((reg_num%8)==7)
         {
             reg_buff++;
         }
         disc_num--;
-        iNReg++;
+        reg_num++;
     }
 
     return status;
