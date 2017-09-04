@@ -126,6 +126,7 @@ xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBParity e
     CHAR wordLength;
     switch (ucDataBits)
     {
+    case 7: //In case of ascii port works correctly with test tools when we use 8n1 mode
     case 8:
         if (eParity == MB_PAR_NONE)
         {
@@ -137,16 +138,17 @@ xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBParity e
         }
         usart_set_databits(MB_USART,wordLength);
         break;
-    case 7:
-        if (eParity == MB_PAR_NONE)
-        {
-            bStatus = FALSE;
-        }
-        else
-        {
-            usart_set_databits(MB_USART,8);
-        }
-        break;
+//    case 7:
+//        //usart_set_databits(MB_USART,8);
+//        if (eParity == MB_PAR_NONE)
+//        {
+//            bStatus = FALSE;
+//        }
+//        else
+//        {
+//            usart_set_databits(MB_USART,8);
+//        }
+//        break;
     default:
         bStatus = FALSE;
     }
