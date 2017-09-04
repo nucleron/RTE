@@ -1,5 +1,15 @@
 # YAPLC/RTE
-This is YAPLC runtime environment project.
+This is YAPLC runtime environment project. 
+
+YAPLC/RTE can run user aplications made with YAPLC/IDE.
+It runs on bare metal without any OS.
+It is small and portable.
+
+# Contributors
+ * Paul Beltyukov aka [@shkolnick-kun](https://github.com/shkolnick-kun),
+ * Radeon Ww <radeon.w@gmail.com>,
+ * Sergey Ovchinnikov <osv@nucleron.ru>,
+ * Michael Volkov <xpert3000@yandex.ru>.
 
 # Using stm32f4-discovery board
 Target "yaplc" can be used to build and upload aplication to the board.
