@@ -30,7 +30,7 @@
 
 #include <mb.h>
 
-#include "user_mb_app.h"
+//#include "user_mb_app.h"
 
 #define MBM_REQUEST_MAX_ADDR 250
 #define INVALID_UID 0xFFFF
