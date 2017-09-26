@@ -30,7 +30,179 @@
 
 #include <mb.h>
 
+typedef enum
+{
+    /*Working states*/
+    PLC_MBM_ST_RQ_SCHED,
+    PLC_MBM_ST_RQ_READ,
+    PLC_MBM_ST_RQ_FETCH, /*Fetch register contents before write*/
+    PLC_MBM_ST_RQ_WRITE,
+    /*Limit of working states for border checking*/
+    PLC_MBM_ST_RQ_LIM,
+    /*Location checking states*/
+    PLC_MBM_ST_INIT,    /*Initial state*/
+    PLC_MBM_ST_ERR,     /*Error state*/
+    /*Location check states*/
+    PLC_MBM_ST_CHK_RQ,  /*Request IB3.[id].[type].[slv_address].[reg_address].[period_ms]*/
+    PLC_MBM_ST_CHK_MEM, /*Memory MX3.[id].[reg_id] or MW3.[id].[reg_id]*/
+    PLC_MBM_ST_CHK_CFG  /*Configuration QX3.[baud].[mode]*/
+} plc_mbm_st_enum;
 
+typedef enum
+{
+    /*Read*/
+    PLC_MBM_RQ_RD_IX, /*Discrete inputs*/
+    PLC_MBM_RQ_RD_MX, /*Coils*/
+    PLC_MBM_RQ_RD_IW, /*Input regs*/
+    PLC_MBM_RQ_RD_MW, /*Holding regs*/
+    /*Write*/
+    PLC_MBM_RQ_WR_MX, /*Coils*/
+    PLC_MBM_RQ_WR_MW, /*Holding regs*/
+    /*Limit value for border checking*/
+    PLC_MBM_RQ_LIM
+} plc_mbm_rq_enum;
+
+typedef enum
+{
+    PLC_MBM_RST_OK = 0,  /*Request success*/
+    PLC_MBM_RST_NODATA,  /*No data for request (initial state)*/
+    PLC_MBM_RST_ERR_TO,  /*Request timed out*/
+    PLC_MBM_RST_ERR_FN,  /*MB function exception*/
+    PLC_MBM_RST_ERR_RCV, /*MB receive exception*/
+    PLC_MBM_RST_ERR_DL,  /*MB request deadline not met*/
+    PLC_MBM_RST_ERR_FAIL,/*MB stack failed*/
+    /*Limit value for border checking*/
+    PLC_MBM_RST_LIM
+} plc_mbm_rst_enum;
+
+/*MB master state*/
+typedef struct
+{
+    uint8_t state;
+} plc_mbm_struct;
+
+/*Read  request function pointer*/
+typedef mb_err_enum (*plc_mbm_rd_rq_fp)(mb_inst_struct *inst, UCHAR snd_addr, USHORT reg_addr, USHORT reg_num);
+/*Write request function pointer*/
+typedef mb_err_enum (*plc_mbm_wr_rq_fp)(mb_inst_struct *inst, UCHAR snd_addr, USHORT reg_addr, USHORT reg_num, USHORT *data_ptr);
+/*Alias of both*/
+typedef union
+{
+    plc_mbm_rd_rq_fp rd; /*read*/
+    plc_mbm_wr_rq_fp wr; /*write*/
+} plc_mbm_rq_fp;
+
+/**TODO: Data load function pointer*/
+/**TODO: Data store function pointer*/
+
+/*Transintion function pointer*/
+typedef void (*plc_mbm_trans_fp)(void);
+/*Transintion function table pointer*/
+typedef plc_mbm_trans_fp * plc_mbm_trans_tbl;
+
+plc_mbm_struct plc_mbm =
+{
+    .state  = PLC_MBM_ST_INIT
+};
+
+static void plc_mbm_tf_error(uint8_t err)
+{
+    (void)err;
+    /**TODO:Написать тут общий обработчик перехода
+    в состояние "SCHED" c ошибкой*/
+}
+
+/*Request function table*/
+const plc_mbm_rq_fp plc_mbm_rq_tbl[PLC_MBM_RQ_LIM] =
+{
+    /*Read*/
+    [PLC_MBM_RQ_RD_IX] = {.rd = mb_mstr_rq_read_discrete_inputs   },
+    [PLC_MBM_RQ_RD_MX] = {.rd = mb_mstr_rq_read_coils             },
+    [PLC_MBM_RQ_RD_IW] = {.rd = mb_mstr_rq_read_inp_reg           },
+    [PLC_MBM_RQ_RD_MW] = {.rd = mb_mstr_rq_read_holding_reg       },
+    /*Write*/
+    [PLC_MBM_RQ_RD_MX] = {.wr = mb_mstr_rq_write_multi_coils      },
+    [PLC_MBM_RQ_RD_MW] = {.wr = mb_mstr_rq_write_multi_holding_reg}
+};
+/*Fetch request function selector*/
+/**TODO: Придумать, как лучше написать...*/
+static mb_err_enum _default_fetch(mb_inst_struct *inst, UCHAR snd_addr, USHORT reg_addr, USHORT reg_num)
+{
+    plc_mbm_tf_error(PLC_MBM_RST_ERR_FAIL);
+}
+/**А что если выполнять реквесты прямо тут?*/
+/**Или переместить этот код прямо в обработчик перехода SCHED->FETCH?*/
+static inline plc_mbm_rd_rq_fp _plc_mbm_get_fetch_fp(uint8_t rq_type)
+{
+    switch(rq_type)
+    {
+    case PLC_MBM_RQ_RD_MX:
+        return mb_mstr_rq_read_coils;
+    case PLC_MBM_RQ_RD_MW:
+        return mb_mstr_rq_read_holding_reg;
+    default:
+        return (plc_mbm_rd_rq_fp)0;
+    }
+}
+
+/*Default transition handler*/
+static void plc_mbm_tf_default(uint8_t err)
+{
+    plc_mbm_tf_error(PLC_MBM_RST_ERR_FAIL);
+}
+
+static void plc_mbm_tf_rd_sched(void)
+{
+    /**TODO:Написать обработчик прерхода SCHED->READ*/
+}
+
+static void plc_mbm_tf_rd_read(void)
+{
+    /**TODO:Написать обработчик прерхода READ->SCHED*/
+}
+
+const plc_mbm_trans_fp plc_mbm_rd_tbl[PLC_MBM_ST_RQ_LIM] =
+{
+    [PLC_MBM_ST_RQ_SCHED] = plc_mbm_tf_rd_sched,
+    [PLC_MBM_ST_RQ_READ]  = plc_mbm_tf_rd_read,
+    [PLC_MBM_ST_RQ_FETCH] = plc_mbm_tf_default,
+    [PLC_MBM_ST_RQ_WRITE] = plc_mbm_tf_default
+}
+
+static void plc_mbm_tf_wr_sched(void)
+{
+    /**TODO:Написать обработчик прерхода SCHED->[FETCH,WRITE]*/
+}
+
+static void plc_mbm_tf_wr_fetch(void)
+{
+    /**TODO:Написать обработчик прерхода FETCH->WRITE*/
+}
+
+static void plc_mbm_tf_wr_write(void)
+{
+    /**TODO:Написать обработчик прерхода WRITE->SHCED*/
+}
+
+const plc_mbm_trans_fp plc_mbm_wr_tbl[PLC_MBM_ST_RQ_LIM] =
+{
+    [PLC_MBM_ST_RQ_SCHED] = plc_mbm_tf_wr_sched,
+    [PLC_MBM_ST_RQ_READ]  = plc_mbm_tf_default,
+    [PLC_MBM_ST_RQ_FETCH] = plc_mbm_tf_wr_fetch,
+    [PLC_MBM_ST_RQ_WRITE] = plc_mbm_tf_wr_write
+};
+
+const plc_mbm_trans_tbl plc_mbm_tr_tbl[PLC_MBM_RQ_LIM] =
+{
+    /*Read*/
+    [PLC_MBM_RQ_RD_IX] = (plc_mbm_trans_tbl)plc_mbm_rd_tbl,
+    [PLC_MBM_RQ_RD_MX] = (plc_mbm_trans_tbl)plc_mbm_rd_tbl,
+    [PLC_MBM_RQ_RD_IW] = (plc_mbm_trans_tbl)plc_mbm_rd_tbl,
+    [PLC_MBM_RQ_RD_MW] = (plc_mbm_trans_tbl)plc_mbm_rd_tbl,
+    /*Write*/
+    [PLC_MBM_RQ_RD_MX] = (plc_mbm_trans_tbl)plc_mbm_wr_tbl,
+    [PLC_MBM_RQ_RD_MW] = (plc_mbm_trans_tbl)plc_mbm_wr_tbl
+};
 
 #define LOCAL_PROTO plc_mbm
 void PLC_IOM_LOCAL_INIT(void)
@@ -41,7 +213,7 @@ bool PLC_IOM_LOCAL_TEST_HW(void)
     return true;
 }
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
-{    
+{
     return true;
 }
 
@@ -325,7 +497,7 @@ mb_err_enum mb_mstr_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT r
     //}
     //else
     //{
-        //coils read callback here
+    //coils read callback here
     //}
 
     //return status;

@@ -84,6 +84,9 @@
 		<Unit filename="../../src/bsp/common/plc_mbm.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../../src/bsp/common/plc_mbm_ng.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../../src/bsp/common/plc_mbs.c">
 			<Option compilerVar="CC" />
 		</Unit>
