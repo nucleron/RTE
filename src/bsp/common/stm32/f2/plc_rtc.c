@@ -36,13 +36,6 @@
 
 volatile uint8_t plc_rtc_failure = 0; //Not failed by default
 
-uint32_t plc_rtc_clken_and_check(void)
-{
-    rcc_periph_clock_enable(RCC_PWR);
-
-    return PLC_BKP_RTC_IS_OK ;
-}
-
 /*
  *  Julian Day Number computation
  *  See http://en.wikipedia.org/wiki/Julian_day
@@ -123,6 +116,52 @@ void  sec_to_dt (uint32_t utime, tm *date_time)
 
 
 static bool start_flg = true;
+#define PLC_BASE_TICK_NS (100000)
+#define PLC_RTC_CORR_THR (1200000000)
+static int32_t plc_rtc_tick_ns;// Initial tick value is 100'000ns
+static int64_t plc_rtc_correction;//Correction to RTC time
+
+//static uint32_t plc_rtc_dr = 0;
+//static uint32_t plc_rtc_tr = 0;
+
+static uint64_t plc_rtc_sec = 0;
+
+uint32_t plc_rtc_clken_and_check(void)
+{
+    uint32_t ret;
+    rcc_periph_clock_enable(RCC_PWR);
+    ret = PLC_BKP_RTC_IS_OK;
+
+    if (ret)
+    {
+        /*Sunchronize with HW RTC on start*/
+        static tm rtc_time;
+        uint32_t tmp;
+
+        tmp = RTC_TR;
+        rtc_time.tm_sec   = (unsigned char)(  tmp & 0x0000000F);
+        rtc_time.tm_sec  += (unsigned char)(((tmp & 0x000000F0) >> 4) * 10);
+        rtc_time.tm_min   = (unsigned char)(( tmp & 0x00000F00) >> 8);
+        rtc_time.tm_min  += (unsigned char)(((tmp & 0x0000F000) >> 12) * 10);
+        rtc_time.tm_hour  = (unsigned char)(( tmp & 0x000F0000) >> 16);
+        rtc_time.tm_hour += (unsigned char)(((tmp & 0x00F00000) >> 20) * 10);
+
+        tmp = RTC_DR;
+        rtc_time.tm_day   = (unsigned char)(  tmp & 0x0000000F);
+        rtc_time.tm_day  += (unsigned char)(((tmp & 0x00000030) >> 4) * 10);
+        rtc_time.tm_mon   = (unsigned char)(( tmp & 0x00000F00) >> 8);
+        rtc_time.tm_mon  += (unsigned char)(((tmp & 0x00001000) >> 12) * 10);
+        rtc_time.tm_year  = (unsigned char)(( tmp & 0x000F0000) >> 16);
+        rtc_time.tm_year += (unsigned char)(((tmp & 0x00F00000) >> 20) * 10);
+        rtc_time.tm_year += 2000; // 16 is actually 2016
+
+        plc_rtc_sec = dt_to_sec(&rtc_time);
+        start_flg   = true;
+    }
+
+    return ret ;
+}
+
 
 void _plc_rtc_dt_set(tm* time)
 {
@@ -182,7 +221,8 @@ void _plc_rtc_dt_set(tm* time)
     /* Normal termination */
     rtc_lock();
     PLC_BKP_RTC_IS_OK = 1;
-    start_flg = true;
+    plc_rtc_sec       = dt_to_sec(time);
+    start_flg         = true;
     return;
     /* LSE error occured */
 lse_error:
@@ -246,15 +286,6 @@ void plc_rtc_dt_get(tm* time)
     sec_to_dt(utime, time);
 }
 
-
-#define PLC_BASE_TICK_NS (100000)
-#define PLC_RTC_CORR_THR (1200000000)
-static int32_t plc_rtc_tick_ns;// Initial tick value is 100'000ns
-static int64_t plc_rtc_correction;//Correction to RTC time
-
-static uint32_t plc_rtc_dr = 0;
-static uint32_t plc_rtc_tr = 0;
-
 //THis function is called every 100us in PLC_WAIT_TMR_ISR
 void _plc_rtc_poll(void)
 {
@@ -269,8 +300,8 @@ void _plc_rtc_poll(void)
         start_flg = false;
         last_sec = current_sec;
 
-        plc_rtc_dr = RTC_DR;
-        plc_rtc_tr = RTC_TR;
+        //plc_rtc_dr = RTC_DR;
+        //plc_rtc_tr = RTC_TR;
         // Initial tick value is 100'000ns or 100us
         plc_rtc_tick_ns = PLC_BASE_TICK_NS;
         plc_rtc_correction = 0;
@@ -286,8 +317,9 @@ void _plc_rtc_poll(void)
         {
             last_sec = current_sec;
             //Update buffered date and time registers
-            plc_rtc_dr = RTC_DR;
-            plc_rtc_tr = RTC_TR;
+            //plc_rtc_dr = RTC_DR;
+            //plc_rtc_tr = RTC_TR;
+            plc_rtc_sec++;
             //This second is in plc_rtc_dr now!
             plc_rtc_correction -= 1000000000;
             //Update plc_rtc_tick_ns
@@ -302,34 +334,17 @@ void _plc_rtc_poll(void)
 
 void plc_rtc_time_get(IEC_TIME *current_time)
 {
-    static tm curr;
-    static uint32_t rtc_tr, rtc_dr;
-    static int64_t rtc_corr;
+    int64_t rtc_sec;
+    int64_t rtc_corr;
 
     //Read buffered register values
     PLC_DISABLE_INTERRUPTS();
-    rtc_tr  = plc_rtc_tr;
-    rtc_dr  = plc_rtc_dr;
+    rtc_sec  = plc_rtc_sec;
     rtc_corr = plc_rtc_correction;
     PLC_ENABLE_INTERRUPTS();
 
-    curr.tm_sec   = (unsigned char)( rtc_tr & 0x0000000F);
-    curr.tm_sec  += (unsigned char)(((rtc_tr & 0x000000F0) >> 4) * 10);
-    curr.tm_min   = (unsigned char)((rtc_tr & 0x00000F00) >> 8);
-    curr.tm_min  += (unsigned char)(((rtc_tr & 0x0000F000) >> 12) * 10);
-    curr.tm_hour  = (unsigned char)((rtc_tr & 0x000F0000) >> 16);
-    curr.tm_hour += (unsigned char)(((rtc_tr & 0x00F00000) >> 20) * 10);
-
-    curr.tm_day   = (unsigned char)( rtc_dr & 0x0000000F);
-    curr.tm_day  += (unsigned char)(((rtc_dr & 0x00000030) >> 4) * 10);
-    curr.tm_mon   = (unsigned char)((rtc_dr & 0x00000F00) >> 8);
-    curr.tm_mon  += (unsigned char)(((rtc_dr & 0x00001000) >> 12) * 10);
-    curr.tm_year  = (unsigned char)((rtc_dr & 0x000F0000) >> 16);
-    curr.tm_year += (unsigned char)(((rtc_dr & 0x00F00000) >> 20) * 10);
-    curr.tm_year += 2000; // 16 is actually 2016
-
     /* Convert current date/time to unix time seconds */
-    current_time->tv_sec = dt_to_sec(&curr);
+    current_time->tv_sec  = rtc_sec;
     current_time->tv_sec += (rtc_corr / 1000000000);
     current_time->tv_nsec = (rtc_corr % 1000000000);
 }
