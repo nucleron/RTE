@@ -23,7 +23,6 @@
 
 #include <plc_config.h>
 #include <plc_backup.h>
-#include <plc_diag.h>
 #include <plc_rtc.h>
 #include <plc_hw.h>
 
@@ -125,66 +124,35 @@ void  sec_to_dt (uint32_t utime, tm *date_time)
 
 static bool start_flg = true;
 
-void plc_rtc_init(tm* time)
+void _plc_rtc_dt_set(tm* time)
 {
     uint32_t i;
-    uint32_t tmp=0;
+    uint32_t tmp;
 
-    start_flg = true;
-
-    rcc_periph_clock_enable(RCC_PWR);
-
-    BACKUP_UNLOCK(); //Disable backup domain write protect
+    if (plc_rtc_failure)
+    {
+        return;
+    }
 
     PLC_BKP_RTC_IS_OK = 0;
+    rtc_unlock();
 
-    /* LSE oscillator clock used as the RTC clock */
-    RCC_BDCR |= (1<<8);
-    RCC_BDCR |= RCC_BDCR_LSEON;
-    rcc_periph_clock_enable(RCC_RTC);
+    RTC_ISR |= RTC_ISR_INIT; //Init mode
 
-    //Wait for LSE oscillator start
     for(i=0; i<1000000; i++)
     {
-        if (RCC_BDCR  &  RCC_BDCR_LSERDY)
+        if (RTC_ISR & RTC_ISR_INITF)
         {
             break;
         }
     }
 
-    if (!(RCC_BDCR  & RCC_BDCR_LSERDY))
+    if (!(RTC_ISR & RTC_ISR_INITF))
     {
-        plc_diag_status |= PLC_DIAG_ERR_LSE;
-        BACKUP_LOCK();
-        return;
-    }
-    rtc_unlock(); //First unlock write-protected RTC registers
-
-    RTC_ISR = RTC_ISR_INIT; //Then Init mode
-
-
-    /* We have 32, 768KHz clock, set 0x80*/ //Using default values
-
-    for(i=0; i<1000000; i++)
-    {
-        if (RTC_ISR & RTC_ISR_INITF) //waiting for INIT flag to come up
-        {
-            break;
-        }
+        goto lse_error;
     }
 
-    if (!(RTC_ISR & RTC_ISR_INITF)) //timeout occured
-    {
-        plc_diag_status |= PLC_DIAG_ERR_LSE;
-
-        RTC_ISR &= ~RTC_ISR_INIT;
-        rtc_lock();
-        BACKUP_LOCK(); //Return to locked state
-        return;
-    }
-
-    //set time
-
+    tmp = 0;
     tmp |= (time->tm_sec%10)<< RTC_TR_SU_SHIFT;
     tmp |= (time->tm_sec/10)<< RTC_TR_ST_SHIFT;
 
@@ -206,91 +174,66 @@ void plc_rtc_init(tm* time)
 
     tmp |= (time->tm_year%10) << RTC_DR_YU_SHIFT;
     tmp |= ((time->tm_year%100)/10) << RTC_DR_YT_SHIFT;
+
     RTC_DR = tmp;
+
     RTC_ISR &= ~RTC_ISR_INIT;
 
     /* Normal termination */
-    PLC_BKP_RTC_IS_OK = 1;
     rtc_lock();
-    BACKUP_LOCK();
+    PLC_BKP_RTC_IS_OK = 1;
+    start_flg = true;
     return;
     /* LSE error occured */
-//lse_error:
-//    //plc_diag_status |= PLC_DIAG_ERR_LSE; //FIXME
-//    rtc_lock();
-//    plc_rtc_failure = 1;
+lse_error:
+    //plc_diag_status |= PLC_DIAG_ERR_LSE;
+    rtc_lock();
+    plc_rtc_failure = 1;
 }
 
-void plc_rtc_dt_set(tm* time)
+void plc_rtc_init(tm* time)
 {
     uint32_t i;
-    uint32_t dr;
-    uint32_t tr;
 
-    if (plc_diag_status & PLC_DIAG_ERR_LSE)
-    {
-        return;
-    }
-
-    start_flg = true;
+    rcc_periph_clock_enable(RCC_PWR);
 
     BACKUP_UNLOCK(); //Disable backup domain write protect
-    rtc_unlock();
+    /* LSE oscillator clock used as the RTC clock */
+    RCC_BDCR |= (1<<8);
+    RCC_BDCR |= RCC_BDCR_LSEON;
+    rcc_periph_clock_enable(RCC_RTC);
 
-    RTC_ISR = RTC_ISR_INIT; //Init mode
-
+    //Wait for LSE oscillator start
     for(i=0; i<1000000; i++)
     {
-        if (RTC_ISR & RTC_ISR_INITF)
+        if (RCC_BDCR  &  RCC_BDCR_LSERDY)
         {
             break;
         }
     }
 
-    if (!(RTC_ISR & RTC_ISR_INITF))
+    if (!(RCC_BDCR  & RCC_BDCR_LSERDY))
     {
-        goto lse_error;
+        //plc_diag_status |= PLC_DIAG_ERR_LSE;
+        plc_rtc_failure = 1;
+        BACKUP_LOCK();
+        return;
     }
 
-    tr = 0;
-    tr |= (time->tm_sec%10)<< RTC_TR_SU_SHIFT;
-    tr |= (time->tm_sec/10)<< RTC_TR_ST_SHIFT;
+    _plc_rtc_dt_set(time);
+    BACKUP_LOCK();
+}
 
-    tr |= (time->tm_min%10)<< RTC_TR_MNU_SHIFT;
-    tr |= (time->tm_min/10)<< RTC_TR_MNT_SHIFT;
+void plc_rtc_dt_set(tm* time)
+{
 
-    tr |= (time->tm_hour%10)<< RTC_TR_HU_SHIFT;
-    tr |= (time->tm_hour/10)<< RTC_TR_HT_SHIFT;
-    //set date
-    dr=0;
-    dr = 1<<RTC_DR_WDU_SHIFT;
-    dr |= (time->tm_day%10) << RTC_DR_DU_SHIFT;
-    dr |= (time->tm_day/10) << RTC_DR_DT_SHIFT;
-
-    dr |= (time->tm_mon%10) << RTC_DR_MU_SHIFT;
-    dr |= (time->tm_mon/10) << RTC_DR_MT_SHIFT;
-
-    dr |= (time->tm_year%10) << RTC_DR_YU_SHIFT;
-    dr |= ((time->tm_year%100)/10) << RTC_DR_YT_SHIFT;
-
+    BACKUP_UNLOCK();
     PLC_DISABLE_INTERRUPTS();
-    RTC_TR = tr;
-    RTC_DR = dr;
-    start_flg = true;
+
+    _plc_rtc_dt_set(time);
+
     PLC_ENABLE_INTERRUPTS();
-
-    RTC_ISR &= ~RTC_ISR_INIT;
-
-    /* Normal termination */
-    rtc_lock();
     BACKUP_LOCK();
-    return;
-    /* LSE error occured */
-lse_error:
-    plc_diag_status |= PLC_DIAG_ERR_LSE;
-    rtc_lock();
-    BACKUP_LOCK();
-    plc_rtc_failure = 1;
 }
 
 void plc_rtc_dt_get(tm* time)
