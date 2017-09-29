@@ -200,7 +200,7 @@
 #define PLC_O1_PIN    GPIO5
 
 #define PLC_O2_PERIPH RCC_GPIOB
-#define PLC_O2_PORT   GPIOB
+#define PLC_O2_PORT   GPIOD
 #define PLC_O2_PIN    GPIO4
 
 #define PLC_O3_PERIPH RCC_GPIOB
@@ -209,11 +209,11 @@
 
 #define PLC_O4_PERIPH RCC_GPIOC
 #define PLC_O4_PORT   GPIOC
-#define PLC_O4_PIN    GPIO6
+#define PLC_O4_PIN    GPIO9
 
-#define PLC_O5_PERIPH RCC_GPIOC
-#define PLC_O5_PORT   GPIOC
-#define PLC_O5_PIN    GPIO7
+#define PLC_O5_PERIPH RCC_GPIOA
+#define PLC_O5_PORT   GPIOA
+#define PLC_O5_PIN    GPIO8
 
 #define PLC_O6_PERIPH RCC_GPIOD
 #define PLC_O6_PORT   GPIOD
