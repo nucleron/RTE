@@ -16,9 +16,8 @@ typedef struct {
 	int tm_mon;			/* Month.	[0-11] */
 	int tm_year;			/* Year	*/
 } tm;
-//#include <time.h>
+
 #include <iec_types_all.h>
-//#include <iec_std_lib.h>
 
 extern volatile uint8_t plc_rtc_failure;
 
