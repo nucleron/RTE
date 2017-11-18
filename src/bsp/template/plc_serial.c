@@ -1,136 +1,67 @@
-/*
- * This file is based on the libopencm3 project.
- *
- * Copyright (C) 2016 Nucleron R&D LLC (main@nucleron.ru)
- *
- * This library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library.  If not, see <http://www.gnu.org/licenses/>.
- */
+/******************************************************************************
+*           This file contains debug serial port related stuff                *
+*You can use src/bsp/common/stm32/f2/plc_serial.c as reference implementation.*
+*                                                                             *
+*    Debug serial port is used to connect PLC with Host which is running IDE. *
+* We use full duplex serial link for the debug. Two FIFOs are used to transfer*
+* the data in each direction.                                                 *
+*                                                                             *
+*    This file should be used as Low level part of PLC side debuger. I must   *
+* contain debug UART driver with the following API.                           *
+******************************************************************************/
 
+/*****************************************************************************/
+/* Platform specific includes */
 
+/* STM32 example
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/usart.h>
 
 #include <libopencm3/cm3/cortex.h>
 #include <libopencm3/cm3/nvic.h>
+*/
 
+/*****************************************************************************/
+/* YAPLC includes */
 #include <plc_config.h>
-#include <plc_dbg.h>
+#include <plc_dbg.h>      /*See this file for dbg_fifo API.*/
 
-static unsigned char usart_data = 0x00;
+/*  FIFOS or TX and RX */
 static dbg_fifo_t usart_rx_buf, usart_tx_buf;
 
+/*****************************************************************************/
+/* This function is used to setup the debug serial port at the device reset. */
 void dbg_serial_init(void)
 {
+    /* First init FIFOs. */
     dbg_fifo_flush(&usart_rx_buf);
     dbg_fifo_flush(&usart_tx_buf);
 
-    //rcc_periph_clock_enable(RCC_AFIO);
-    rcc_periph_clock_enable(DBG_USART_PERIPH);
-    rcc_periph_clock_enable(DBG_USART_TX_PERIPH);
-#if (DBG_USART_RX_PERIPH != DBG_USART_TX_PERIPH)
-    rcc_periph_clock_enable(DBG_USART_RX_PERIPH);
-#endif
-    /* Enable the DBG_USART interrupt. */
-    nvic_enable_irq(DBG_USART_VECTOR);
+    /* Then init serial port. */
 
-    /* Setup GPIO pins for USART transmit. */
-    gpio_mode_setup(DBG_USART_TX_PORT, GPIO_MODE_AF,  GPIO_PUPD_NONE, DBG_USART_TX_PIN);
-
-    /* Setup GPIO pins for USART receive. */
-    gpio_mode_setup(DBG_USART_RX_PORT, GPIO_MODE_AF, GPIO_PUPD_PULLUP, DBG_USART_RX_PIN);
-
-    gpio_set_af(DBG_USART_TX_PORT, GPIO_AF7, DBG_USART_TX_PIN);
-    gpio_set_af(DBG_USART_RX_PORT, GPIO_AF7, DBG_USART_RX_PIN);
-
-    /* Setup USART parameters. */
-    usart_set_baudrate    (DBG_USART, 57600);
-    usart_set_databits    (DBG_USART, 8);
-    usart_set_stopbits    (DBG_USART, USART_STOPBITS_1);
-    usart_set_mode        (DBG_USART, USART_MODE_TX_RX);
-    usart_set_parity      (DBG_USART, USART_PARITY_NONE);
-    usart_set_flow_control(DBG_USART, USART_FLOWCONTROL_NONE);
-    /* Enable USART Receive interrupt. */
-    usart_enable_rx_interrupt(DBG_USART);
-
-    /* Finally enable the USART. */
-    usart_enable(DBG_USART);
+    /* Insert your code here. */
 }
 
-void DBG_USART_ISR(void)
-{
-    /* Check if we were called because of RXNE. */
-    if (((USART_CR1(DBG_USART) & USART_CR1_RXNEIE) != 0) && ((USART_SR(DBG_USART) & USART_SR_RXNE) != 0))
-    {
-        usart_data = usart_recv(DBG_USART);
-        if (!dbg_fifo_write_byte(&usart_rx_buf, usart_data))
-        {
-            usart_disable_rx_interrupt(DBG_USART);
-        }
-    }
-    /* Check if we were called because of TXE. */
-    if (((USART_CR1(DBG_USART) & USART_CR1_TXEIE) != 0) && ((USART_SR(DBG_USART) & USART_SR_TXE) != 0))
-    {
-        /* Put data into the transmit register. */
-        if (dbg_fifo_read_byte(&usart_tx_buf, &usart_data))
-        {
-            usart_send(DBG_USART, usart_data);
-        }
-        else
-        {
-            /* Disable the TXE interrupt as we don't need it anymore. */
-            usart_disable_tx_interrupt(DBG_USART);
-        }
-    }
-}
-
+/*---------------------------------------------------------------------------*/
+/* This function is used to write data to usart_tx_buf. */
 int dbg_serial_write(unsigned char *d, unsigned short n)
 {
     int res = 0;
-    cm_disable_interrupts();
-    res = dbg_fifo_write(&usart_tx_buf, d, n);
-    if (res && !(USART_CR1(DBG_USART) & USART_CR1_TXEIE))
-    {
-        if (dbg_fifo_read_byte(&usart_tx_buf, &usart_data))
-        {
-            while (!(USART_SR(DBG_USART) & USART_SR_TXE));///пока буфер не пуст
-            usart_send(DBG_USART, usart_data);
-            usart_enable_tx_interrupt(DBG_USART);
-        }
-    }
-    cm_enable_interrupts();
-    return res;
+    PLC_DISABLE_INTERRUPTS();
+    /* Insert your code here. */
+    /* dbg_fifo_write_byte, and dbg_fifo_write can be used here.*/
+    PLC_ENABLE_INTERRUPTS();
+    return res; /*Return number of bytes written.*/
 }
 
+/* This function is used to read data from usart_rx_buf. */
 int dbg_serial_read(unsigned char *d, unsigned short n)
 {
-    int res;
-    res = 0;
-    while (n--)
-    {
-        cm_disable_interrupts();
-        if (dbg_fifo_read_byte(&usart_rx_buf, d))
-        {
-            cm_enable_interrupts();
-            d++;
-            res++;
-        }
-        else
-        {
-            cm_enable_interrupts();
-            break;
-        }
-    }
-    return res;
+    int res = 0;
+    PLC_DISABLE_INTERRUPTS();
+    /* Insert your code here. */
+    /* dbg_fifo_read_byte, and dbg_read_write can be used here.*/
+    PLC_ENABLE_INTERRUPTS();
+    return res; /*Return number of bytes red.*/
 }
