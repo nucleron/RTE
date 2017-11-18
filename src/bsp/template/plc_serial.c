@@ -61,7 +61,7 @@ int dbg_serial_read(unsigned char *d, unsigned short n)
     int res = 0;
     PLC_DISABLE_INTERRUPTS();
     /* Insert your code here. */
-    /* dbg_fifo_read_byte, and dbg_read_write can be used here.*/
+    /* dbg_fifo_read_byte, and dbg_fifo_read can be used here.*/
     PLC_ENABLE_INTERRUPTS();
     return res; /*Return number of bytes red.*/
 }

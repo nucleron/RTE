@@ -1,5 +1,5 @@
 /******************************************************************************
-*           This file contains retain wait timer related stuff.               *
+*               This file contains wait timer related stuff.                  *
 *You can use src/bsp/common/stm32/plc_wait_tmr.c as reference implementation. *
 ******************************************************************************/
 

@@ -1,5 +1,5 @@
 /******************************************************************************
-*               This file contains retain RTC related stuff.                  *
+*                   This file contains RTC related stuff.                     *
 *  You can use src/bsp/common/stm32/f2/plc_rtc.c as reference implementation. *
 ******************************************************************************/
 

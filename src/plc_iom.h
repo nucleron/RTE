@@ -11,7 +11,7 @@
 typedef struct _plc_io_metods_t plc_io_metods_t;
 struct _plc_io_metods_t
 {
-    void     (*init)   (void);                /* void     init    (void);                                */
+    void     (*init)   (void);                /* void     init    (void);                               */
     bool     (*test_hw)(void);                /* bool     test_hw (void);                               */
     bool     (*check)  (uint16_t);            /* bool     check   (uint16_t lid);                       */
     void     (*begin)  (uint16_t);            /* void     begin   (uint16_t lid);                       */
