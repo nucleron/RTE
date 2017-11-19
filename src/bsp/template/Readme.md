@@ -99,11 +99,11 @@ We use external bootloader utility to load softPLC to devices.
 YAPLC target plugins **GetBinaryCode** returns bootloader command 
 which then used by YAPLC connectors **NewPLC** method to load softPLC to YAPLC based device.
 
-To write new target one need to 
+To write new target one need to:
 * copy one of current targets,
 * change IO map in **extensions.cfg** file.
-* rename: plc_***_main.c, 
-* rename ***_target class in **\_\_init\_\_.py**,
+* rename: **plc_\*\*\*_main.c**, 
+* rename **\*\*\*_target** class in **\_\_init\_\_.py**,
 * addjust **load_addr** and **runtime_addr** fields to **\_\_init\_\_** method,
 * if target is not STM32 based, then use **toolchain\_\_yaplc** as base class, add **GetBinaryCode** method.
 
