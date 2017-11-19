@@ -71,6 +71,19 @@ We need some hardware resources for RTE/softPLC to work porperly, they are:
 
 # YAPLC/IDE
 
-YAPLC/IDE is a set of Beremiz plugins which 
+YAPLC/IDE is a set of Beremiz plugins, they are:
+* A set of target plugins.
+* YAPLC connector.
+* Retargetable configuration plugin.
 
+## Target plugins
+Target plugins are used to: 
+* build softPLCs for YAPLC tagrets, 
+* give PLC IO map to configuration plugin, 
+* give bootloader console command to connector plugin.
+
+YAPLC target plugins use gcc based yaplc toolchain to build softPLCs. 
+We use external bootloader utility to load softPLC to devices.
+YAPLC target plugins **GetBinaryCode** returns bootloader command 
+which then used by YAPLC connectors **NewPLC** method to load softPLC to YAPLC based device.
 
