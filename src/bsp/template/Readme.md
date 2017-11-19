@@ -48,8 +48,15 @@ PLCs drivers have standard interface, see [plc_driver_template.c](plc_driver_tem
 
 ## Debuger
 
-PLC debuger is responsible for communication with YAPLC/IDE. Upper level is implemented in [src/plc_dbg.c](../../plc_dbg.c).
+PLC debuger is responsible for communication with YAPLC/IDE. 
+
+The debuger can start and stop softPLC, load softPLC to the device. 
+
 PLC debugger API is defined in [src/plc_dbg.h](../../plc_dbg.h).
+
+High level is implemented in [src/plc_dbg.c](../../plc_dbg.c).
+
+Low level of the debuger must be implemented in BSP as debuger serial driver, see below.
 
 ## Critical hardware resources
 
