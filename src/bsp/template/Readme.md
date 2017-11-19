@@ -31,7 +31,15 @@ This table is used by YAPLC/RTE IO manager to connect device drivers with locate
 ## IO manager
 YAPLC/RTE IO mansger controls PLC hardware drivers and communicates with softPLC. IO manager schedules PLCs IO activity. On each softPLC run plc_iom_get() is called before softPLC code and plc_iom_set() is called after softPLC code. Every work cycle plc_iom_poll() is called to schedule asynchronous IO activity.
 
+IO manager workflow is:
 
+* Init hardware.
+* Check hardware.
+* After softPLC cstartuo code is called - check and sort locations. Locations are first sorted in three groups: **inputs**, **memories**, **outputs**. Ihside these groups locations are sorted based on IO protocol (driver) IDs. After first sort locations are checked vor validity, if no erorrs found, then protocol specific sort is done for **inputs**, **memories** and **outputs**.
+* Initiate IO activities on softPLC start.
+* Poll drivers every main loop cycle.
+* Get and set driver variables every softPLC cycle.
+* Terminate IO activities on softPLC stop.
 
 # YAPLC/IDE
 
