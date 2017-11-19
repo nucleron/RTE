@@ -35,11 +35,32 @@ IO manager workflow is:
 
 * Init hardware.
 * Check hardware.
-* After softPLC cstartuo code is called - check and sort locations. Locations are first sorted in three groups: **inputs**, **memories**, **outputs**. Ihside these groups locations are sorted based on IO protocol (driver) IDs. After first sort locations are checked vor validity, if no erorrs found, then protocol specific sort is done for **inputs**, **memories** and **outputs**.
+* After softPLC cstartup code is called - check and sort locations. Locations are first sorted in three groups: **inputs**, **memories**, **outputs**. Ihside these groups locations are sorted based on IO protocol (driver) IDs. After first sort locations are checked vor validity, if no erorrs found, then protocol specific sort is done for **inputs**, **memories** and **outputs**.
 * Initiate IO activities on softPLC start.
 * Poll drivers every main loop cycle.
 * Get and set driver variables every softPLC cycle.
 * Terminate IO activities on softPLC stop.
+
+For interface with drivers BSP must contain [PLC IO manager registry](plc_iom_reg.c)
+
+### Driver interface
+PLCs drivers have standard interface, see [plc_driver_template.c](plc_driver_template.c) for details.
+
+## Debuger
+
+PLC debuger is responsible for communication with YAPLC/IDE. Upper level is implemented in [src/plc_dbg.c](../../plc_dbg.c).
+PLC debugger API is defined in [src/plc_dbg.h](../../plc_dbg.h).
+
+## Critical hardware resources
+
+We need some hardware resources for RTE/softPLC to work porperly, they are:
+* [RTC](plc_rtc.c) (needed for IEC STD LIB).
+* Periodic interrupt source to [count time](plc_wait_tmr.c) for IOM sheduing and delays.
+* Periodic interrupt source to [call softPLC](plc_tick.c) code.
+* [Debug UART](plc_serial.c) for IDE connection.
+* [Retain](plc_backup.c) memory (e.g. EEPROM).
+* [Jumpers](plc_hw.c) or emulation.
+* [Boot](plc_hw.c) pin, or emulation. 
 
 # YAPLC/IDE
 
