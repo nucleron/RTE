@@ -76,6 +76,18 @@ YAPLC/IDE is a set of Beremiz plugins, they are:
 * YAPLC connector.
 * Retargetable configuration plugin.
 
+## Connector plugin
+YAPLC connector use serial port to communicate with PLCs. 
+We use YaPySerial library for communication as PySerial had problems with Java on Windows(R) host.
+
+## Configuration plugin
+Configuration plugin parses PLC IO MAP which is given by YAPLC target plugin and generates variables location 
+three.
+
+PLC IO map files are situated in target dirrectories. These files are plain text files which contain IO MAP descriptions
+for target devices. We use pretty simple declarative description language in YAPLC configuration plugin, you may use 
+any current target as a reference to write your own target IO map.
+
 ## Target plugins
 Target plugins are used to: 
 * build softPLCs for YAPLC tagrets, 
@@ -87,3 +99,12 @@ We use external bootloader utility to load softPLC to devices.
 YAPLC target plugins **GetBinaryCode** returns bootloader command 
 which then used by YAPLC connectors **NewPLC** method to load softPLC to YAPLC based device.
 
+To write new target one need to 
+* copy one of current targets,
+* change IO map in **extensions.cfg** file.
+* rename: plc_***_main.c, 
+* rename ***_target class in **\_\_init\_\_.py**,
+* addjust **load_addr** and **runtime_addr** fields to **\_\_init\_\_** method,
+* if target is not STM32 based, then use **toolchain\_\_yaplc** as base class, add **GetBinaryCode** method.
+
+Use **toolchain\_\_yaplc\_\_stm32** **GetBinaryCode** method as reference implementation.
