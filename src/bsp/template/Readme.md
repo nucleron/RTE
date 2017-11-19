@@ -14,6 +14,7 @@ YAPLC/RTE is runtime environment which can run Beremiz/matiec generated softPLC.
 It can be compiled in one executable file with softPLC or YAPLC/RTE may be used as PLC firmware
 which may run softPLC which is compiled and linked as a separate executable file.
 
+## ABI
 YAPLC/RTE uses plc ABI for communivation with softPLC. 
 
 The ABI if defined in src/plc_abi.h it consists of several data structures which are placed in special 
@@ -26,6 +27,11 @@ These structures are:
 * **plc_loc_tbl_t** - location table generated in softPLC on compile phase. The global variable of this type is blaced at softPLC **data** section. 
 This table is used by YAPLC/RTE IO manager to connect device drivers with located variables of softPLC. The table consists of location descriptors.
 * **plc_loc_dsc_t** - location descriptor. This structure contains data which is used by YAPLC/RTE IO manager to communicate with softPLC.
+
+## IO manager
+YAPLC/RTE IO mansger controls PLC hardware drivers and communicates with softPLC. IO manager schedules PLCs IO activity. On each softPLC run plc_iom_get() is called before softPLC code and plc_iom_set() is called after softPLC code. Every work cycle plc_iom_poll() is called to schedule asynchronous IO activity.
+
+
 
 # YAPLC/IDE
 
