@@ -67,7 +67,8 @@ We need some hardware resources for RTE/softPLC to work porperly, they are:
 * [Debug UART](plc_serial.c) for IDE connection.
 * [Retain](plc_backup.c) memory (e.g. EEPROM).
 * [Jumpers](plc_hw.c) or emulation.
-* [Boot](plc_hw.c) pin, or emulation. 
+* [Boot](plc_hw.c) pin, or emulation.
+* [MCU main clock](plc_clock.c), is needed to set MCU clock frequency, se up reservse clocks, etc.
 
 # YAPLC/IDE
 

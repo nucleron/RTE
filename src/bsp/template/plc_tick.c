@@ -5,6 +5,7 @@
 
 /* Platform specific includes should be places here*/
 /*
+STM32 example
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/cm3/nvic.h>
 #include <libopencm3/cm3/systick.h>
