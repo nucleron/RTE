@@ -160,9 +160,9 @@
 #define PLC_O0_PORT   GPIOB
 #define PLC_O0_PIN    GPIO6
 
-#define PLC_O1_PERIPH RCC_GPIOB
-#define PLC_O1_PORT   GPIOB
-#define PLC_O1_PIN    GPIO5
+#define PLC_O1_PERIPH RCC_GPIOA
+#define PLC_O1_PORT   GPIOA
+#define PLC_O1_PIN    GPIO7
 
 #define PLC_O2_PERIPH RCC_GPIOD
 #define PLC_O2_PORT   GPIOD
@@ -184,7 +184,7 @@
 #define PLC_AI_NUM    4
 
 #define ADC_CHANNEL_REF2v5  ADC_CHANNEL2
-#define ADC_CHANNEL_18v     ADC_CHANNEL7
+#define ADC_CHANNEL_18v     ADC_CHANNEL2 /*Костыль*/
 #define ADC_CHANNEL_AIN0    ADC_CHANNEL14
 #define ADC_CHANNEL_AIN1    ADC_CHANNEL15
 #define ADC_CHANNEL_AIN2    ADC_CHANNEL8
@@ -214,10 +214,10 @@
 #define PLC_DEFAULT_ADC_FLG              0
 #define PLC_DEFAULT_ADC_MODE             1
 
-#define PLC_DEFAULT_COEF_10V             40563
-#define PLC_DEFAULT_COEF_20MA            42027
-#define PLC_DEFAULT_COEF_100R            2487  //*0.1 Ohm
-#define PLC_DEFAULT_COEF_4K              4034  //*1 Ohm
+#define PLC_DEFAULT_COEF_10V             41778
+#define PLC_DEFAULT_COEF_20MA            42661
+#define PLC_DEFAULT_COEF_100R            2551  //*0.1 Ohm
+#define PLC_DEFAULT_COEF_4K              4163  //*1 Ohm
 
 ///TODO: Compute rigth values!!!
 #define PLC_COEF_DELTA_10V             20000 ///!!!
@@ -280,11 +280,11 @@
 
 #define PLC_NON11_PERIPH    RCC_GPIOB
 #define PLC_NON11_PORT      GPIOB
-#define PLC_NON11_PIN       GPIO15
+#define PLC_NON11_PIN       GPIO13
 
 #define PLC_NON02_PERIPH    RCC_GPIOB
 #define PLC_NON02_PORT      GPIOB
-#define PLC_NON02_PIN       GPIO13
+#define PLC_NON02_PIN       GPIO15
 
 #define PLC_NON12_PERIPH    RCC_GPIOB
 #define PLC_NON12_PORT      GPIOB
@@ -324,7 +324,7 @@
 
 #define PLC_ADC18_PERIPH    RCC_GPIOA
 #define PLC_ADC18_PORT      GPIOA
-#define PLC_ADC18_PIN       GPIO7
+#define PLC_ADC18_PIN       GPIO2 /*Костыль*/
 
 // Analog outputs
 #define PLC_AO_NUM    2

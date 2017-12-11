@@ -167,9 +167,9 @@
 #define PLC_O0_PORT   GPIOB
 #define PLC_O0_PIN    GPIO6
 
-#define PLC_O1_PERIPH RCC_GPIOB
-#define PLC_O1_PORT   GPIOB
-#define PLC_O1_PIN    GPIO5
+#define PLC_O1_PERIPH RCC_GPIOA
+#define PLC_O1_PORT   GPIOA
+#define PLC_O1_PIN    GPIO7
 
 #define PLC_O2_PERIPH RCC_GPIOB
 #define PLC_O2_PORT   GPIOD
