@@ -134,7 +134,7 @@
 		<Unit filename="../../src/COPYING.GPL3" />
 		<Unit filename="../../src/COPYING.LGPL3" />
 		<Unit filename="../../src/License.txt" />
-		<Unit filename="../../src/bsp/common/plc_mbm.c">
+		<Unit filename="../../src/bsp/common/plc_mbm_ng.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../src/bsp/common/plc_mbs.c">

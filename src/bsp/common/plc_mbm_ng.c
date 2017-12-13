@@ -30,6 +30,42 @@
 
 #include <mb.h>
 
+
+#define PLC_APP_LTE(i)        (PLC_APP->l_tab[i])
+
+#define PLC_APP_ASZ(i)        (PLC_APP_LTE(i)->a_size)
+#define PLC_APP_ADDR(i)        PLC_APP_LTE(i)->a_data
+#define PLC_APP_APTR(i, type) ((type *)(PLC_APP_LTE(i)->a_data))
+
+#define PLC_APP_VTYPE(i)      (PLC_APP_LTE(i)->v_type)
+#define PLC_APP_VSIZE(i)      (PLC_APP_LTE(i)->v_size)
+
+#define PLC_APP_VVAL(i, type) (*(type)(PLC_APP_LTE(i)->v_buff))
+
+#define _RQ_REG_LIM (64)
+/*Request IB3.[id].[type].[slv_address].[reg_address].[period_ms]*/
+typedef struct {
+    uint32_t id;
+    uint32_t type;
+    uint32_t slv_address;
+    uint32_t reg_address;
+    uint32_t period_ms;
+}plc_mbm_rq_cfg_struct;
+
+/*Memory MX3.[id].[reg_id] or MW3.[id].[reg_id]*/
+typedef struct {
+    uint32_t id;
+    uint32_t red_id;
+}plc_mbm_reg_cfg_struct;
+
+/*Configuration QX3.[baud].[mode]*/
+typedef struct {
+    uint32_t baud;
+    uint32_t mode;
+}plc_mbm_cfg_struct;
+
+#define _CFG_STR_SZ(a) (sizeof(a)/sizeof(uint32_t))
+
 typedef enum
 {
     /*Working states*/
@@ -79,6 +115,9 @@ typedef enum
 typedef struct
 {
     uint8_t state;
+    uint16_t rq_start;
+    uint16_t rq_end;
+
 } plc_mbm_struct;
 
 /*Read  request function pointer*/
@@ -102,7 +141,9 @@ typedef plc_mbm_trans_fp * plc_mbm_trans_tbl;
 
 plc_mbm_struct plc_mbm =
 {
-    .state  = PLC_MBM_ST_INIT
+    .state    = PLC_MBM_ST_INIT,
+    .rq_start = 0,
+    .rq_end   = 0
 };
 
 static void plc_mbm_tf_error(uint8_t err)
@@ -121,14 +162,19 @@ const plc_mbm_rq_fp plc_mbm_rq_tbl[PLC_MBM_RQ_LIM] =
     [PLC_MBM_RQ_RD_IW] = {.rd = mb_mstr_rq_read_inp_reg           },
     [PLC_MBM_RQ_RD_MW] = {.rd = mb_mstr_rq_read_holding_reg       },
     /*Write*/
-    [PLC_MBM_RQ_RD_MX] = {.wr = mb_mstr_rq_write_multi_coils      },
-    [PLC_MBM_RQ_RD_MW] = {.wr = mb_mstr_rq_write_multi_holding_reg}
+    [PLC_MBM_RQ_WR_MX] = {.wr = (plc_mbm_wr_rq_fp)mb_mstr_rq_write_multi_coils}, /*Фактически будем использовать UHSORT * */
+    [PLC_MBM_RQ_WR_MW] = {.wr = mb_mstr_rq_write_multi_holding_reg}
 };
 /*Fetch request function selector*/
 /**TODO: Придумать, как лучше написать...*/
 static mb_err_enum _default_fetch(mb_inst_struct *inst, UCHAR snd_addr, USHORT reg_addr, USHORT reg_num)
 {
+    (void)inst;
+    (void)snd_addr;
+    (void)reg_addr;
+    (void)reg_num;
     plc_mbm_tf_error(PLC_MBM_RST_ERR_FAIL);
+    return MB_EILLFUNC;
 }
 /**А что если выполнять реквесты прямо тут?*/
 /**Или переместить этот код прямо в обработчик перехода SCHED->FETCH?*/
@@ -141,12 +187,12 @@ static inline plc_mbm_rd_rq_fp _plc_mbm_get_fetch_fp(uint8_t rq_type)
     case PLC_MBM_RQ_RD_MW:
         return mb_mstr_rq_read_holding_reg;
     default:
-        return (plc_mbm_rd_rq_fp)0;
+        return _default_fetch;
     }
 }
 
 /*Default transition handler*/
-static void plc_mbm_tf_default(uint8_t err)
+static void plc_mbm_tf_default(void)
 {
     plc_mbm_tf_error(PLC_MBM_RST_ERR_FAIL);
 }
@@ -167,7 +213,7 @@ const plc_mbm_trans_fp plc_mbm_rd_tbl[PLC_MBM_ST_RQ_LIM] =
     [PLC_MBM_ST_RQ_READ]  = plc_mbm_tf_rd_read,
     [PLC_MBM_ST_RQ_FETCH] = plc_mbm_tf_default,
     [PLC_MBM_ST_RQ_WRITE] = plc_mbm_tf_default
-}
+};
 
 static void plc_mbm_tf_wr_sched(void)
 {
@@ -200,26 +246,160 @@ const plc_mbm_trans_tbl plc_mbm_tr_tbl[PLC_MBM_RQ_LIM] =
     [PLC_MBM_RQ_RD_IW] = (plc_mbm_trans_tbl)plc_mbm_rd_tbl,
     [PLC_MBM_RQ_RD_MW] = (plc_mbm_trans_tbl)plc_mbm_rd_tbl,
     /*Write*/
-    [PLC_MBM_RQ_RD_MX] = (plc_mbm_trans_tbl)plc_mbm_wr_tbl,
-    [PLC_MBM_RQ_RD_MW] = (plc_mbm_trans_tbl)plc_mbm_wr_tbl
+    [PLC_MBM_RQ_WR_MX] = (plc_mbm_trans_tbl)plc_mbm_wr_tbl,
+    [PLC_MBM_RQ_WR_MW] = (plc_mbm_trans_tbl)plc_mbm_wr_tbl
 };
 
 #define LOCAL_PROTO plc_mbm
 void PLC_IOM_LOCAL_INIT(void)
 {
+    /*Инициализация управлящих структур*/
 }
+
 bool PLC_IOM_LOCAL_TEST_HW(void)
 {
+    return true;/*Оставить как есть*/
+}
+
+#define _CHK_ERRROR(e) do{ \
+                            plc_iom_errno_print(e);\
+                            plc_mbm.state = PLC_MBM_ST_ERR; \
+                            return false; \
+                        }while(0)
+
+
+bool _ckeck_rq(uint16_t i)
+{
+    bool st = false;
+    int j;
+    plc_mbm_rq_cfg_struct * rq_cfg;
+
+    if (_CFG_STR_SZ(plc_mbm_rq_cfg_struct) != PLC_APP_ASZ(i))
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_SZ);
+    }
+
+    rq_cfg = PLC_APP_APTR(i, plc_mbm_rq_cfg_struct);
+
+    /*Проверка типа запроса*/
+    /** АААА! Дайте мне питон, и чтоб работал быстро, как Си!!1 */
+    static const plc_mbm_rq_enum _rq_types[] =
+    {
+        PLC_MBM_RQ_RD_IX,
+        PLC_MBM_RQ_RD_MX,
+        PLC_MBM_RQ_RD_IW,
+        PLC_MBM_RQ_RD_MW,
+        PLC_MBM_RQ_WR_MX,
+        PLC_MBM_RQ_WR_MW
+    };
+
+    for (j = 0; j < PLC_MBM_RQ_LIM; j++)
+    {
+        if (_rq_types[j] == rq_cfg->type)
+        {
+            st = true;
+            break;
+        }
+    }
+
+    if (!st)
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_RQ_TP);
+    }
+
+    /*Адреса слейва, */
+    if ((244 < rq_cfg->slv_address) || (0 == rq_cfg->slv_address))
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_RQ_RA);
+    }
+
+    /*адреса регистра, */
+    if ((65535-_RQ_REG_LIM)< rq_cfg->slv_address)
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_RQ_RA);
+    }
+
+    /*периода,*/
+    if (3600000 < rq_cfg->period_ms)
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_RQ_MS);
+    }
+
+    /*уникальности запроса*/
+    for (j = plc_mbm.rq_start; j < i; j++)
+    {
+        if (PLC_APP_APTR(j, plc_mbm_rq_cfg_struct)->id == rq_cfg->id)
+        {
+            _CHK_ERRROR(PLC_ERRNO_MBM_RQ_ID);
+        }
+    }
+
+    /*Проверки окончены*/
+    plc_mbm.rq_end = i;
     return true;
 }
+
+/**TODO*/
+bool _ckeck_mem(uint16_t i)
+{
+    (void)i;
+    return true;
+}
+
+/**TODO*/
+bool _ckeck_cfg(uint16_t i)
+{
+    (void)i;
+    return true;
+}
+
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
-    return true;
+    switch (plc_mbm.state)
+    {
+    case PLC_MBM_ST_INIT:
+    {
+        /*Ждем появления входнной локации*/
+        if (PLC_LT_I != PLC_APP_VTYPE(i))
+        {
+            _CHK_ERRROR(PLC_ERRNO_MBM_TP); /*Wrong variable type*/
+        }
+
+        plc_mbm.state    = PLC_MBM_ST_CHK_RQ;
+        plc_mbm.rq_start = i;
+        return _ckeck_rq(i);
+    }
+    case PLC_MBM_ST_CHK_RQ:
+    {
+        /*Look ahead and switch state*/
+        switch (PLC_APP_VTYPE(i))
+        {
+        case PLC_LT_M:
+            plc_mbm.state = PLC_MBM_ST_CHK_MEM;
+            /**TODO*/
+            return _ckeck_mem(i);
+
+        case PLC_LT_Q:
+            plc_mbm.state = PLC_MBM_ST_CHK_CFG;
+            /**TODO*/
+            return _ckeck_cfg(i);
+
+        case PLC_LT_I:
+            return _ckeck_rq(i);
+
+        default:
+            return false;
+        }
+    }
+    default:
+        _CHK_ERRROR(PLC_ERRNO_MBM_ST); /*Wrong MBM state!*/
+    }
+    return true;/*Конечный автомат проверки локаций, можно попробовать добавить взвешивание*/
 }
 
 void PLC_IOM_LOCAL_START(uint16_t i)
 {
-    (void)i;
+    (void)i;/*Использовать для инициализации модбас-стека*/
 }
 
 void PLC_IOM_LOCAL_STOP(void)
@@ -228,13 +408,13 @@ void PLC_IOM_LOCAL_STOP(void)
 
 void PLC_IOM_LOCAL_BEGIN(uint16_t i)
 {
-    (void)i;
+    (void)i;/*Использовать*/
 }
 //Do once!
 void PLC_IOM_LOCAL_END(uint16_t i)
 {
 //    int j, k, l;
-    (void)i;
+    (void)i;/*использовать*/
 }
 
 uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
@@ -246,19 +426,25 @@ uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
 
 void PLC_IOM_LOCAL_POLL(uint32_t tick)
 {
+    (void)tick;/*Использовать, в том числе для ввода-вывода*/
 }
 
 uint32_t PLC_IOM_LOCAL_WEIGTH(uint16_t i)
 {
+    (void)i;/*Использовать?*/
+    return 0;
 }
 
 uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
 {
-
+    (void)i;/*Не использовать*/
+    return 0;
 }
 
 uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
 {
+    (void)i;/*Не использовать*/
+    return 0;
 }
 
 /**
@@ -324,6 +510,7 @@ void mb_mstr_error_exec_fn_cb(mb_inst_struct *inst, UCHAR dst_addr, const UCHAR*
  */
 void mb_mstr_rq_success_cb(mb_inst_struct *inst)
 {
+    (void)inst;
 }
 
 /**
@@ -341,6 +528,11 @@ mb_err_enum mb_mstr_reg_input_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT r
     //uint8_t reg_index;
 
     (void)inst;
+    (void)reg_buff;
+    (void)reg_addr;
+    (void)reg_num;
+
+    return MB_EILLFUNC;
 
     /* it already plus one in modbus function method. */
     //reg_addr--;
@@ -374,6 +566,12 @@ mb_err_enum mb_mstr_reg_input_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT r
 
 mb_err_enum mb_mstr_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num)
 {
+    (void)inst;
+    (void)reg_buff;
+    (void)reg_addr;
+    (void)reg_num;
+
+    return MB_EILLFUNC;
     //mb_err_enum    status = MB_ENOERR;
 
     //uint8_t reg_index=0;
@@ -481,7 +679,9 @@ mb_err_enum mb_mstr_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT r
     //uint8_t nByte=0;
 
     (void)inst;
+    (void)reg_buff;
     (void)reg_addr;
+    (void)coil_num;
 
     //if (mbm_need_preread)
     //{
@@ -501,6 +701,7 @@ mb_err_enum mb_mstr_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT r
     //}
 
     //return status;
+    return MB_EILLFUNC;
 }
 
 /**
@@ -520,6 +721,9 @@ mb_err_enum mb_mstr_reg_discrete_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHOR
     //uint8_t reg_index;
 
     (void)inst;
+    (void)reg_buff;
+    (void)reg_addr;
+    (void)disc_num;
 
     /* it already plus one in modbus function method. */
     //reg_addr--;
@@ -542,5 +746,6 @@ mb_err_enum mb_mstr_reg_discrete_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHOR
     //}
 
     //return status;
+    return MB_EILLFUNC;
 }
 

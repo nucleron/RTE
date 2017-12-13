@@ -401,14 +401,22 @@ extern void plc_diag_reset(void);
 #define PLC_ERRNO_MBS_EX_INIT 25
 
 /* MBM */
-#define PLC_ERRNO_MBM_ASZ     30
-#define PLC_ERRNO_MBM_TP      31
+#define PLC_ERRNO_MBM_ASZ     300
+#define PLC_ERRNO_MBM_TP      301
+#define PLC_ERRNO_MBM_SZ      302
+#define PLC_ERRNO_MBM_ST      303
+
+#define PLC_ERRNO_MBM_RQ_TP   304
+#define PLC_ERRNO_MBM_RQ_SA   305
+#define PLC_ERRNO_MBM_RQ_RA   306
+#define PLC_ERRNO_MBM_RQ_MS   307
+#define PLC_ERRNO_MBM_RQ_ID   308
+
 #define PLC_ERRNO_MBM_ADDR    32
 #define PLC_ERRNO_MBM_INIT    33
 #define PLC_ERRNO_MBM_TP_INIT 34
 #define PLC_ERRNO_MBM_EX_INIT 35
 #define PLC_ERRNO_MBM_UID     36
-#define PLC_ERRNO_MBM_SZ      37
 /* HMI */
 #define PLC_ERRNO_HMI_ASZ     400
 #define PLC_ERRNO_HMI_TP      401
