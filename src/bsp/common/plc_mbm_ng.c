@@ -81,7 +81,7 @@ typedef enum
     /*Location check states*/
     PLC_MBM_ST_CHK_RQ,  /*Request IB3.[id].[type].[slv_address].[reg_address].[period_ms]*/
     PLC_MBM_ST_CHK_MEM, /*Memory MX3.[id].[reg_id] or MW3.[id].[reg_id]*/
-    PLC_MBM_ST_CHK_CFG  /*Configuration QX3.[baud].[mode]*/
+    PLC_MBM_ST_STOP     /*Configuration QX3.[baud].[mode]*/
 } plc_mbm_st_enum;
 
 typedef enum
@@ -339,20 +339,20 @@ bool _ckeck_rq(uint16_t i)
     return true;
 }
 
-/**TODO*/
+/**TODO: */
 bool _ckeck_mem(uint16_t i)
 {
     (void)i;
     return true;
 }
 
-/**TODO*/
+/**TODO: */
 bool _ckeck_cfg(uint16_t i)
 {
     (void)i;
     return true;
 }
-
+ /** TODO: Поменять вложенность свичей? Или сделать матричный автомат? Или?..*/
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
     switch (plc_mbm.state)
@@ -360,18 +360,32 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     case PLC_MBM_ST_INIT:
     {
         /*Ждем появления входнной локации*/
-        if (PLC_LT_I != PLC_APP_VTYPE(i))
+        switch (PLC_APP_VTYPE(i))
         {
-            _CHK_ERRROR(PLC_ERRNO_MBM_TP); /*Wrong variable type*/
+        case PLC_LT_I:
+        {
+            plc_mbm.state    = PLC_MBM_ST_CHK_RQ;
+            plc_mbm.rq_start = i;
+            return _ckeck_rq(i);
         }
-
-        plc_mbm.state    = PLC_MBM_ST_CHK_RQ;
-        plc_mbm.rq_start = i;
-        return _ckeck_rq(i);
+        case PLC_LT_M:
+        {
+            /*Строго говоря - не имеет смысла проверять!*/
+            plc_mbm.state    = PLC_MBM_ST_CHK_MEM;
+            return _ckeck_mem(i);
+        }
+        case PLC_LT_Q:
+        {
+            plc_mbm.state    = PLC_MBM_ST_STOP;
+            return _ckeck_cfg(i);
+        }
+        default:
+             _CHK_ERRROR(PLC_ERRNO_MBM_TP); /*Wrong variable type*/
+        }
     }
+
     case PLC_MBM_ST_CHK_RQ:
     {
-        /*Look ahead and switch state*/
         switch (PLC_APP_VTYPE(i))
         {
         case PLC_LT_M:
@@ -380,7 +394,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             return _ckeck_mem(i);
 
         case PLC_LT_Q:
-            plc_mbm.state = PLC_MBM_ST_CHK_CFG;
+            plc_mbm.state = PLC_MBM_ST_STOP;
             /**TODO*/
             return _ckeck_cfg(i);
 
@@ -388,9 +402,28 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             return _ckeck_rq(i);
 
         default:
-            return false;
+            _CHK_ERRROR(PLC_ERRNO_MBM_TP); /*Wrong variable type*/
         }
     }
+
+    case PLC_MBM_ST_CHK_MEM:
+    {
+        switch (PLC_APP_VTYPE(i))
+        {
+        case PLC_LT_M:
+            /**TODO*/
+            return _ckeck_mem(i);
+
+        case PLC_LT_Q:
+            plc_mbm.state = PLC_MBM_ST_STOP;
+            /**TODO*/
+            return _ckeck_cfg(i);
+
+        default:
+            _CHK_ERRROR(PLC_ERRNO_MBM_TP); /*Wrong variable type*/
+        }
+    }
+
     default:
         _CHK_ERRROR(PLC_ERRNO_MBM_ST); /*Wrong MBM state!*/
     }
