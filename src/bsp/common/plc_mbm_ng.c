@@ -32,6 +32,7 @@
 
 
 #define PLC_APP_LTE(i)        (PLC_APP->l_tab[i])
+#define PLC_APP_WTE(i)        (PLC_APP->w_tab[i])
 
 #define PLC_APP_ASZ(i)        (PLC_APP_LTE(i)->a_size)
 #define PLC_APP_ADDR(i)        PLC_APP_LTE(i)->a_data
@@ -41,6 +42,8 @@
 #define PLC_APP_VSIZE(i)      (PLC_APP_LTE(i)->v_size)
 
 #define PLC_APP_VVAL(i, type) (*(type)(PLC_APP_LTE(i)->v_buff))
+
+#define _RQ_EMPTY_FLG 0x40000000 /*В будущем возможно испльзование отрицательных весов для сигнализации ошибок*/
 
 #define _RQ_REG_LIM (64)
 /*Request IB3.[id].[type].[slv_address].[reg_address].[period_ms]*/
@@ -52,10 +55,12 @@ typedef struct {
     uint32_t period_ms;
 }plc_mbm_rq_cfg_struct;
 
+
+
 /*Memory MX3.[id].[reg_id] or MW3.[id].[reg_id]*/
 typedef struct {
     uint32_t id;
-    uint32_t red_id;
+    uint32_t reg_id;
 }plc_mbm_reg_cfg_struct;
 
 /*Configuration QX3.[baud].[mode]*/
@@ -114,10 +119,11 @@ typedef enum
 /*MB master state*/
 typedef struct
 {
-    uint8_t state;
+    uint32_t crqi; /**Current request index*/
+    plc_mbm_cfg_struct * cfg;
     uint16_t rq_start;
     uint16_t rq_end;
-
+    uint8_t state;
 } plc_mbm_struct;
 
 /*Read  request function pointer*/
@@ -143,7 +149,9 @@ plc_mbm_struct plc_mbm =
 {
     .state    = PLC_MBM_ST_INIT,
     .rq_start = 0,
-    .rq_end   = 0
+    .rq_end   = 0,
+    .cfg      = (void *)0,
+    .crqi     = 0
 };
 
 static void plc_mbm_tf_error(uint8_t err)
@@ -267,10 +275,10 @@ bool PLC_IOM_LOCAL_TEST_HW(void)
                             return false; \
                         }while(0)
 
-
+/*Request IB3.[id].[type].[slv_address].[reg_address].[period_ms]*/
 bool _ckeck_rq(uint16_t i)
 {
-    bool st = false;
+    bool st;
     int j;
     plc_mbm_rq_cfg_struct * rq_cfg;
 
@@ -292,6 +300,8 @@ bool _ckeck_rq(uint16_t i)
         PLC_MBM_RQ_WR_MX,
         PLC_MBM_RQ_WR_MW
     };
+
+    st = false;
 
     for (j = 0; j < PLC_MBM_RQ_LIM; j++)
     {
@@ -325,6 +335,12 @@ bool _ckeck_rq(uint16_t i)
         _CHK_ERRROR(PLC_ERRNO_MBM_RQ_MS);
     }
 
+    /*Номера запроса*/
+    if (255 < rq_cfg->id)
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_RQ_LIM);
+    }
+
     /*уникальности запроса*/
     for (j = plc_mbm.rq_start; j < i; j++)
     {
@@ -336,22 +352,97 @@ bool _ckeck_rq(uint16_t i)
 
     /*Проверки окончены*/
     plc_mbm.rq_end = i;
+    /*Взвешиваем прямо тут*/
+    PLC_APP_WTE(i) = _RQ_EMPTY_FLG | rq_cfg->period_ms; /*По умолчанию все запросы пусты*/
     return true;
 }
 
-/**TODO: */
+/*Memory MX3.[id].[reg_id] or MW3.[id].[reg_id]*/
 bool _ckeck_mem(uint16_t i)
 {
-    (void)i;
+    int j;
+    plc_mbm_reg_cfg_struct * rq_reg;
+
+    /*Проверка размера адреса*/
+    if (_CFG_STR_SZ(plc_mbm_reg_cfg_struct) != PLC_APP_ASZ(i))
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_SZ);
+    }
+
+
+    rq_reg = PLC_APP_APTR(i, plc_mbm_reg_cfg_struct);
+
+    /*Номера регистра в запросе*/
+    if (63 < rq_reg->reg_id)
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_REG_ID);
+    }
+
+    /*Номера запроса*/
+    if (255 < rq_reg->id)
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_RQ_LIM);
+    }
+
+    /*Поиск соответствующего запроса и очистка флага _RQ_EMPTY_FLG*/
+    for (j = plc_mbm.rq_start; j <= plc_mbm.rq_end; j++)
+    {
+        if (PLC_APP_APTR(j, plc_mbm_reg_cfg_struct)->id == rq_reg->id)
+        {
+            PLC_APP_WTE(j) &= ~_RQ_EMPTY_FLG;
+            break;
+        }
+    }
+
+    /*Взвешиваем по номеру запроса и номеру регистра*/
+    PLC_APP_WTE(i) = ((rq_reg->id & 0xff) << 8) | (rq_reg->reg_id & 0xff);
+
     return true;
 }
 
 /**TODO: */
 bool _ckeck_cfg(uint16_t i)
 {
-    (void)i;
+    bool st;
+    int j;
+
+    if (_CFG_STR_SZ(plc_mbm_cfg_struct) != PLC_APP_ASZ(i))
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_SZ);
+    }
+
+    plc_mbm.cfg = PLC_APP_APTR(i, plc_mbm_cfg_struct);
+
+    const uint32_t _good_baud[] =
+    {
+        1200,  2400,  4800,  9600,
+        19200, 38400, 57600, 115200
+    };
+
+    st = false;
+    for (j = 0; j < 8; j++)
+    {
+        if (_good_baud[j] == plc_mbm.cfg->baud)
+        {
+            st = true;
+            break;
+        }
+    }
+
+    if (!st)
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_BAUD);
+    }
+
+    if (1 < plc_mbm.cfg->mode)
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_MODE);
+    }
+
+    PLC_APP_WTE(i) = 0;
     return true;
 }
+/*Конечный автомат проверки локаций, можно попробовать добавить взвешивание*/
  /** TODO: Поменять вложенность свичей? Или сделать матричный автомат? Или?..*/
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
@@ -427,7 +518,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     default:
         _CHK_ERRROR(PLC_ERRNO_MBM_ST); /*Wrong MBM state!*/
     }
-    return true;/*Конечный автомат проверки локаций, можно попробовать добавить взвешивание*/
+    return true;
 }
 
 void PLC_IOM_LOCAL_START(uint16_t i)
@@ -464,8 +555,7 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
 
 uint32_t PLC_IOM_LOCAL_WEIGTH(uint16_t i)
 {
-    (void)i;/*Использовать?*/
-    return 0;
+    return PLC_APP_WTE(i); /*Взвесили на этапе проверки*/
 }
 
 uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
