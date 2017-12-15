@@ -305,17 +305,27 @@ bool _ckeck_rq(uint16_t i)
     /*Адреса слейва, */
     if ((244 < rq_cfg->slv_address) || (0 == rq_cfg->slv_address))
     {
-        _CHK_ERRROR(PLC_ERRNO_MBM_RQ_RA);
+        _CHK_ERRROR(PLC_ERRNO_MBM_RQ_SA);
     }
 
     /*адреса регистра, */
-    if ((65535-_RQ_REG_LIM)< rq_cfg->slv_address)
+    if ((65535-_RQ_REG_LIM)< rq_cfg->reg_address )
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_RQ_RA);
+    }
+
+    if (0 == rq_cfg->slv_address)
     {
         _CHK_ERRROR(PLC_ERRNO_MBM_RQ_RA);
     }
 
     /*периода,*/
     if (3600000 < rq_cfg->period_ms)
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_RQ_MS);
+    }
+
+    if (100 > rq_cfg->period_ms)
     {
         _CHK_ERRROR(PLC_ERRNO_MBM_RQ_MS);
     }

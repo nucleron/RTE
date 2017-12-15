@@ -406,18 +406,18 @@ extern void plc_diag_reset(void);
 #define PLC_ERRNO_MBM_SZ      302
 #define PLC_ERRNO_MBM_ST      303
 
-#define PLC_ERRNO_MBM_RQ_TP   304
-#define PLC_ERRNO_MBM_RQ_SA   305
-#define PLC_ERRNO_MBM_RQ_RA   306
-#define PLC_ERRNO_MBM_RQ_MS   307
-#define PLC_ERRNO_MBM_RQ_ID   308
-#define PLC_ERRNO_MBM_RQ_LIM  309
+#define PLC_ERRNO_MBM_RQ_TP   304  /*RQ type*/
+#define PLC_ERRNO_MBM_RQ_SA   305  /*Salve address*/
+#define PLC_ERRNO_MBM_RQ_RA   306  /*Register address*/
+#define PLC_ERRNO_MBM_RQ_MS   307  /*Milliseconds*/
+#define PLC_ERRNO_MBM_RQ_ID   308  /*Request ID is not unique*/
+#define PLC_ERRNO_MBM_RQ_LIM  309  /*Request ID is out of bounds*/
 
 #define PLC_ERRNO_MBM_REG_ID  310
 
 #define PLC_ERRNO_MBM_BAUD    311
 #define PLC_ERRNO_MBM_MODE    312
-#define PLC_ERRNO_MBM_USFG    313
+#define PLC_ERRNO_MBM_USFG    313 /**/
 
 #define PLC_ERRNO_MBM_ULT     314
 
