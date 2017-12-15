@@ -47,27 +47,30 @@
 
 #define _RQ_REG_LIM (64)
 /*Request IB3.[id].[type].[slv_address].[reg_address].[period_ms]*/
-typedef struct {
+typedef struct
+{
     uint32_t id;
     uint32_t type;
     uint32_t slv_address;
     uint32_t reg_address;
     uint32_t period_ms;
-}plc_mbm_rq_cfg_struct;
+} plc_mbm_rq_cfg_struct;
 
 
 
 /*Memory MX3.[id].[reg_id] or MW3.[id].[reg_id]*/
-typedef struct {
+typedef struct
+{
     uint32_t id;
     uint32_t reg_id;
-}plc_mbm_reg_cfg_struct;
+} plc_mbm_reg_cfg_struct;
 
 /*Configuration QX3.[baud].[mode]*/
-typedef struct {
+typedef struct
+{
     uint32_t baud;
     uint32_t mode;
-}plc_mbm_cfg_struct;
+} plc_mbm_cfg_struct;
 
 #define _CFG_STR_SZ(a) (sizeof(a)/sizeof(uint32_t))
 
@@ -278,7 +281,6 @@ bool PLC_IOM_LOCAL_TEST_HW(void)
 /*Request IB3.[id].[type].[slv_address].[reg_address].[period_ms]*/
 bool _ckeck_rq(uint16_t i)
 {
-    bool st;
     int j;
     plc_mbm_rq_cfg_struct * rq_cfg;
 
@@ -287,32 +289,15 @@ bool _ckeck_rq(uint16_t i)
         _CHK_ERRROR(PLC_ERRNO_MBM_SZ);
     }
 
+    if (PLC_LSZ_B != PLC_APP_VSIZE(i))
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_VSZ);
+    }
+
     rq_cfg = PLC_APP_APTR(i, plc_mbm_rq_cfg_struct);
 
     /*Проверка типа запроса*/
-    /** АААА! Дайте мне питон, и чтоб работал быстро, как Си!!1 */
-    static const plc_mbm_rq_enum _rq_types[] =
-    {
-        PLC_MBM_RQ_RD_IX,
-        PLC_MBM_RQ_RD_MX,
-        PLC_MBM_RQ_RD_IW,
-        PLC_MBM_RQ_RD_MW,
-        PLC_MBM_RQ_WR_MX,
-        PLC_MBM_RQ_WR_MW
-    };
-
-    st = false;
-
-    for (j = 0; j < PLC_MBM_RQ_LIM; j++)
-    {
-        if (_rq_types[j] == rq_cfg->type)
-        {
-            st = true;
-            break;
-        }
-    }
-
-    if (!st)
+    if (PLC_MBM_RQ_LIM <= rq_cfg->type)
     {
         _CHK_ERRROR(PLC_ERRNO_MBM_RQ_TP);
     }
@@ -369,6 +354,16 @@ bool _ckeck_mem(uint16_t i)
         _CHK_ERRROR(PLC_ERRNO_MBM_SZ);
     }
 
+    switch (PLC_APP_VSIZE(i))
+    {
+    case PLC_LSZ_X:
+    case PLC_LSZ_W:
+        break;
+
+    default:
+        _CHK_ERRROR(PLC_ERRNO_MBM_VSZ);
+    }
+
 
     rq_reg = PLC_APP_APTR(i, plc_mbm_reg_cfg_struct);
 
@@ -389,6 +384,30 @@ bool _ckeck_mem(uint16_t i)
     {
         if (PLC_APP_APTR(j, plc_mbm_reg_cfg_struct)->id == rq_reg->id)
         {
+            uint32_t t;
+            static const uint8_t _good_sizes[] =
+            {
+                [PLC_MBM_RQ_RD_IX] = PLC_LSZ_X,
+                [PLC_MBM_RQ_RD_MX] = PLC_LSZ_X,
+                [PLC_MBM_RQ_RD_IW] = PLC_LSZ_W,
+                [PLC_MBM_RQ_RD_MW] = PLC_LSZ_W,
+                /*Write*/
+                [PLC_MBM_RQ_WR_MX] = PLC_LSZ_X,
+                [PLC_MBM_RQ_WR_MW] = PLC_LSZ_W
+            };
+
+            t = PLC_APP_APTR(j, plc_mbm_rq_cfg_struct)->type;
+            /*Придется проверить тип на всякий случай*/
+            if (PLC_MBM_RQ_LIM <= t)
+            {
+                _CHK_ERRROR(PLC_ERRNO_MBM_RQ_TP);
+            }
+
+            if (_good_sizes[t] != PLC_APP_VSIZE(i))
+            {
+                _CHK_ERRROR(PLC_ERRNO_MBM_VSZ);
+            }
+
             PLC_APP_WTE(j) &= ~_RQ_EMPTY_FLG;
             break;
         }
@@ -411,8 +430,13 @@ bool _ckeck_cfg(uint16_t i)
         _CHK_ERRROR(PLC_ERRNO_MBM_SZ);
     }
 
-    plc_mbm.cfg = PLC_APP_APTR(i, plc_mbm_cfg_struct);
+    if (PLC_LSZ_X != PLC_APP_VSIZE(i))
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_VSZ);
+    }
 
+    plc_mbm.cfg = PLC_APP_APTR(i, plc_mbm_cfg_struct);
+    /*Дайте мне питон еще раз... Макрос сделать, что ли?..*/
     const uint32_t _good_baud[] =
     {
         1200,  2400,  4800,  9600,
@@ -443,7 +467,7 @@ bool _ckeck_cfg(uint16_t i)
     return true;
 }
 /*Конечный автомат проверки локаций, можно попробовать добавить взвешивание*/
- /** TODO: Поменять вложенность свичей? Или сделать матричный автомат? Или?..*/
+/** TODO: Поменять вложенность свичей? Или сделать матричный автомат? Или?..*/
 bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 {
     switch (plc_mbm.state)
@@ -471,7 +495,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             return _ckeck_cfg(i);
         }
         default:
-             _CHK_ERRROR(PLC_ERRNO_MBM_TP); /*Wrong variable type*/
+            _CHK_ERRROR(PLC_ERRNO_MBM_TP); /*Wrong variable type*/
         }
     }
 
@@ -479,6 +503,9 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     {
         switch (PLC_APP_VTYPE(i))
         {
+        case PLC_LT_I:
+            return _ckeck_rq(i);
+
         case PLC_LT_M:
             plc_mbm.state = PLC_MBM_ST_CHK_MEM;
             /**TODO*/
@@ -488,9 +515,6 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
             plc_mbm.state = PLC_MBM_ST_STOP;
             /**TODO*/
             return _ckeck_cfg(i);
-
-        case PLC_LT_I:
-            return _ckeck_rq(i);
 
         default:
             _CHK_ERRROR(PLC_ERRNO_MBM_TP); /*Wrong variable type*/
@@ -512,6 +536,20 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 
         default:
             _CHK_ERRROR(PLC_ERRNO_MBM_TP); /*Wrong variable type*/
+        }
+    }
+
+    case PLC_MBM_ST_STOP:
+    {
+        /*Проверка уникальности конфигурации*/
+        if (PLC_LT_Q == PLC_APP_VTYPE(i))
+        {
+            _CHK_ERRROR(PLC_ERRNO_MBM_USFG);
+        }
+        else
+        {
+            /*В этом состоянии мы не ожидаем появления других типов локаций*/
+            _CHK_ERRROR(PLC_ERRNO_MBM_ULT);
         }
     }
 

@@ -417,6 +417,11 @@ extern void plc_diag_reset(void);
 
 #define PLC_ERRNO_MBM_BAUD    311
 #define PLC_ERRNO_MBM_MODE    312
+#define PLC_ERRNO_MBM_USFG    313
+
+#define PLC_ERRNO_MBM_ULT     314
+
+#define PLC_ERRNO_MBM_VSZ     315
 
 /* HMI */
 #define PLC_ERRNO_HMI_ASZ     400
