@@ -163,12 +163,11 @@ bool plc_iom_check_and_sort(void)
 
     for (i = 0; i < o_end; i++)
     {
-        plc_iom_check_print(i);
-
         j = mid_from_pid(PLC_APP->l_tab[i]->proto);
         //Check protocol
         if (PLC_IOM_MID_ERROR == j)
         {
+            plc_iom_check_print(i);
             PLC_LOG_ERROR(plc_iom_err_proto);
             return false;
         }
@@ -184,6 +183,7 @@ bool plc_iom_check_and_sort(void)
 
     for (i = 0; i < o_end; i++)
     {
+        plc_iom_check_print(i);
         //Weigth locations for protocol specific sort
         j = mid_from_pid(PLC_APP->l_tab[i]->proto);
         //Check location, plc_iom_registry[j].check(i) must print all error messages!

@@ -286,7 +286,7 @@ bool _ckeck_rq(uint16_t i)
 
     if (_CFG_STR_SZ(plc_mbm_rq_cfg_struct) != PLC_APP_ASZ(i))
     {
-        _CHK_ERRROR(PLC_ERRNO_MBM_SZ);
+        _CHK_ERRROR(PLC_ERRNO_MBM_ASZ);
     }
 
     if (PLC_LSZ_B != PLC_APP_VSIZE(i))
@@ -336,7 +336,7 @@ bool _ckeck_rq(uint16_t i)
     }
 
     /*Проверки окончены*/
-    plc_mbm.rq_end = i;
+    plc_mbm.rq_end = i + 1;
     /*Взвешиваем прямо тут*/
     PLC_APP_WTE(i) = _RQ_EMPTY_FLG | rq_cfg->period_ms; /*По умолчанию все запросы пусты*/
     return true;
@@ -351,9 +351,9 @@ bool _ckeck_mem(uint16_t i)
     /*Проверка размера адреса*/
     if (_CFG_STR_SZ(plc_mbm_reg_cfg_struct) != PLC_APP_ASZ(i))
     {
-        _CHK_ERRROR(PLC_ERRNO_MBM_SZ);
+        _CHK_ERRROR(PLC_ERRNO_MBM_ASZ);
     }
-
+    /*Предварительная проверка размера переменной*/
     switch (PLC_APP_VSIZE(i))
     {
     case PLC_LSZ_X:
@@ -368,7 +368,7 @@ bool _ckeck_mem(uint16_t i)
     rq_reg = PLC_APP_APTR(i, plc_mbm_reg_cfg_struct);
 
     /*Номера регистра в запросе*/
-    if (63 < rq_reg->reg_id)
+    if (_RQ_REG_LIM <= rq_reg->reg_id)
     {
         _CHK_ERRROR(PLC_ERRNO_MBM_REG_ID);
     }
@@ -380,13 +380,14 @@ bool _ckeck_mem(uint16_t i)
     }
 
     /*Поиск соответствующего запроса и очистка флага _RQ_EMPTY_FLG*/
-    for (j = plc_mbm.rq_start; j <= plc_mbm.rq_end; j++)
+    for (j = plc_mbm.rq_start; j < plc_mbm.rq_end; j++)
     {
         if (PLC_APP_APTR(j, plc_mbm_reg_cfg_struct)->id == rq_reg->id)
         {
             uint32_t t;
             static const uint8_t _good_sizes[] =
             {
+                /*Read*/
                 [PLC_MBM_RQ_RD_IX] = PLC_LSZ_X,
                 [PLC_MBM_RQ_RD_MX] = PLC_LSZ_X,
                 [PLC_MBM_RQ_RD_IW] = PLC_LSZ_W,
@@ -402,7 +403,7 @@ bool _ckeck_mem(uint16_t i)
             {
                 _CHK_ERRROR(PLC_ERRNO_MBM_RQ_TP);
             }
-
+            /*Проверка соответствия размера переменной типу запроса*/
             if (_good_sizes[t] != PLC_APP_VSIZE(i))
             {
                 _CHK_ERRROR(PLC_ERRNO_MBM_VSZ);
@@ -427,7 +428,7 @@ bool _ckeck_cfg(uint16_t i)
 
     if (_CFG_STR_SZ(plc_mbm_cfg_struct) != PLC_APP_ASZ(i))
     {
-        _CHK_ERRROR(PLC_ERRNO_MBM_SZ);
+        _CHK_ERRROR(PLC_ERRNO_MBM_ASZ);
     }
 
     if (PLC_LSZ_X != PLC_APP_VSIZE(i))
