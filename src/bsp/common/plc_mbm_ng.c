@@ -1,5 +1,6 @@
 /*
- * FreeModbus Libary: user callback functions and buffer define in master mode
+ * libremodbus Libary: user callback functions and buffer define in master mode
+ * Copyright (C) 2017 Nucleron R&D LLC
  * Copyright (C) 2013 Armink <armink.ztl@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
@@ -55,8 +56,6 @@ typedef struct
     uint32_t reg_address;
     uint32_t period_ms;
 } plc_mbm_rq_cfg_struct;
-
-
 
 /*Memory MX3.[id].[reg_id] or MW3.[id].[reg_id]*/
 typedef struct
@@ -122,12 +121,24 @@ typedef enum
 /*MB master state*/
 typedef struct
 {
-    uint32_t crqi; /**Current request index*/
     plc_mbm_cfg_struct * cfg;
+    uint16_t crqi; /**Current request index*/
     uint16_t rq_start;
     uint16_t rq_end;
     uint8_t state;
+    bool is_ready;
 } plc_mbm_struct;
+
+typedef struct
+{
+    uint32_t w;
+    struct
+    {
+        uint16_t start; /*Start location index*/
+        uint8_t  num;   /*Number of memory locations only 6 bits used*/
+        uint8_t  len;   /*Length of request only 6 bits used*/
+    } dsc;
+} plc_mbm_rq_dsc_union;
 
 /*Read  request function pointer*/
 typedef mb_err_enum (*plc_mbm_rd_rq_fp)(mb_inst_struct *inst, UCHAR snd_addr, USHORT reg_addr, USHORT reg_num);
@@ -151,11 +162,15 @@ typedef plc_mbm_trans_fp * plc_mbm_trans_tbl;
 plc_mbm_struct plc_mbm =
 {
     .state    = PLC_MBM_ST_INIT,
+    .crqi     = 0,
     .rq_start = 0,
     .rq_end   = 0,
     .cfg      = (void *)0,
-    .crqi     = 0
+    .is_ready = false
 };
+
+static mb_inst_struct mb_master;
+static mb_trans_union mb_transport;
 
 static void plc_mbm_tf_error(uint8_t err)
 {
@@ -448,7 +463,7 @@ bool _ckeck_cfg(uint16_t i)
 
     plc_mbm.cfg = PLC_APP_APTR(i, plc_mbm_cfg_struct);
     /*Дайте мне питон еще раз... Макрос сделать, что ли?..*/
-    const uint32_t _good_baud[] =
+    static const uint32_t _good_baud[] =
     {
         1200,  2400,  4800,  9600,
         19200, 38400, 57600, 115200
@@ -492,6 +507,7 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         {
             plc_mbm.state    = PLC_MBM_ST_CHK_RQ;
             plc_mbm.rq_start = i;
+            plc_mbm.crqi     = i;/*Needed for scheduling*/
             return _ckeck_rq(i);
         }
         case PLC_LT_M:
@@ -572,7 +588,70 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 
 void PLC_IOM_LOCAL_START(uint16_t i)
 {
-    (void)i;/*Использовать для инициализации модбас-стека*/
+    /*Использовать для инициализации модбас-стека*/
+    int j;
+    plc_mbm_reg_cfg_struct * reg_cfg;
+
+    /*Тут мы инициализируем порт и запланируем запросы*/
+    if (PLC_LT_M != PLC_APP_VTYPE(i))
+    {
+        /*Нас интересует только память.*/
+        return;
+    }
+
+    if ((0 != plc_mbm.cfg) && !plc_mbm.is_ready)
+    {
+        plc_mbm.is_ready = true;
+
+        mb_init(&mb_master, &mb_transport, (plc_mbm.cfg->mode)?MB_ASCII:MB_RTU, TRUE, 0, (mb_port_base_struct *)&mbm_inst_usart, plc_mbm.cfg->baud, MB_PAR_NONE);
+
+        for (j = plc_mbm.rq_start; j < plc_mbm.rq_end; j++)
+        {
+            /*Запросы отсортированы ак, что в конце идут пустые*/
+            if (PLC_APP_WTE(j) & _RQ_EMPTY_FLG)
+            {
+                /*Мы не будем планировать пустые запросы*/
+                plc_mbm.rq_end = j;
+                break;
+            }
+            else
+            {
+                /*Для не пустых - обнуляем веса*/
+                PLC_APP_WTE(j) = 0;
+            }
+        }
+    }
+
+    reg_cfg = PLC_APP_APTR(i, plc_mbm_reg_cfg_struct);
+
+    for (j = plc_mbm.rq_start; j < plc_mbm.rq_end; j++)
+    {
+        if (reg_cfg->id == PLC_APP_APTR(j, plc_mbm_rq_cfg_struct)->id)
+        {
+            plc_mbm_rq_dsc_union rqwte;
+            rqwte.w = PLC_APP_WTE(j);
+            if (0 == rqwte.w)
+            {
+                /*Нашли новый запрос*/
+                rqwte.dsc.start = i;
+                rqwte.dsc.num   = 1;
+                /*Следующий дэдлайн*/
+                PLC_APP_WTE(i)  = PLC_APP_APTR(j, plc_mbm_rq_cfg_struct)->period_ms;
+            }
+            else
+            {
+                /*Планируем старый запрос*/
+                rqwte.dsc.num++;
+            }
+            /*
+            Локации отсортированы по врзрастанию сдвига регистра в запросе,
+            последний сдвиг фактически дает длину запроса
+            */
+            rqwte.dsc.len = reg_cfg->reg_id;
+            /*Обновляем вес*/
+            PLC_APP_WTE(j) = rqwte.w;
+        }
+    }
 }
 
 void PLC_IOM_LOCAL_STOP(void)
