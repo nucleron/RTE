@@ -749,7 +749,7 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
             /*Для запросов с превышением дедлайна - выставляем статус и вычисляем следующий дедлайн*/
             if (dl >= _RQ_DEADLINE_FLG)
             {
-                PLC_APP_VVAL(j, BYTE) = PLC_MBM_RST_ERR_TO;
+                PLC_APP_VVAL(j, BYTE) = PLC_MBM_RST_ERR_DL;
                 PLC_APP_WTE(rqwte.dsc.start) += rq_cfg->period_ms;
             }
         }
@@ -763,7 +763,7 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
             rq_cfg  = PLC_APP_APTR(j, plc_mbm_rq_cfg_struct);
             rqwte.w = PLC_APP_WTE(j);
 
-            /*Забиваем вычисляем следующий дедлайн запроса*/
+            /*Вычисляем следующий дедлайн запроса*/
             PLC_APP_WTE(rqwte.dsc.start) += rq_cfg->period_ms;
 
             //PLC_APP_VVAL(j, BYTE) = PLC_MBM_RST_NODATA;
@@ -792,6 +792,12 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     (void)i;/*Не использовать*/
     return 0;
 }
+/*===============================================================================*/
+static inline void plc_mb_err_cb(BYTE errno)
+{
+    PLC_APP_VVAL(plc_mbm.crqi, BYTE) = errno;
+    plc_mbm.state = PLC_MBM_ST_RQ_SCHED;
+}
 
 /**
  * This is modbus master respond timeout error process callback function.
@@ -803,12 +809,22 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
  * @param pdu_len PDU buffer length
  *
  */
-void mb_mstr_error_timeout_cb(mb_inst_struct *inst, UCHAR dst_addr, const UCHAR* pdu_data_ptr, USHORT pdu_len)
+void mb_mstr_error_timeout_cb(mb_inst_struct *inst)
 {
+    int j;
+    plc_mbm_rq_cfg_struct * rq_cfg;
+    plc_mbm_rq_dsc_union rqwte;
+
+    j = plc_mbm.crqi;
+    rq_cfg  = PLC_APP_APTR(j, plc_mbm_rq_cfg_struct);
+    rqwte.w = PLC_APP_WTE(j);
+
+    /*Вычисляем следующий дедлайн запроса*/
+    PLC_APP_WTE(rqwte.dsc.start) += rq_cfg->period_ms;
+    /*Выставляе номер ошибки*/
+    plc_mb_err_cb(PLC_MBM_RST_ERR_TO);
+
     (void)inst;
-    (void)dst_addr;
-    (void)pdu_data_ptr;
-    (void)pdu_len;
 }
 
 
@@ -822,12 +838,11 @@ void mb_mstr_error_timeout_cb(mb_inst_struct *inst, UCHAR dst_addr, const UCHAR*
  * @param pdu_len PDU buffer length
  *
  */
-void mb_mstr_error_rcv_data_cb(mb_inst_struct *inst, UCHAR dst_addr, const UCHAR* pdu_data_ptr, USHORT pdu_len)
+void mb_mstr_error_rcv_data_cb(mb_inst_struct *inst)
 {
+    plc_mb_err_cb(PLC_MBM_RST_ERR_RCV);
+
     (void)inst;
-    (void)dst_addr;
-    (void)pdu_data_ptr;
-    (void)pdu_len;
 }
 
 /**
@@ -840,12 +855,11 @@ void mb_mstr_error_rcv_data_cb(mb_inst_struct *inst, UCHAR dst_addr, const UCHAR
  * @param pdu_len PDU buffer length
  *
  */
-void mb_mstr_error_exec_fn_cb(mb_inst_struct *inst, UCHAR dst_addr, const UCHAR* pdu_data_ptr, USHORT pdu_len)
+void mb_mstr_error_exec_fn_cb(mb_inst_struct *inst)
 {
+    plc_mb_err_cb(PLC_MBM_RST_ERR_FN);
+
     (void)inst;
-    (void)dst_addr;
-    (void)pdu_data_ptr;
-    (void)pdu_len;
 }
 
 /**
