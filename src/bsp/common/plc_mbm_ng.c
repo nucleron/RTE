@@ -126,6 +126,7 @@ typedef struct
     uint16_t crqi; /**Current request index*/
     uint16_t rq_start;
     uint16_t rq_end;
+    uint8_t crqt;  /**Current request type*/
     uint8_t state;
     bool is_ready;
 } plc_mbm_struct;
@@ -171,6 +172,8 @@ plc_mbm_struct plc_mbm =
     .cfg      = (void *)0,
     .is_ready = false
 };
+
+USHORT mbm_buf[64];
 
 static mb_inst_struct mb_master;
 static mb_trans_union mb_transport;
@@ -765,10 +768,10 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
 
             /*Вычисляем следующий дедлайн запроса*/
             PLC_APP_WTE(rqwte.dsc.start) += rq_cfg->period_ms;
-
-            //PLC_APP_VVAL(j, BYTE) = PLC_MBM_RST_NODATA;
-            /*Отладочный код*/
-            PLC_APP_VVAL(j, BYTE)++;
+            /*Запоминаем тип запроса, чтобы не восстанавливать потом*/
+            plc_mbm.crqt = rq_cfg->type;
+            /*Начинаем обработку запроса.*/
+            plc_mbm_tr_tbl[rq_cfg->type][PLC_MBM_ST_RQ_SCHED]();
         }
     }
 
@@ -815,6 +818,8 @@ void mb_mstr_error_timeout_cb(mb_inst_struct *inst)
     plc_mbm_rq_cfg_struct * rq_cfg;
     plc_mbm_rq_dsc_union rqwte;
 
+    (void)inst;
+
     j = plc_mbm.crqi;
     rq_cfg  = PLC_APP_APTR(j, plc_mbm_rq_cfg_struct);
     rqwte.w = PLC_APP_WTE(j);
@@ -823,8 +828,6 @@ void mb_mstr_error_timeout_cb(mb_inst_struct *inst)
     PLC_APP_WTE(rqwte.dsc.start) += rq_cfg->period_ms;
     /*Выставляе номер ошибки*/
     plc_mb_err_cb(PLC_MBM_RST_ERR_TO);
-
-    (void)inst;
 }
 
 
@@ -840,9 +843,9 @@ void mb_mstr_error_timeout_cb(mb_inst_struct *inst)
  */
 void mb_mstr_error_rcv_data_cb(mb_inst_struct *inst)
 {
-    plc_mb_err_cb(PLC_MBM_RST_ERR_RCV);
-
     (void)inst;
+
+    plc_mb_err_cb(PLC_MBM_RST_ERR_RCV);
 }
 
 /**
@@ -857,9 +860,9 @@ void mb_mstr_error_rcv_data_cb(mb_inst_struct *inst)
  */
 void mb_mstr_error_exec_fn_cb(mb_inst_struct *inst)
 {
-    plc_mb_err_cb(PLC_MBM_RST_ERR_FN);
-
     (void)inst;
+
+    plc_mb_err_cb(PLC_MBM_RST_ERR_FN);
 }
 
 /**
@@ -871,6 +874,14 @@ void mb_mstr_error_exec_fn_cb(mb_inst_struct *inst)
 void mb_mstr_rq_success_cb(mb_inst_struct *inst)
 {
     (void)inst;
+
+    if ((PLC_MBM_RQ_LIM <= plc_mbm.crqt) || (PLC_MBM_ST_RQ_LIM <= plc_mbm.state))
+    {
+        plc_mb_err_cb(PLC_MBM_RST_ERR_FAIL);
+        return;
+    }
+
+    plc_mbm_tr_tbl[plc_mbm.crqt][plc_mbm.state]();
 }
 
 /**
@@ -884,31 +895,12 @@ void mb_mstr_rq_success_cb(mb_inst_struct *inst)
  */
 mb_err_enum mb_mstr_reg_input_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num)
 {
-    //mb_err_enum    status = MB_ENOERR;
-    //uint8_t reg_index;
-
     (void)inst;
-    (void)reg_buff;
     (void)reg_addr;
-    (void)reg_num;
 
-    return MB_EILLFUNC;
+    memcpy(mbm_buf, reg_buff, reg_num);
 
-    /* it already plus one in modbus function method. */
-    //reg_addr--;
-
-    //while (reg_num > 0)
-    //{
-    //    reg_index = req_find_reg(reg_addr);
-
-    //    mbm_request.target_value[reg_index] =  (uint16_t)(*reg_buff++)<<8;
-    //    mbm_request.target_value[reg_index]|=   *reg_buff++;
-
-    //    reg_addr++;
-    //    reg_num--;
-    //}
-
-    //return status;
+    return MB_ENOERR;
 }
 
 /**
@@ -927,100 +919,11 @@ mb_err_enum mb_mstr_reg_input_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT r
 mb_err_enum mb_mstr_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num)
 {
     (void)inst;
-    (void)reg_buff;
     (void)reg_addr;
-    (void)reg_num;
 
-    return MB_EILLFUNC;
-    //mb_err_enum    status = MB_ENOERR;
+    memcpy(mbm_buf, reg_buff, reg_num);
 
-    //uint8_t reg_index=0;
-
-    //(void)inst;
-
-    //reg_addr--;
-
-    //while (reg_num > 0)
-    //{
-    //    if (mbm_need_preread)
-    //    {
-    //        mbm_preread_buffer[reg_index] = (uint16_t)(*reg_buff++)<<8;
-    //        mbm_preread_buffer[reg_index]|=   *reg_buff++;
-    //        reg_index++;
-    //    }
-    //    else
-    //    {
-    //        reg_index = req_find_reg(reg_addr);
-    //        if (reg_index!=0xFF)
-    //        {
-    //            mbm_request.target_value[reg_index] =  (uint16_t)(*reg_buff++)<<8;
-    //            mbm_request.target_value[reg_index]|=   *reg_buff++;
-    //        }
-    //        else
-    //        {
-    //            reg_buff++;
-    //            reg_buff++;
-    //            //we got extra register. just ignore it for now
-    //        }
-    //    }
-    //    reg_addr++;
-    //    reg_num--;
-    //}
-
-//    switch (mode)
-//    {
-//    /* write values to slave registers*/
-//    case MB_REG_WRITE:
-//        break;
-//        while (reg_num > 0)
-//        {
-//            reg_index = req_find_reg(reg_addr);
-//            if (reg_index!=0xFF)
-//            {
-//                *reg_buff++ = (UCHAR) (mbm_request.target_value[reg_index] >> 8);
-//                *reg_buff++ = (UCHAR) (mbm_request.target_value[reg_index] & 0xFF);
-//            }
-//            else //means we are trying to write registers we do not have
-//            {
-//                *reg_buff++=0xDE; //should never end up here
-//                *reg_buff++=0xAD; //
-//            }
-//            reg_addr++;
-//            reg_num--;
-//        }
-//        break;
-//    /*Get values from slave registers */
-//    case MB_REG_READ:
-//        while (reg_num > 0)
-//        {
-//            if (mbm_need_preread)
-//            {
-//                mbm_preread_buffer[reg_index] = (uint16_t)(*reg_buff++)<<8;
-//                mbm_preread_buffer[reg_index]|=   *reg_buff++;
-//                reg_index++;
-//            }
-//            else
-//            {
-//                reg_index = req_find_reg(reg_addr);
-//                if (reg_index!=0xFF)
-//                {
-//                    mbm_request.target_value[reg_index] =  (uint16_t)(*reg_buff++)<<8;
-//                    mbm_request.target_value[reg_index]|=   *reg_buff++;
-//                }
-//                else
-//                {
-//                    reg_buff++;
-//                    reg_buff++;
-//                    //we got extra register. just ignore it for now
-//                }
-//            }
-//            reg_addr++;
-//            reg_num--;
-//        }
-//        break;
-//    }
-
-    //return status;
+    return MB_ENOERR;
 }
 
 /**
@@ -1035,33 +938,17 @@ mb_err_enum mb_mstr_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT
  */
 mb_err_enum mb_mstr_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT coil_num)
 {
-    //mb_err_enum    status = MB_ENOERR;
-    //uint8_t nByte=0;
+    int count;
 
     (void)inst;
     (void)reg_buff;
     (void)reg_addr;
     (void)coil_num;
 
-    //if (mbm_need_preread)
-    //{
-    //    nByte = coil_num/8 + ((coil_num%8)>0)?1:0;
-    //    memcpy(mbm_preread_buffer, reg_buff, nByte);
-// Эта реализация memcpy не работает!!!
-//        while(nByte>0)
-//        {
-//            mbm_preread_buffer[nByte] = *(reg_buff+nByte);
-//            nByte--;
-//        }
-// Эта реализация memcpy не работает!!!
-    //}
-    //else
-    //{
-    //coils read callback here
-    //}
+    count = coil_num/8 + ((coil_num%8)>0)?1:0;
+    memcpy(mbm_buf, reg_buff, count);
 
-    //return status;
-    return MB_EILLFUNC;
+    return MB_ENOERR;
 }
 
 /**
@@ -1075,37 +962,14 @@ mb_err_enum mb_mstr_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT r
  */
 mb_err_enum mb_mstr_reg_discrete_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT disc_num)
 {
-    //mb_err_enum    status = MB_ENOERR;
-
-    //uint8_t reg_num =  0;
-    //uint8_t reg_index;
+    int count;
 
     (void)inst;
-    (void)reg_buff;
     (void)reg_addr;
-    (void)disc_num;
 
-    /* it already plus one in modbus function method. */
-    //reg_addr--;
+    count = disc_num/8 + ((disc_num%8)>0)?1:0;
+    memcpy(mbm_buf, reg_buff, count);
 
-    /* write current discrete values with new values from the protocol stack. */
-    //while (disc_num > 0)
-    //{
-    //    reg_index = req_find_reg(reg_addr+reg_num);
-    //    if (reg_index!=0xFF)
-    //    {
-    //        mbm_request.target_value[reg_index] = (*(reg_buff+(reg_num/8))) &(1<<(reg_num%8));
-    //    }
-
-    //    if ((reg_num%8)==7)
-    //    {
-    //        reg_buff++;
-    //    }
-    //    disc_num--;
-    //    reg_num++;
-    //}
-
-    //return status;
-    return MB_EILLFUNC;
+    return MB_ENOERR;
 }
 
