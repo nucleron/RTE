@@ -42,9 +42,10 @@
 #define PLC_APP_VTYPE(i)      (PLC_APP_LTE(i)->v_type)
 #define PLC_APP_VSIZE(i)      (PLC_APP_LTE(i)->v_size)
 
-#define PLC_APP_VVAL(i, type) (*(type)(PLC_APP_LTE(i)->v_buff))
+#define PLC_APP_VVAL(i, type) (*(type *)(PLC_APP_LTE(i)->v_buf))
 
-#define _RQ_EMPTY_FLG 0x40000000 /*В будущем возможно испльзование отрицательных весов для сигнализации ошибок*/
+#define _RQ_EMPTY_FLG    0x40000000 /*В будущем возможно испльзование отрицательных весов для сигнализации ошибок*/
+#define _RQ_DEADLINE_FLG 0x80000000
 
 #define _RQ_REG_LIM (64)
 /*Request IB3.[id].[type].[slv_address].[reg_address].[period_ms]*/
@@ -131,13 +132,15 @@ typedef struct
 
 typedef struct
 {
+    uint16_t start; /*Start location index*/
+    uint8_t  num;   /*Number of memory locations only 6 bits used*/
+    uint8_t  len;   /*Length of request only 6 bits used*/
+} plc_rq_dsc_struct;
+
+typedef union
+{
     uint32_t w;
-    struct
-    {
-        uint16_t start; /*Start location index*/
-        uint8_t  num;   /*Number of memory locations only 6 bits used*/
-        uint8_t  len;   /*Length of request only 6 bits used*/
-    } dsc;
+    plc_rq_dsc_struct dsc;
 } plc_mbm_rq_dsc_union;
 
 /*Read  request function pointer*/
@@ -586,41 +589,15 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
     return true;
 }
 
-void PLC_IOM_LOCAL_START(uint16_t i)
+
+static bool _have_mstart = false;
+static uint16_t mstart = 0;
+static uint16_t mend = 0;
+
+static void _sched_construct(uint16_t i)
 {
-    /*Использовать для инициализации модбас-стека*/
     int j;
     plc_mbm_reg_cfg_struct * reg_cfg;
-
-    /*Тут мы инициализируем порт и запланируем запросы*/
-    if (PLC_LT_M != PLC_APP_VTYPE(i))
-    {
-        /*Нас интересует только память.*/
-        return;
-    }
-
-    if ((0 != plc_mbm.cfg) && !plc_mbm.is_ready)
-    {
-        plc_mbm.is_ready = true;
-
-        mb_init(&mb_master, &mb_transport, (plc_mbm.cfg->mode)?MB_ASCII:MB_RTU, TRUE, 0, (mb_port_base_struct *)&mbm_inst_usart, plc_mbm.cfg->baud, MB_PAR_NONE);
-
-        for (j = plc_mbm.rq_start; j < plc_mbm.rq_end; j++)
-        {
-            /*Запросы отсортированы ак, что в конце идут пустые*/
-            if (PLC_APP_WTE(j) & _RQ_EMPTY_FLG)
-            {
-                /*Мы не будем планировать пустые запросы*/
-                plc_mbm.rq_end = j;
-                break;
-            }
-            else
-            {
-                /*Для не пустых - обнуляем веса*/
-                PLC_APP_WTE(j) = 0;
-            }
-        }
-    }
 
     reg_cfg = PLC_APP_APTR(i, plc_mbm_reg_cfg_struct);
 
@@ -628,7 +605,7 @@ void PLC_IOM_LOCAL_START(uint16_t i)
     {
         if (reg_cfg->id == PLC_APP_APTR(j, plc_mbm_rq_cfg_struct)->id)
         {
-            plc_mbm_rq_dsc_union rqwte;
+            volatile plc_mbm_rq_dsc_union rqwte;
             rqwte.w = PLC_APP_WTE(j);
             if (0 == rqwte.w)
             {
@@ -650,23 +627,89 @@ void PLC_IOM_LOCAL_START(uint16_t i)
             rqwte.dsc.len = reg_cfg->reg_id;
             /*Обновляем вес*/
             PLC_APP_WTE(j) = rqwte.w;
+            rqwte.w = PLC_APP_WTE(j);
+            rqwte.w = PLC_APP_WTE(j);
         }
+    }
+}
+
+
+void PLC_IOM_LOCAL_START(void) /*Внимание!!! Это надо исправить во вссех файлах драйверов*/
+{
+    /*Использовать для инициализации модбас-стека*/
+    if ((0 != plc_mbm.cfg) && !plc_mbm.is_ready)
+    {
+        plc_mbm.is_ready = true;
+        mb_init(&mb_master, &mb_transport, (plc_mbm.cfg->mode)?MB_ASCII:MB_RTU, TRUE, 0, (mb_port_base_struct *)&mbm_inst_usart, plc_mbm.cfg->baud, MB_PAR_NONE);
+    }
+
+    if (PLC_MBM_ST_STOP == plc_mbm.state)
+    {
+        int j;
+
+        plc_mbm.state = PLC_MBM_ST_RQ_SCHED;
+
+        for (j = plc_mbm.rq_start; j < plc_mbm.rq_end; j++)
+        {
+            /*Запросы отсортированы ак, что в конце идут пустые*/
+            if (PLC_APP_WTE(j) & _RQ_EMPTY_FLG)
+            {
+                /*Мы не будем планировать пустые запросы*/
+                plc_mbm.rq_end = j;
+                break;
+            }
+            else
+            {
+                /*Для не пустых - обнуляем веса*/
+                PLC_APP_WTE(j)  = 0;
+                PLC_APP_VVAL(j,BYTE) = PLC_MBM_RST_NODATA;
+            }
+        }
+
+        /*Конструируем структуру планировщика путем обхода всей памяти*/
+        for(j = mstart; j < mend; j++)
+        {
+            //plc_iom_check_print(j);
+            _sched_construct(j);
+        }
+
+        mb_enable(&mb_master);
     }
 }
 
 void PLC_IOM_LOCAL_STOP(void)
 {
+    if (PLC_MBM_ST_STOP != plc_mbm.state)
+    {
+        plc_mbm.state = PLC_MBM_ST_STOP;
+        mb_disable(&mb_master);
+    }
 }
+
 
 void PLC_IOM_LOCAL_BEGIN(uint16_t i)
 {
-    (void)i;/*Использовать*/
+    if (PLC_LT_M == PLC_APP_VTYPE(i))
+    {
+        /*Нас интересует только память.*/
+        _have_mstart = true;
+        mstart = i;
+    }
 }
 //Do once!
+
+
 void PLC_IOM_LOCAL_END(uint16_t i)
 {
-//    int j, k, l;
-    (void)i;/*использовать*/
+    if (_have_mstart)
+    {
+        mend = i;
+        /*
+        Обязателно сбрасываем переменную,
+        иначе будет нарушена целостность структуры планировщика
+        */
+        _have_mstart = false;
+    }
 }
 
 uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
@@ -679,6 +722,58 @@ uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
 void PLC_IOM_LOCAL_POLL(uint32_t tick)
 {
     (void)tick;/*Использовать, в том числе для ввода-вывода*/
+
+    if (PLC_MBM_ST_RQ_SCHED == plc_mbm.state)
+    {
+        int j;
+        uint32_t mdl = _RQ_DEADLINE_FLG - 1;
+        plc_mbm.crqi = plc_mbm.rq_end;
+
+        for (j = plc_mbm.rq_start; j < plc_mbm.rq_end; j++)
+        {
+            volatile plc_mbm_rq_cfg_struct * rq_cfg;
+            volatile plc_mbm_rq_dsc_union rqwte;
+            uint32_t dl;
+
+            rq_cfg  = PLC_APP_APTR(j, plc_mbm_rq_cfg_struct);
+            rqwte.w = PLC_APP_WTE(j);
+
+            dl = PLC_APP_WTE(rqwte.dsc.start) - tick;
+            /*Ищем самый близкий дедлайн при условии, что он меньше периода опроса*/
+            if ((dl < rq_cfg->period_ms) && (dl < mdl))
+            {
+                mdl = dl;
+                plc_mbm.crqi = j;
+            }
+
+            /*Для запросов с превышением дедлайна - выставляем статус и вычисляем следующий дедлайн*/
+            if (dl >= _RQ_DEADLINE_FLG)
+            {
+                PLC_APP_VVAL(j, BYTE) = PLC_MBM_RST_ERR_TO;
+                PLC_APP_WTE(rqwte.dsc.start) += rq_cfg->period_ms;
+            }
+        }
+        /*Есть ли запрос на выполнение?*/
+        j = plc_mbm.crqi;
+        if (j < plc_mbm.rq_end)
+        {
+            plc_mbm_rq_cfg_struct * rq_cfg;
+            plc_mbm_rq_dsc_union rqwte;
+
+            rq_cfg  = PLC_APP_APTR(j, plc_mbm_rq_cfg_struct);
+            rqwte.w = PLC_APP_WTE(j);
+
+            /*Забиваем вычисляем следующий дедлайн запроса*/
+            PLC_APP_WTE(rqwte.dsc.start) += rq_cfg->period_ms;
+
+            //PLC_APP_VVAL(j, BYTE) = PLC_MBM_RST_NODATA;
+            /*Отладочный код*/
+            PLC_APP_VVAL(j, BYTE)++;
+        }
+    }
+
+    /*Главный цикл модбас*/
+    mb_poll(&mb_master);
 }
 
 uint32_t PLC_IOM_LOCAL_WEIGTH(uint16_t i)
