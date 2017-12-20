@@ -119,18 +119,6 @@ typedef enum
     PLC_MBM_RST_LIM
 } plc_mbm_rst_enum;
 
-/*MB master state*/
-typedef struct
-{
-    plc_mbm_cfg_struct * cfg;
-    uint16_t crqi; /**Current request index*/
-    uint16_t rq_start;
-    uint16_t rq_end;
-    uint8_t crqt;  /**Current request type*/
-    uint8_t state;
-    bool is_ready;
-} plc_mbm_struct;
-
 typedef struct
 {
     uint16_t start; /*Start location index*/
@@ -143,6 +131,21 @@ typedef union
     uint32_t w;
     plc_rq_dsc_struct dsc;
 } plc_mbm_rq_dsc_union;
+
+/*MB master state*/
+typedef struct
+{
+    plc_mbm_cfg_struct    * cfg;
+    plc_mbm_rq_cfg_struct * crqcfg; /**Current request config*/
+    plc_mbm_rq_dsc_union    crqwte; /**Current request descriptor*/
+    uint16_t crqi;                  /**Current request index*/
+    uint16_t rq_start;
+    uint16_t rq_end;
+    uint8_t state;
+    bool is_ready;
+} plc_mbm_struct;
+
+
 
 /*Read  request function pointer*/
 typedef mb_err_enum (*plc_mbm_rd_rq_fp)(mb_inst_struct *inst, UCHAR snd_addr, USHORT reg_addr, USHORT reg_num);
@@ -178,11 +181,10 @@ USHORT mbm_buf[64];
 static mb_inst_struct mb_master;
 static mb_trans_union mb_transport;
 
-static void plc_mbm_tf_error(uint8_t err)
+static inline void plc_mbm_tf_error(BYTE errno)
 {
-    (void)err;
-    /**TODO:Написать тут общий обработчик перехода
-    в состояние "SCHED" c ошибкой*/
+    PLC_APP_VVAL(plc_mbm.crqi, BYTE) = errno;
+    plc_mbm.state = PLC_MBM_ST_RQ_SCHED;
 }
 
 /*Request function table*/
@@ -224,19 +226,30 @@ static inline plc_mbm_rd_rq_fp _plc_mbm_get_fetch_fp(uint8_t rq_type)
 }
 
 /*Default transition handler*/
-static void plc_mbm_tf_default(void)
+static inline void plc_mbm_tf_default(void)
 {
     plc_mbm_tf_error(PLC_MBM_RST_ERR_FAIL);
 }
 
+/**TODO:Написать обработчик прерхода SCHED->READ*/
 static void plc_mbm_tf_rd_sched(void)
 {
-    /**TODO:Написать обработчик прерхода SCHED->READ*/
+    PLC_APP_VVAL(plc_mbm.crqi, BYTE)++;
+    /*
+    if ((plc_mbm.crqi < plc_mbm.rq_end) && (PLC_MBM_RQ_WR_MX <= plc_mbm.crqcfg->type))
+    {
+        plc_mbm_rq_tbl[plc_mbm.crqcfg->type].rd(&mb_master, plc_mbm.crqcfg->slv_address, plc_mbm.crqcfg->reg_address, plc_mbm.crqwte.dsc.len);
+    }
+    else
+    {
+        plc_mbm_tf_default();
+    }
+    */
 }
 
+/**TODO:Написать обработчик прерхода READ->SCHED*/
 static void plc_mbm_tf_rd_read(void)
 {
-    /**TODO:Написать обработчик прерхода READ->SCHED*/
 }
 
 const plc_mbm_trans_fp plc_mbm_rd_tbl[PLC_MBM_ST_RQ_LIM] =
@@ -250,6 +263,7 @@ const plc_mbm_trans_fp plc_mbm_rd_tbl[PLC_MBM_ST_RQ_LIM] =
 static void plc_mbm_tf_wr_sched(void)
 {
     /**TODO:Написать обработчик прерхода SCHED->[FETCH,WRITE]*/
+    PLC_APP_VVAL(plc_mbm.crqi, BYTE)++;
 }
 
 static void plc_mbm_tf_wr_fetch(void)
@@ -630,8 +644,6 @@ static void _sched_construct(uint16_t i)
             rqwte.dsc.len = reg_cfg->reg_id;
             /*Обновляем вес*/
             PLC_APP_WTE(j) = rqwte.w;
-            rqwte.w = PLC_APP_WTE(j);
-            rqwte.w = PLC_APP_WTE(j);
         }
     }
 }
@@ -760,18 +772,14 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
         j = plc_mbm.crqi;
         if (j < plc_mbm.rq_end)
         {
-            plc_mbm_rq_cfg_struct * rq_cfg;
-            plc_mbm_rq_dsc_union rqwte;
-
-            rq_cfg  = PLC_APP_APTR(j, plc_mbm_rq_cfg_struct);
-            rqwte.w = PLC_APP_WTE(j);
+            /*Запоминаем данные запроса*/
+            plc_mbm.crqcfg   = PLC_APP_APTR(j, plc_mbm_rq_cfg_struct);
+            plc_mbm.crqwte.w = PLC_APP_WTE(j);
 
             /*Вычисляем следующий дедлайн запроса*/
-            PLC_APP_WTE(rqwte.dsc.start) += rq_cfg->period_ms;
-            /*Запоминаем тип запроса, чтобы не восстанавливать потом*/
-            plc_mbm.crqt = rq_cfg->type;
+            PLC_APP_WTE(plc_mbm.crqwte.dsc.start) += plc_mbm.crqcfg->period_ms;
             /*Начинаем обработку запроса.*/
-            plc_mbm_tr_tbl[rq_cfg->type][PLC_MBM_ST_RQ_SCHED]();
+            plc_mbm_tr_tbl[plc_mbm.crqcfg->type][PLC_MBM_ST_RQ_SCHED]();
         }
     }
 
@@ -796,11 +804,6 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     return 0;
 }
 /*===============================================================================*/
-static inline void plc_mb_err_cb(BYTE errno)
-{
-    PLC_APP_VVAL(plc_mbm.crqi, BYTE) = errno;
-    plc_mbm.state = PLC_MBM_ST_RQ_SCHED;
-}
 
 /**
  * This is modbus master respond timeout error process callback function.
@@ -814,20 +817,12 @@ static inline void plc_mb_err_cb(BYTE errno)
  */
 void mb_mstr_error_timeout_cb(mb_inst_struct *inst)
 {
-    int j;
-    plc_mbm_rq_cfg_struct * rq_cfg;
-    plc_mbm_rq_dsc_union rqwte;
-
     (void)inst;
 
-    j = plc_mbm.crqi;
-    rq_cfg  = PLC_APP_APTR(j, plc_mbm_rq_cfg_struct);
-    rqwte.w = PLC_APP_WTE(j);
-
     /*Вычисляем следующий дедлайн запроса*/
-    PLC_APP_WTE(rqwte.dsc.start) += rq_cfg->period_ms;
+    PLC_APP_WTE(plc_mbm.crqwte.dsc.start) += plc_mbm.crqcfg->period_ms;
     /*Выставляе номер ошибки*/
-    plc_mb_err_cb(PLC_MBM_RST_ERR_TO);
+    plc_mbm_tf_error(PLC_MBM_RST_ERR_TO);
 }
 
 
@@ -845,7 +840,7 @@ void mb_mstr_error_rcv_data_cb(mb_inst_struct *inst)
 {
     (void)inst;
 
-    plc_mb_err_cb(PLC_MBM_RST_ERR_RCV);
+    plc_mbm_tf_error(PLC_MBM_RST_ERR_RCV);
 }
 
 /**
@@ -862,7 +857,7 @@ void mb_mstr_error_exec_fn_cb(mb_inst_struct *inst)
 {
     (void)inst;
 
-    plc_mb_err_cb(PLC_MBM_RST_ERR_FN);
+    plc_mbm_tf_error(PLC_MBM_RST_ERR_FN);
 }
 
 /**
@@ -875,13 +870,13 @@ void mb_mstr_rq_success_cb(mb_inst_struct *inst)
 {
     (void)inst;
 
-    if ((PLC_MBM_RQ_LIM <= plc_mbm.crqt) || (PLC_MBM_ST_RQ_LIM <= plc_mbm.state))
+    if ((PLC_MBM_RQ_LIM <= plc_mbm.crqcfg->type) || (PLC_MBM_ST_RQ_LIM <= plc_mbm.state))
     {
-        plc_mb_err_cb(PLC_MBM_RST_ERR_FAIL);
+        plc_mbm_tf_error(PLC_MBM_RST_ERR_FAIL);
         return;
     }
 
-    plc_mbm_tr_tbl[plc_mbm.crqt][plc_mbm.state]();
+    plc_mbm_tr_tbl[plc_mbm.crqcfg->type][plc_mbm.state]();
 }
 
 /**
@@ -941,9 +936,7 @@ mb_err_enum mb_mstr_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT r
     int count;
 
     (void)inst;
-    (void)reg_buff;
     (void)reg_addr;
-    (void)coil_num;
 
     count = coil_num/8 + ((coil_num%8)>0)?1:0;
     memcpy(mbm_buf, reg_buff, count);
