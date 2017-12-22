@@ -185,7 +185,7 @@ static inline void plc_mbm_tf_error(BYTE errno)
 }
 
 /*Request function table*/
-const plc_mbm_rq_fp plc_mbm_rq_tbl[PLC_MBM_RQ_LIM] =
+static const plc_mbm_rq_fp plc_mbm_rq_tbl[PLC_MBM_RQ_LIM] =
 {
     /*Read*/
     [PLC_MBM_RQ_RD_IX] = {.rd = mb_mstr_rq_read_discrete_inputs   },
@@ -212,9 +212,9 @@ static inline plc_mbm_rd_rq_fp _plc_mbm_get_fetch_fp(uint8_t rq_type)
 {
     switch(rq_type)
     {
-    case PLC_MBM_RQ_RD_MX:
+    case PLC_MBM_RQ_WR_MX:
         return mb_mstr_rq_read_coils;
-    case PLC_MBM_RQ_RD_MW:
+    case PLC_MBM_RQ_WR_MW:
         return mb_mstr_rq_read_holding_reg;
     default:
         return _default_fetch;
@@ -229,21 +229,50 @@ static inline void plc_mbm_tf_default(void)
 /**TODO:Написать обработчик прерхода SCHED->READ*/
 static void plc_mbm_tf_rd_sched(void)
 {
-    //if ((plc_mbm.crqi < plc_mbm.rq_end) && (PLC_MBM_RQ_WR_MX <= plc_mbm.crqcfg->type))
-    if ((plc_mbm.crqi < plc_mbm.rq_end) && (PLC_MBM_RQ_RD_MW == plc_mbm.crqcfg->type)) //Отладочная версия
-    {
-        plc_mbm.state = PLC_MBM_ST_RQ_READ;
-        plc_mbm_rq_tbl[plc_mbm.crqcfg->type].rd(&mb_master, plc_mbm.crqcfg->slv_address, plc_mbm.crqcfg->reg_address, plc_mbm.crqwte.dsc.len + 1);
-    }
-    else
-    {
-        plc_mbm_tf_default();
-    }
+    plc_mbm.state = PLC_MBM_ST_RQ_READ;
+    plc_mbm_rq_tbl[plc_mbm.crqcfg->type].rd(&mb_master, plc_mbm.crqcfg->slv_address, plc_mbm.crqcfg->reg_address, plc_mbm.crqwte.dsc.len + 1);
 }
 
-/**TODO:Написать обработчик прерхода READ->SCHED*/
-/*Data read functions.*/
-static void _store_words(void)
+/*Data read/write functions.*/
+
+static void _store_word(uint16_t j, uint16_t reg_id)
+{
+    PLC_APP_VVAL(j, WORD) = mbm_buf[reg_id];
+}
+
+static void _store_bit(uint16_t j, uint16_t reg_id)
+{
+    /**Tests needed!!!*/
+    PLC_APP_VVAL(j, BOOL) = mb_util_get_bits((UCHAR *)mbm_buf, reg_id, 1);
+}
+
+static void _load_word(uint16_t j, uint16_t reg_id)
+{
+    /**Tests needed!!!*/
+    mbm_buf[reg_id] = PLC_APP_VVAL(j, WORD);
+}
+
+static void _load_bit(uint16_t j, uint16_t reg_id)
+{
+    /**Tests needed!!!*/
+    mb_util_set_bits((UCHAR *)mbm_buf, reg_id, 1, (PLC_APP_VVAL(j, BOOL)==0)?0:1);
+}
+
+typedef void (*_data_handler_fp)(uint16_t, uint16_t);
+
+static const _data_handler_fp _data_dispatch_tbl[PLC_MBM_RQ_LIM] =
+{
+    /*Read*/
+    [PLC_MBM_RQ_RD_IX] = _store_bit,
+    [PLC_MBM_RQ_RD_MX] = _store_bit,
+    [PLC_MBM_RQ_RD_IW] = _store_word,
+    [PLC_MBM_RQ_RD_MW] = _store_word,
+    /*Write*/
+    [PLC_MBM_RQ_WR_MX] = _load_bit,
+    [PLC_MBM_RQ_WR_MW] = _load_word,
+};
+
+static void _data_dispatch(void)
 {
     uint16_t i;
     for (i = 0; i < plc_mbm.crqwte.dsc.num; i++)
@@ -252,47 +281,20 @@ static void _store_words(void)
         plc_mbm_reg_cfg_struct * reg_cfg;
 
         j = plc_mbm.crqwte.dsc.start + i;
-
         reg_cfg = PLC_APP_APTR(j, plc_mbm_reg_cfg_struct);
-        PLC_APP_VVAL(j, WORD) = mbm_buf[reg_cfg->reg_id];
+
+        _data_dispatch_tbl[plc_mbm.crqcfg->type](j, reg_cfg->reg_id);
     }
 }
-static void _store_bits(void)
-{
-    ///TODO!!!
-}
-
-const plc_mbm_trans_fp _store_data_tbl[PLC_MBM_RQ_LIM] =
-{
-    /*Read*/
-    [PLC_MBM_RQ_RD_IX] = _store_bits,
-    [PLC_MBM_RQ_RD_MX] = _store_bits,
-    [PLC_MBM_RQ_RD_IW] = _store_words,
-    [PLC_MBM_RQ_RD_MW] = _store_words,
-    /*Write*/
-    [PLC_MBM_RQ_WR_MX] = _store_bits,
-    [PLC_MBM_RQ_WR_MW] = _store_words
-};
 
 static void plc_mbm_tf_rd_read(void)
 {
-    /*uint8_t rq_tp;
-    rq_tp = plc_mbm.crqcfg->type;
-    if (PLC_MBM_RQ_WR_MX > rq_tp)
-    {
-        _store_data_tbl[rq_tp]();
-        PLC_APP_VVAL(plc_mbm.crqi, BYTE) = PLC_MBM_RST_OK;
-    }
-    else
-    {
-        PLC_APP_VVAL(plc_mbm.crqi, BYTE) = PLC_MBM_RST_ERR_FAIL;
-    }*/
-    _store_data_tbl[plc_mbm.crqcfg->type]();
+    _data_dispatch();
     PLC_APP_VVAL(plc_mbm.crqi, BYTE) = PLC_MBM_RST_OK;
     plc_mbm.state = PLC_MBM_ST_RQ_SCHED;
 }
 
-const plc_mbm_trans_fp plc_mbm_rd_tbl[PLC_MBM_ST_RQ_LIM] =
+static const plc_mbm_trans_fp plc_mbm_rd_tbl[PLC_MBM_ST_RQ_LIM] =
 {
     [PLC_MBM_ST_RQ_SCHED] = plc_mbm_tf_rd_sched,
     [PLC_MBM_ST_RQ_READ]  = plc_mbm_tf_rd_read,
@@ -303,20 +305,34 @@ const plc_mbm_trans_fp plc_mbm_rd_tbl[PLC_MBM_ST_RQ_LIM] =
 static void plc_mbm_tf_wr_sched(void)
 {
     /**TODO:Написать обработчик прерхода SCHED->[FETCH,WRITE]*/
-    PLC_APP_VVAL(plc_mbm.crqi, BYTE)++;
+    /** Пока переходим fetch, т.к. на оптимизацию не зватит памяти.*/
+    //plc_mbm_tf_default();
+    {
+        plc_mbm_rd_rq_fp fetch_func;
+
+        plc_mbm.state = PLC_MBM_ST_RQ_FETCH;
+
+        fetch_func = _plc_mbm_get_fetch_fp(plc_mbm.crqcfg->type);
+        fetch_func(&mb_master, plc_mbm.crqcfg->slv_address, plc_mbm.crqcfg->reg_address, plc_mbm.crqwte.dsc.len + 1);
+    }
 }
 
 static void plc_mbm_tf_wr_fetch(void)
 {
     /**TODO:Написать обработчик прерхода FETCH->WRITE*/
+    _data_dispatch();
+    plc_mbm_rq_tbl[plc_mbm.crqcfg->type].wr(&mb_master, plc_mbm.crqcfg->slv_address, plc_mbm.crqcfg->reg_address, plc_mbm.crqwte.dsc.len + 1, mbm_buf);
+    plc_mbm.state = PLC_MBM_ST_RQ_WRITE;
 }
 
 static void plc_mbm_tf_wr_write(void)
 {
     /**TODO:Написать обработчик прерхода WRITE->SHCED*/
+    PLC_APP_VVAL(plc_mbm.crqi, BYTE) = PLC_MBM_RST_OK;
+    plc_mbm.state = PLC_MBM_ST_RQ_SCHED;
 }
 
-const plc_mbm_trans_fp plc_mbm_wr_tbl[PLC_MBM_ST_RQ_LIM] =
+static const plc_mbm_trans_fp plc_mbm_wr_tbl[PLC_MBM_ST_RQ_LIM] =
 {
     [PLC_MBM_ST_RQ_SCHED] = plc_mbm_tf_wr_sched,
     [PLC_MBM_ST_RQ_READ]  = plc_mbm_tf_default,
@@ -324,7 +340,7 @@ const plc_mbm_trans_fp plc_mbm_wr_tbl[PLC_MBM_ST_RQ_LIM] =
     [PLC_MBM_ST_RQ_WRITE] = plc_mbm_tf_wr_write
 };
 
-const plc_mbm_trans_tbl plc_mbm_tr_tbl[PLC_MBM_RQ_LIM] =
+static const plc_mbm_trans_tbl plc_mbm_tr_tbl[PLC_MBM_RQ_LIM] =
 {
     /*Read*/
     [PLC_MBM_RQ_RD_IX] = (plc_mbm_trans_tbl)plc_mbm_rd_tbl,
