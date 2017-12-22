@@ -64,7 +64,7 @@ static const clk_cfg cfg_hse_8Mhz =
     .ppre1  = RCC_CFGR_PPRE_DIV_4,
     .ppre2  = RCC_CFGR_PPRE_DIV_2,
 
-    .flash_ws = FLASH_ACR_ICE | FLASH_ACR_DCE | FLASH_ACR_LATENCY_2WS,
+    .flash_ws = FLASH_ACR_ICE | FLASH_ACR_DCE | FLASH_ACR_LATENCY_3WS,
 
     .pll_m     = 8,
     .pll_n     = 240,
@@ -83,7 +83,7 @@ static const clk_cfg cfg_hse_16Mhz =
     .ppre1  = RCC_CFGR_PPRE_DIV_4,
     .ppre2  = RCC_CFGR_PPRE_DIV_2,
 
-    .flash_ws = FLASH_ACR_ICE | FLASH_ACR_DCE | FLASH_ACR_LATENCY_2WS,
+    .flash_ws = FLASH_ACR_ICE | FLASH_ACR_DCE | FLASH_ACR_LATENCY_3WS,
 
     .pll_m     = 16,
     .pll_n     = 240,
@@ -102,7 +102,7 @@ static const clk_cfg cfg_hsi =
     .ppre1  = RCC_CFGR_PPRE_DIV_4,
     .ppre2  = RCC_CFGR_PPRE_DIV_2,
 
-    .flash_ws = FLASH_ACR_ICE | FLASH_ACR_DCE | FLASH_ACR_LATENCY_2WS,
+    .flash_ws = FLASH_ACR_ICE | FLASH_ACR_DCE | FLASH_ACR_LATENCY_3WS,
 
     .pll_m     = 16,
     .pll_n     = 240,

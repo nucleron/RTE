@@ -158,9 +158,6 @@ typedef union
     plc_mbm_wr_rq_fp wr; /*write*/
 } plc_mbm_rq_fp;
 
-/**TODO: Data load function pointer*/
-/**TODO: Data store function pointer*/
-
 /*Transintion function pointer*/
 typedef void (*plc_mbm_trans_fp)(void);
 /*Transintion function table pointer*/
@@ -200,7 +197,6 @@ const plc_mbm_rq_fp plc_mbm_rq_tbl[PLC_MBM_RQ_LIM] =
     [PLC_MBM_RQ_WR_MW] = {.wr = mb_mstr_rq_write_multi_holding_reg}
 };
 /*Fetch request function selector*/
-/**TODO: Придумать, как лучше написать...*/
 static mb_err_enum _default_fetch(mb_inst_struct *inst, UCHAR snd_addr, USHORT reg_addr, USHORT reg_num)
 {
     (void)inst;
@@ -224,7 +220,6 @@ static inline plc_mbm_rd_rq_fp _plc_mbm_get_fetch_fp(uint8_t rq_type)
         return _default_fetch;
     }
 }
-
 /*Default transition handler*/
 static inline void plc_mbm_tf_default(void)
 {
@@ -234,22 +229,67 @@ static inline void plc_mbm_tf_default(void)
 /**TODO:Написать обработчик прерхода SCHED->READ*/
 static void plc_mbm_tf_rd_sched(void)
 {
-    PLC_APP_VVAL(plc_mbm.crqi, BYTE)++;
-    /*
-    if ((plc_mbm.crqi < plc_mbm.rq_end) && (PLC_MBM_RQ_WR_MX <= plc_mbm.crqcfg->type))
+    //if ((plc_mbm.crqi < plc_mbm.rq_end) && (PLC_MBM_RQ_WR_MX <= plc_mbm.crqcfg->type))
+    if ((plc_mbm.crqi < plc_mbm.rq_end) && (PLC_MBM_RQ_RD_MW == plc_mbm.crqcfg->type)) //Отладочная версия
     {
-        plc_mbm_rq_tbl[plc_mbm.crqcfg->type].rd(&mb_master, plc_mbm.crqcfg->slv_address, plc_mbm.crqcfg->reg_address, plc_mbm.crqwte.dsc.len);
+        plc_mbm.state = PLC_MBM_ST_RQ_READ;
+        plc_mbm_rq_tbl[plc_mbm.crqcfg->type].rd(&mb_master, plc_mbm.crqcfg->slv_address, plc_mbm.crqcfg->reg_address, plc_mbm.crqwte.dsc.len + 1);
     }
     else
     {
         plc_mbm_tf_default();
     }
-    */
 }
 
 /**TODO:Написать обработчик прерхода READ->SCHED*/
+/*Data read functions.*/
+static void _store_words(void)
+{
+    uint16_t i;
+    for (i = 0; i < plc_mbm.crqwte.dsc.num; i++)
+    {
+        uint16_t j;
+        plc_mbm_reg_cfg_struct * reg_cfg;
+
+        j = plc_mbm.crqwte.dsc.start + i;
+
+        reg_cfg = PLC_APP_APTR(j, plc_mbm_reg_cfg_struct);
+        PLC_APP_VVAL(j, WORD) = mbm_buf[reg_cfg->reg_id];
+    }
+}
+static void _store_bits(void)
+{
+    ///TODO!!!
+}
+
+const plc_mbm_trans_fp _store_data_tbl[PLC_MBM_RQ_LIM] =
+{
+    /*Read*/
+    [PLC_MBM_RQ_RD_IX] = _store_bits,
+    [PLC_MBM_RQ_RD_MX] = _store_bits,
+    [PLC_MBM_RQ_RD_IW] = _store_words,
+    [PLC_MBM_RQ_RD_MW] = _store_words,
+    /*Write*/
+    [PLC_MBM_RQ_WR_MX] = _store_bits,
+    [PLC_MBM_RQ_WR_MW] = _store_words
+};
+
 static void plc_mbm_tf_rd_read(void)
 {
+    /*uint8_t rq_tp;
+    rq_tp = plc_mbm.crqcfg->type;
+    if (PLC_MBM_RQ_WR_MX > rq_tp)
+    {
+        _store_data_tbl[rq_tp]();
+        PLC_APP_VVAL(plc_mbm.crqi, BYTE) = PLC_MBM_RST_OK;
+    }
+    else
+    {
+        PLC_APP_VVAL(plc_mbm.crqi, BYTE) = PLC_MBM_RST_ERR_FAIL;
+    }*/
+    _store_data_tbl[plc_mbm.crqcfg->type]();
+    PLC_APP_VVAL(plc_mbm.crqi, BYTE) = PLC_MBM_RST_OK;
+    plc_mbm.state = PLC_MBM_ST_RQ_SCHED;
 }
 
 const plc_mbm_trans_fp plc_mbm_rd_tbl[PLC_MBM_ST_RQ_LIM] =
@@ -746,8 +786,8 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
 
         for (j = plc_mbm.rq_start; j < plc_mbm.rq_end; j++)
         {
-            volatile plc_mbm_rq_cfg_struct * rq_cfg;
-            volatile plc_mbm_rq_dsc_union rqwte;
+            plc_mbm_rq_cfg_struct * rq_cfg;
+            plc_mbm_rq_dsc_union rqwte;
             uint32_t dl;
 
             rq_cfg  = PLC_APP_APTR(j, plc_mbm_rq_cfg_struct);
@@ -890,10 +930,15 @@ void mb_mstr_rq_success_cb(mb_inst_struct *inst)
  */
 mb_err_enum mb_mstr_reg_input_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num)
 {
+    uint16_t i;
     (void)inst;
     (void)reg_addr;
 
-    memcpy(mbm_buf, reg_buff, reg_num);
+    /*Can't use memcpy because of endianess difference*/
+    for (i = 0; i < reg_num; i++)
+    {
+        mbm_buf[i] = ((uint16_t)reg_buff[2 * i] << 8) | (reg_buff[2 * i + 1]);
+    }
 
     return MB_ENOERR;
 }
@@ -908,18 +953,7 @@ mb_err_enum mb_mstr_reg_input_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT r
  *
  * @return result
  */
-
-
-
-mb_err_enum mb_mstr_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num)
-{
-    (void)inst;
-    (void)reg_addr;
-
-    memcpy(mbm_buf, reg_buff, reg_num);
-
-    return MB_ENOERR;
-}
+mb_err_enum mb_mstr_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num) __attribute__ ((alias ("mb_mstr_reg_input_cb")));
 
 /**
  * Modbus master coils callback function.
@@ -953,16 +987,5 @@ mb_err_enum mb_mstr_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT r
  *
  * @return result
  */
-mb_err_enum mb_mstr_reg_discrete_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT disc_num)
-{
-    int count;
-
-    (void)inst;
-    (void)reg_addr;
-
-    count = disc_num/8 + ((disc_num%8)>0)?1:0;
-    memcpy(mbm_buf, reg_buff, count);
-
-    return MB_ENOERR;
-}
+mb_err_enum mb_mstr_reg_discrete_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT disc_num) __attribute__ ((alias ("mb_mstr_reg_coils_cb")));
 
