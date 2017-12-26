@@ -235,42 +235,42 @@ static void plc_mbm_tf_rd_sched(void)
 
 /*Data read/write functions.*/
 
-static void _store_word(uint16_t j, uint16_t reg_id)
-{
-    PLC_APP_VVAL(j, WORD) = mbm_buf[reg_id];
-}
-
-static void _store_bit(uint16_t j, uint16_t reg_id)
-{
-    /**Tests needed!!!*/
-    PLC_APP_VVAL(j, BOOL) = mb_util_get_bits((UCHAR *)mbm_buf, reg_id, 1);
-}
-
-static void _load_word(uint16_t j, uint16_t reg_id)
-{
-    /**Tests needed!!!*/
-    mbm_buf[reg_id] = PLC_APP_VVAL(j, WORD);
-}
-
-static void _load_bit(uint16_t j, uint16_t reg_id)
-{
-    /**Tests needed!!!*/
-    mb_util_set_bits((UCHAR *)mbm_buf, reg_id, 1, (PLC_APP_VVAL(j, BOOL)==0)?0:1);
-}
-
-typedef void (*_data_handler_fp)(uint16_t, uint16_t);
-
-static const _data_handler_fp _data_dispatch_tbl[PLC_MBM_RQ_LIM] =
-{
-    /*Read*/
-    [PLC_MBM_RQ_RD_IX] = _store_bit,
-    [PLC_MBM_RQ_RD_MX] = _store_bit,
-    [PLC_MBM_RQ_RD_IW] = _store_word,
-    [PLC_MBM_RQ_RD_MW] = _store_word,
-    /*Write*/
-    [PLC_MBM_RQ_WR_MX] = _load_bit,
-    [PLC_MBM_RQ_WR_MW] = _load_word,
-};
+//static void _store_word(uint16_t j, uint16_t reg_id)
+//{
+//    PLC_APP_VVAL(j, WORD) = mbm_buf[reg_id];
+//}
+//
+//static void _store_bit(uint16_t j, uint16_t reg_id)
+//{
+//    /**Tests needed!!!*/
+//    PLC_APP_VVAL(j, BOOL) = mb_util_get_bits((UCHAR *)mbm_buf, reg_id, 1);
+//}
+//
+//static void _load_word(uint16_t j, uint16_t reg_id)
+//{
+//    /**Tests needed!!!*/
+//    mbm_buf[reg_id] = PLC_APP_VVAL(j, WORD);
+//}
+//
+//static void _load_bit(uint16_t j, uint16_t reg_id)
+//{
+//    /**Tests needed!!!*/
+//    mb_util_set_bits((UCHAR *)mbm_buf, reg_id, 1, (PLC_APP_VVAL(j, BOOL)==0)?0:1);
+//}
+//
+//typedef void (*_data_handler_fp)(uint16_t, uint16_t);
+//
+//static const _data_handler_fp _data_dispatch_tbl[PLC_MBM_RQ_LIM] =
+//{
+//    /*Read*/
+//    [PLC_MBM_RQ_RD_IX] = _store_bit,
+//    [PLC_MBM_RQ_RD_MX] = _store_bit,
+//    [PLC_MBM_RQ_RD_IW] = _store_word,
+//    [PLC_MBM_RQ_RD_MW] = _store_word,
+//    /*Write*/
+//    [PLC_MBM_RQ_WR_MX] = _load_bit,
+//    [PLC_MBM_RQ_WR_MW] = _load_word,
+//};
 
 static void _data_dispatch(void)
 {
@@ -278,12 +278,39 @@ static void _data_dispatch(void)
     for (i = 0; i < plc_mbm.crqwte.dsc.num; i++)
     {
         uint16_t j;
-        plc_mbm_reg_cfg_struct * reg_cfg;
+        uint8_t  reg_id;
+        //plc_mbm_reg_cfg_struct * reg_cfg;
 
         j = plc_mbm.crqwte.dsc.start + i;
-        reg_cfg = PLC_APP_APTR(j, plc_mbm_reg_cfg_struct);
+        reg_id = PLC_APP_APTR(j, plc_mbm_reg_cfg_struct)->reg_id;
 
-        _data_dispatch_tbl[plc_mbm.crqcfg->type](j, reg_cfg->reg_id);
+        switch(plc_mbm.crqcfg->type)
+        {
+        case PLC_MBM_RQ_RD_IX:
+        case PLC_MBM_RQ_RD_MX:
+        {
+            PLC_APP_VVAL(j, BOOL) = mb_util_get_bits((UCHAR *)mbm_buf, reg_id, 1)?TRUE:FALSE;
+            break;
+        }
+        case PLC_MBM_RQ_RD_IW:
+        case PLC_MBM_RQ_RD_MW:
+        {
+            PLC_APP_VVAL(j, WORD) = mbm_buf[reg_id];
+            break;
+        }
+        case PLC_MBM_RQ_WR_MX:
+        {
+            mb_util_set_bits((UCHAR *)mbm_buf, reg_id, 1, (PLC_APP_VVAL(j, BOOL)==0)?0:1);
+            break;
+        }
+        case PLC_MBM_RQ_WR_MW:
+        {
+            mbm_buf[reg_id] = PLC_APP_VVAL(j, WORD);
+            break;
+        }
+        }
+
+        //_data_dispatch_tbl[plc_mbm.crqcfg->type](j, reg_cfg->reg_id);
     }
 }
 
@@ -988,7 +1015,8 @@ mb_err_enum mb_mstr_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT r
     (void)inst;
     (void)reg_addr;
 
-    count = coil_num/8 + ((coil_num%8)>0)?1:0;
+    count = coil_num/8;
+    count += ((coil_num%8)>0)?1:0;  /*Fucking GCC optimizer!!1*/
     memcpy(mbm_buf, reg_buff, count);
 
     return MB_ENOERR;
