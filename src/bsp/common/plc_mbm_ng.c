@@ -28,6 +28,7 @@
 #include <plc_rtc.h>
 #include <plc_hw.h>
 #include <plc_iom.h>
+#include <plc_wait_tmr.h>
 
 #include <mb.h>
 
@@ -65,11 +66,12 @@ typedef struct
     uint32_t reg_id;
 } plc_mbm_reg_cfg_struct;
 
-/*Configuration QX3.[baud].[mode]*/
+/*Configuration QX3.[baud].[mode].[send_delay]*/
 typedef struct
 {
     uint32_t baud;
     uint32_t mode;
+    uint32_t delay;
 } plc_mbm_cfg_struct;
 
 #define _CFG_STR_SZ(a) (sizeof(a)/sizeof(uint32_t))
@@ -132,20 +134,26 @@ typedef union
     plc_rq_dsc_struct dsc;
 } plc_mbm_rq_dsc_union;
 
+/*Transintion function pointer*/
+typedef void (*plc_mbm_trans_fp)(void);
+
+/*Transintion function table pointer*/
+typedef plc_mbm_trans_fp * plc_mbm_trans_tbl;
+
 /*MB master state*/
 typedef struct
 {
     plc_mbm_cfg_struct    * cfg;
     plc_mbm_rq_cfg_struct * crqcfg; /**Current request config*/
     plc_mbm_rq_dsc_union    crqwte; /**Current request descriptor*/
+    plc_mbm_trans_fp        timed_func;
+    uint32_t timer;
     uint16_t crqi;                  /**Current request index*/
     uint16_t rq_start;
     uint16_t rq_end;
     uint8_t state;
     bool is_ready;
 } plc_mbm_struct;
-
-
 
 /*Read  request function pointer*/
 typedef mb_err_enum (*plc_mbm_rd_rq_fp)(mb_inst_struct *inst, UCHAR snd_addr, USHORT reg_addr, USHORT reg_num);
@@ -158,25 +166,28 @@ typedef union
     plc_mbm_wr_rq_fp wr; /*write*/
 } plc_mbm_rq_fp;
 
-/*Transintion function pointer*/
-typedef void (*plc_mbm_trans_fp)(void);
-/*Transintion function table pointer*/
-typedef plc_mbm_trans_fp * plc_mbm_trans_tbl;
-
 plc_mbm_struct plc_mbm =
 {
-    .state    = PLC_MBM_ST_INIT,
-    .crqi     = 0,
-    .rq_start = 0,
-    .rq_end   = 0,
-    .cfg      = (void *)0,
-    .is_ready = false
+    .state      = PLC_MBM_ST_INIT,
+    .crqi       = 0,
+    .rq_start   = 0,
+    .rq_end     = 0,
+    .cfg        = (void *)0,
+    .timed_func = (plc_mbm_trans_fp)0,
+    .is_ready   = false
 };
 
 USHORT mbm_buf[64];
 
 static mb_inst_struct mb_master;
 static mb_trans_union mb_transport;
+
+static inline void plc_mbm_set_timed_func(plc_mbm_trans_fp func)
+{
+    plc_mbm.timed_func = func;
+    PLC_CLEAR_TIMER(plc_mbm.timer);
+}
+
 
 static inline void plc_mbm_tf_error(BYTE errno)
 {
@@ -207,29 +218,22 @@ static mb_err_enum _default_fetch(mb_inst_struct *inst, UCHAR snd_addr, USHORT r
     return MB_EILLFUNC;
 }
 
-static inline plc_mbm_rd_rq_fp _plc_mbm_get_fetch_fp(uint8_t rq_type)
-{
-    switch(rq_type)
-    {
-    case PLC_MBM_RQ_WR_MX:
-        return mb_mstr_rq_read_coils;
-    case PLC_MBM_RQ_WR_MW:
-        return mb_mstr_rq_read_holding_reg;
-    default:
-        return _default_fetch;
-    }
-}
 /*Default transition handler*/
 static inline void plc_mbm_tf_default(void)
 {
     plc_mbm_tf_error(PLC_MBM_RST_ERR_FAIL);
 }
 
+static void _plc_mbm_tf_rd_sched(void)
+{
+    plc_mbm_rq_tbl[plc_mbm.crqcfg->type].rd(&mb_master, plc_mbm.crqcfg->slv_address, plc_mbm.crqcfg->reg_address, plc_mbm.crqwte.dsc.len);
+}
+
 static void plc_mbm_tf_rd_sched(void)
 {
     /*SCHED->READ*/
     plc_mbm.state = PLC_MBM_ST_RQ_READ;
-    plc_mbm_rq_tbl[plc_mbm.crqcfg->type].rd(&mb_master, plc_mbm.crqcfg->slv_address, plc_mbm.crqcfg->reg_address, plc_mbm.crqwte.dsc.len);
+    plc_mbm_set_timed_func(_plc_mbm_tf_rd_sched);
 }
 
 /*Data read/write function.*/
@@ -289,12 +293,37 @@ static const plc_mbm_trans_fp plc_mbm_rd_tbl[PLC_MBM_ST_RQ_LIM] =
     [PLC_MBM_ST_RQ_WRITE] = plc_mbm_tf_default
 };
 
+static void _plc_mbm_tf_wr_fetch(void)
+{
+    plc_mbm_rq_tbl[plc_mbm.crqcfg->type].wr(&mb_master, plc_mbm.crqcfg->slv_address, plc_mbm.crqcfg->reg_address, plc_mbm.crqwte.dsc.len, mbm_buf);
+}
+
 static void plc_mbm_tf_wr_fetch(void)
 {
     /*[SCHED/FETCH]->WRITE*/
     _data_dispatch();
-    plc_mbm_rq_tbl[plc_mbm.crqcfg->type].wr(&mb_master, plc_mbm.crqcfg->slv_address, plc_mbm.crqcfg->reg_address, plc_mbm.crqwte.dsc.len, mbm_buf);
     plc_mbm.state = PLC_MBM_ST_RQ_WRITE;
+    plc_mbm_set_timed_func(_plc_mbm_tf_wr_fetch);
+}
+
+static void _plc_mbm_tf_wr_sched(void)
+{
+    plc_mbm_rd_rq_fp fetch_func;
+
+    switch(plc_mbm.crqcfg->type)
+    {
+    case PLC_MBM_RQ_WR_MX:
+        fetch_func =  mb_mstr_rq_read_coils;
+        break;
+    case PLC_MBM_RQ_WR_MW:
+        fetch_func =  mb_mstr_rq_read_holding_reg;
+        break;
+    default:
+        fetch_func = _default_fetch;
+        break;
+    }
+
+    fetch_func(&mb_master, plc_mbm.crqcfg->slv_address, plc_mbm.crqcfg->reg_address, plc_mbm.crqwte.dsc.len);
 }
 
 static void plc_mbm_tf_wr_sched(void)
@@ -302,12 +331,8 @@ static void plc_mbm_tf_wr_sched(void)
     /*SCHED->[FETCH/WRITE]*/
     if (plc_mbm.crqwte.dsc.len > plc_mbm.crqwte.dsc.num)
     {   /*SCHED->FETCH*/
-        plc_mbm_rd_rq_fp fetch_func;
-
         plc_mbm.state = PLC_MBM_ST_RQ_FETCH;
-
-        fetch_func = _plc_mbm_get_fetch_fp(plc_mbm.crqcfg->type);
-        fetch_func(&mb_master, plc_mbm.crqcfg->slv_address, plc_mbm.crqcfg->reg_address, plc_mbm.crqwte.dsc.len);
+        plc_mbm_set_timed_func(_plc_mbm_tf_wr_sched);
     }
     else
     {
@@ -556,6 +581,11 @@ bool _ckeck_cfg(uint16_t i)
         _CHK_ERRROR(PLC_ERRNO_MBM_MODE);
     }
 
+    if (2 > plc_mbm.cfg->delay)
+    {
+        _CHK_ERRROR(PLC_ERRNO_MBM_DEL);
+    }
+
     PLC_APP_WTE(i) = 0;
     return true;
 }
@@ -677,7 +707,7 @@ static void _sched_construct(uint16_t i)
                 rqwte.dsc.start = i;
                 rqwte.dsc.num   = 1;
                 /*Следующий дэдлайн*/
-                PLC_APP_WTE(i)  = PLC_APP_APTR(j, plc_mbm_rq_cfg_struct)->period_ms;
+                PLC_APP_WTE(i)  = plc_iom.tick + PLC_APP_APTR(j, plc_mbm_rq_cfg_struct)->period_ms;
             }
             else
             {
@@ -828,6 +858,12 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
             /*Начинаем обработку запроса.*/
             plc_mbm_tr_tbl[plc_mbm.crqcfg->type][PLC_MBM_ST_RQ_SCHED]();
         }
+    }
+
+    if ((plc_mbm.timed_func) && (PLC_TIMER(plc_mbm.timer) > plc_mbm.cfg->delay))
+    {
+        plc_mbm.timed_func();
+        plc_mbm.timed_func = (plc_mbm_trans_fp)0;
     }
 
     /*Главный цикл модбас*/
