@@ -189,7 +189,7 @@ static inline void plc_mbm_set_timed_func(plc_mbm_trans_fp func)
 }
 
 
-static inline void plc_mbm_tf_error(BYTE errno)
+static void plc_mbm_tf_error(BYTE errno)
 {
     PLC_APP_VVAL(plc_mbm.crqi, BYTE) = errno;
     plc_mbm.state = PLC_MBM_ST_RQ_SCHED;
@@ -729,10 +729,9 @@ static void _sched_construct(uint16_t i)
 void PLC_IOM_LOCAL_START(void) /*Внимание!!! Это надо исправить во вссех файлах драйверов*/
 {
     /*Использовать для инициализации модбас-стека*/
-    if ((0 != plc_mbm.cfg) && !plc_mbm.is_ready)
+    if (PLC_MBM_ST_RQ_LIM > plc_mbm.state)
     {
-        plc_mbm.is_ready = true;
-        mb_init(&mb_master, &mb_transport, (plc_mbm.cfg->mode)?MB_ASCII:MB_RTU, TRUE, 0, (mb_port_base_struct *)&mbm_inst_usart, plc_mbm.cfg->baud, MB_PAR_NONE);
+        plc_mbm.state = PLC_MBM_ST_STOP;
     }
 
     if (PLC_MBM_ST_STOP == plc_mbm.state)
@@ -744,7 +743,7 @@ void PLC_IOM_LOCAL_START(void) /*Внимание!!! Это надо испра�
         for (j = plc_mbm.rq_start; j < plc_mbm.rq_end; j++)
         {
             /*Запросы отсортированы ак, что в конце идут пустые*/
-            if (PLC_APP_WTE(j) & _RQ_EMPTY_FLG)
+            if ((PLC_APP_WTE(j) & _RQ_EMPTY_FLG) && !plc_mbm.is_ready)
             {
                 /*Мы не будем планировать пустые запросы*/
                 plc_mbm.rq_end = j;
@@ -765,8 +764,18 @@ void PLC_IOM_LOCAL_START(void) /*Внимание!!! Это надо испра�
             _sched_construct(j);
         }
 
-        mb_enable(&mb_master);
+        if (!plc_mbm.is_ready)
+        {
+            plc_mbm.is_ready = true;
+        }
     }
+
+    if (0 != plc_mbm.cfg)
+    {
+        mb_init(&mb_master, &mb_transport, (plc_mbm.cfg->mode)?MB_ASCII:MB_RTU, TRUE, 0, (mb_port_base_struct *)&mbm_inst_usart, plc_mbm.cfg->baud, MB_PAR_NONE);
+    }
+
+    mb_enable(&mb_master);
 }
 
 void PLC_IOM_LOCAL_STOP(void)
