@@ -401,10 +401,10 @@ extern void plc_diag_reset(void);
 #define PLC_ERRNO_MBS_EX_INIT 25
 
 /* MBM */
-#define PLC_ERRNO_MBM_ASZ     300
-#define PLC_ERRNO_MBM_TP      301
-#define PLC_ERRNO_MBM_SZ      302
-#define PLC_ERRNO_MBM_ST      303
+#define PLC_ERRNO_MBM_ASZ     300 /*Address size*/
+#define PLC_ERRNO_MBM_TP      301 /*Var type I,M,Q*/
+#define PLC_ERRNO_MBM_SZ      302 /*Not used*/
+#define PLC_ERRNO_MBM_ST      303 /*Wrong FSM state*/
 
 #define PLC_ERRNO_MBM_RQ_TP   304  /*RQ type*/
 #define PLC_ERRNO_MBM_RQ_SA   305  /*Salve address*/
