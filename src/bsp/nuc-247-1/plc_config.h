@@ -413,17 +413,17 @@ extern void plc_diag_reset(void);
 #define PLC_ERRNO_MBM_RQ_ID   308  /*Request ID is not unique*/
 #define PLC_ERRNO_MBM_RQ_LIM  309  /*Request ID is out of bounds*/
 
-#define PLC_ERRNO_MBM_REG_ID  310
+#define PLC_ERRNO_MBM_REG_ID  310  /*Register/Coil ID is greater than 63*/
 
-#define PLC_ERRNO_MBM_BAUD    311
-#define PLC_ERRNO_MBM_MODE    312
-#define PLC_ERRNO_MBM_USFG    313 /**/
+#define PLC_ERRNO_MBM_BAUD    311  /*Wrong baud rate*/
+#define PLC_ERRNO_MBM_MODE    312  /*Wrong modbus mode*/
+#define PLC_ERRNO_MBM_USFG    313  /*Modbus config must be unique*/
 
-#define PLC_ERRNO_MBM_ULT     314
+#define PLC_ERRNO_MBM_ULT     314  /*Unexpected location type*/
 
-#define PLC_ERRNO_MBM_VSZ     315
+#define PLC_ERRNO_MBM_VSZ     315  /*Wrong variable size*/
 
-#define PLC_ERRNO_MBM_DEL     316 /**/
+#define PLC_ERRNO_MBM_DEL     316  /*Wrong send delay value (must be at least 2 ms)*/
 /* HMI */
 #define PLC_ERRNO_HMI_ASZ     400
 #define PLC_ERRNO_HMI_TP      401
