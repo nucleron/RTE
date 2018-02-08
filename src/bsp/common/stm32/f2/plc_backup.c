@@ -31,6 +31,15 @@
 #define BACKUP_UNLOCK() PWR_CR |= PWR_CR_DBP
 #define BACKUP_LOCK() PWR_CR &= ~PWR_CR_DBP
 
+#define PLC_BKP_VER_MSK (0xFFFFFFFE)
+#define PLC_BKP_VLD_MSK (0x01)
+
+#define  PLC_BKP_GET_VER(ver) ((ver) & PLC_BKP_VER_MSK)
+#define PLC_BKP_IS_VALID(ver) ((ver) & PLC_BKP_VLD_MSK)
+
+/*If true, then read from v1-bank, write to v2-bank, else do vice versa.*/
+#define  PLC_BKP_TEST_VER(v1, v2) (PLC_BKP_GET_VER(v1) != PLC_BKP_GET_VER(v2))
+
 void plc_backup_init(void)
 {
     uint32_t i;
@@ -63,17 +72,18 @@ uint8_t plc_backup_load_brightness(void)
     return PLC_BKP_BRIGHT;
 }
 
-#define PLC_BKP_INVAL_MSK 0xFFFFFFFE
 void plc_backup_invalidate(void)
 {
     BACKUP_UNLOCK();
-    if (PLC_BKP_VER_1>PLC_BKP_VER_2) //invalidate oldest bank
+    if (PLC_BKP_TEST_VER(PLC_BKP_VER_1, PLC_BKP_VER_2))
     {
-        PLC_BKP_VER_2 &= PLC_BKP_INVAL_MSK;
+        /*Will write BANK_2*/
+        PLC_BKP_VER_2 &= PLC_BKP_VER_MSK;
     }
     else
     {
-        PLC_BKP_VER_1 &= PLC_BKP_INVAL_MSK;
+        /*Will write BANK_1*/
+        PLC_BKP_VER_1 &= PLC_BKP_VER_MSK;
     }
     BACKUP_LOCK();
 }
@@ -94,13 +104,15 @@ void plc_backup_validate(void)
 
     BACKUP_UNLOCK();
 
-    if (PLC_BKP_VER_1<=PLC_BKP_VER_2) //Validate latest bank
+    if (PLC_BKP_TEST_VER(PLC_BKP_VER_1, PLC_BKP_VER_2))
     {
-        PLC_BKP_VER_1 += 3;
+        /*BANK_2 was written.*/
+        PLC_BKP_VER_2 += 3;
     }
     else
     {
-        PLC_BKP_VER_2 += 3;
+        /*BANK_1 was written.*/
+        PLC_BKP_VER_1 += 3;
     }
 
     BACKUP_LOCK();
@@ -108,13 +120,15 @@ void plc_backup_validate(void)
 
 int plc_backup_check(void)
 {
-    if (PLC_BKP_VER_1 & 0x1)
+    if (PLC_BKP_IS_VALID(PLC_BKP_VER_1))
     {
+        /*BANK_1 is valid*/
         return 1;
     }
 
-    if (PLC_BKP_VER_2 & 0x1)
+    if (PLC_BKP_IS_VALID(PLC_BKP_VER_2))
     {
+        /*BANK_2 is valid*/
         return 1;
     }
 
@@ -125,21 +139,20 @@ int plc_backup_check(void)
 
 void plc_backup_remind(unsigned int offset, unsigned int count, void *p)
 {
-//    uint32_t i;
     uint32_t* source = PLC_BKP_BANK1_START;
-
-    if (PLC_BKP_VER_1 > PLC_BKP_VER_2)
+    /*We have at least one valid bank here*/
+    if (PLC_BKP_TEST_VER(PLC_BKP_VER_1, PLC_BKP_VER_2))
     {
-        //Try to remind from bank 1
-        if (PLC_BKP_VER_1 & 0x1)
+        //Try to remind from bank 1 as it was written later
+        if (PLC_BKP_IS_VALID(PLC_BKP_VER_1))
         {
             source = PLC_BKP_BANK1_START;
         }
     }
     else
     {
-        //Try to remind from bank 2
-        if (PLC_BKP_VER_2 & 0x1)
+        //Else - try to remind from bank 2
+        if (PLC_BKP_IS_VALID(PLC_BKP_VER_2))
         {
             source = PLC_BKP_BANK2_START;
         }
@@ -156,13 +169,15 @@ void plc_backup_retain(unsigned int offset, unsigned int count, void *p)
     uint32_t* storage;
     if (offset + count < PLC_BKP_SIZE)
     {
-        if (PLC_BKP_VER_1<=PLC_BKP_VER_2) //store to latest bank (latest means nonvalid with lesser version!)
+        if (PLC_BKP_TEST_VER(PLC_BKP_VER_1, PLC_BKP_VER_2))
         {
-            storage = PLC_BKP_BANK1_START;
+            /*Will write to bank 2 as bank 1 has later version of data.*/
+            storage = PLC_BKP_BANK2_START;
         }
         else
         {
-            storage = PLC_BKP_BANK2_START;
+            /*Will write to bank 1 as it has older data version*/
+            storage = PLC_BKP_BANK1_START;
         }
 
         BACKUP_UNLOCK();

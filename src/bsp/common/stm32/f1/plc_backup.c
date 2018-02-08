@@ -26,6 +26,15 @@
 
 #define PLC_BKP_SIZE (PLC_BKP_REG_NUM*2ul) //Lower 16bits are used
 
+#define PLC_BKP_VER_MSK (0xFFFFFFFE)
+#define PLC_BKP_VLD_MSK (0x01)
+
+#define  PLC_BKP_GET_VER(ver) ((ver) & PLC_BKP_VER_MSK)
+#define PLC_BKP_IS_VALID(ver) ((ver) & PLC_BKP_VLD_MSK)
+
+/*If true, then read from v1-bank, write to v2-bank, else do vice versa.*/
+#define  PLC_BKP_TEST_VER(v1, v2) (PLC_BKP_GET_VER(v1) != PLC_BKP_GET_VER(v2))
+
 static uint16_t plc_backup_buff[PLC_BKP_REG_NUM];
 static uint32_t * plc_backup_reg_1 = PLC_BKP_START_1;
 static uint32_t * plc_backup_reg_2 = PLC_BKP_START_2;
@@ -56,7 +65,7 @@ void plc_backup_validate(void)
     uint32_t i;
     //Write bank 1
     pwr_disable_backup_domain_write_protect();
-    PLC_BKP_VER_1 &= 0xFFFFFFE; //Invalidate bank
+    PLC_BKP_VER_1 &= PLC_BKP_VER_MSK; //Invalidate bank
 
     for(i = 0; i < PLC_BKP_REG_NUM; i++)
     {
@@ -68,7 +77,7 @@ void plc_backup_validate(void)
 
     //Write bank 2
     pwr_disable_backup_domain_write_protect();
-    PLC_BKP_VER_2 &= 0xFFFFFFE; //Invalidate bank
+    PLC_BKP_VER_2 &= PLC_BKP_VER_MSK; //Invalidate bank
 
     for(i = 0; i < PLC_BKP_REG_NUM; i++)
     {
@@ -82,24 +91,28 @@ void plc_backup_validate(void)
 int plc_backup_check(void)
 {
     uint32_t i;
-    if ((PLC_BKP_VER_1 > PLC_BKP_VER_2) && (PLC_BKP_VER_1 & 0x1))
+    if (PLC_BKP_TEST_VER(PLC_BKP_VER_1, PLC_BKP_VER_2))
     {
-        for(i = 0; i < PLC_BKP_REG_NUM; i++)
+        if (PLC_BKP_IS_VALID(PLC_BKP_VER_1))
         {
-            plc_backup_buff[i] = (uint16_t)(plc_backup_reg_1[i]&0xffff);
+            for(i = 0; i < PLC_BKP_REG_NUM; i++)
+            {
+                plc_backup_buff[i] = (uint16_t)(plc_backup_reg_1[i]&0xffff);
+            }
+            return 1;//Success!!!
         }
-        return 1;//Success!!!
     }
-
-    if (PLC_BKP_VER_2 & 0x1)
+    else
     {
-        for(i = 0; i < PLC_BKP_REG_NUM; i++)
+        if (PLC_BKP_IS_VALID(PLC_BKP_VER_2))
         {
-            plc_backup_buff[i] = (uint16_t)(plc_backup_reg_2[i]&0xffff);
+            for(i = 0; i < PLC_BKP_REG_NUM; i++)
+            {
+                plc_backup_buff[i] = (uint16_t)(plc_backup_reg_2[i]&0xffff);
+            }
+            return 1;//Success!!!
         }
-        return 1;//Success!!!
     }
-
     return 0; //Fail! Use dafaults!
 }
 
