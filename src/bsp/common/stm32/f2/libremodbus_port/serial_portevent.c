@@ -33,16 +33,14 @@ mb_port_ser_evt_init(mb_port_ser_struct* inst)
     return TRUE;
 }
 
-BOOL
-mb_port_ser_evt_post( mb_port_ser_struct* inst, mb_event_enum event)
+BOOL mb_port_ser_evt_post( mb_port_ser_struct* inst, mb_event_enum event)
 {
     evt_in_queue = TRUE;
-    queued_evt = event;
+    queued_evt   = event;
     return TRUE;
 }
 
-BOOL
-mb_port_ser_evt_get(mb_port_ser_struct* inst, void* caller, mb_event_enum * event)
+BOOL mb_port_ser_evt_get(mb_port_ser_struct* inst, void* caller, mb_event_enum * event)
 {
     BOOL            xEventHappened = FALSE;
 

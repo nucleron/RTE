@@ -58,7 +58,7 @@
 			<Add option="-Wl,--gc-sections,-lgcc" />
 			<Add option='-T &quot;../../src/bsp/nuc-227-dev/stm32f4disco-rte.ld&quot;' />
 			<Add library="../../../libopencm3/lib/libopencm3_stm32f4.a" />
-			<Add directory="../../../../../../opt/gcc-arm-none-eabi-4_9-2015q1/lib/gcc/arm-none-eabi/4.9.3/armv7e-m/fpu" />
+			<Add directory="/usr/lib/gcc/arm-none-eabi/4.9.3/fpu" />
 		</Linker>
 		<ExtraCommands>
 			<Add after="arm-none-eabi-size ${TARGET_OUTPUT_FILE}" />

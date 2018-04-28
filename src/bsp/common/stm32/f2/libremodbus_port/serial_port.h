@@ -22,31 +22,29 @@
 #ifndef _PORT_H
 #define _PORT_H
 
-#include "serial_multi.h"
 #include <assert.h>
+#include <libopencm3/cm3/cortex.h>
 
 #include <mb_common.h>
+
+#include "serial_multi.h"
+
 PR_BEGIN_EXTERN_C
-
-
-
 /* ----------------------- Defines ------------------------------------------*/
+#define ENTER_CRITICAL_SECTION() cm_disable_interrupts()
+#define EXIT_CRITICAL_SECTION()  cm_enable_interrupts()
 
-#define ENTER_CRITICAL_SECTION()
-#define EXIT_CRITICAL_SECTION()
 #define MB_PORT_HAS_CLOSE	1
+
 #ifndef TRUE
 #define TRUE            1
 #endif
+
 #ifndef FALSE
 #define FALSE           0
 #endif
-#if MB_ASCII_ENABLED == 1
-#define	BUF_SIZE	513     /* must hold a complete ASCII frame. */
-#else
-#define	BUF_SIZE	256     /* must hold a complete RTU frame. */
-#endif
 
+/* ----------------------- Type definitions ---------------------------------*/
 struct _mb_port_ser
 {
     mb_port_base_struct base;
@@ -63,28 +61,8 @@ struct _mb_port_ser
 	//events
 	mb_event_enum queued_evt;
 	BOOL     evt_in_queue;
-
-	//void* parent;
 };
-/* ----------------------- Type definitions ---------------------------------*/
-
-typedef enum
-{
-    MB_LOG_DEBUG,
-    MB_LOG_INFO,
-    MB_LOG_WARN,
-    MB_LOG_ERROR
-} eMBPortLogLevel;
-
-/* ----------------------- Function prototypes ------------------------------*/
-/*
-void            vMBPortLog(eMBPortLogLevel eLevel, const TCHAR * szModule,
-                            const TCHAR * szFmt, ...);*/
-void            vMBPortTimerPoll( mb_port_ser_struct* inst, void* caller ); //FIXME
-BOOL            xMBPortSerialPoll(mb_port_ser_struct* inst, void* caller); //FIXME
-BOOL            xMBPortSerialSetTimeout(mb_port_ser_struct* inst, DWORD dwTimeoutMs);
-
-
+/* ----------------------- Variable definitions -----------------------------*/
 extern mb_port_ser_struct mbs_inst_usart;
 extern mb_port_ser_struct mbm_inst_usart;
 

@@ -148,6 +148,7 @@ typedef struct
     plc_mbm_rq_dsc_union    crqwte; /**Current request descriptor*/
     plc_mbm_trans_fp        timed_func;
     uint32_t timer;
+    uint32_t watchdog;
     uint16_t crqi;                  /**Current request index*/
     uint16_t rq_start;
     uint16_t rq_end;
@@ -193,6 +194,7 @@ static void plc_mbm_tf_error(BYTE errno)
 {
     PLC_APP_VVAL(plc_mbm.crqi, BYTE) = errno;
     plc_mbm.state = PLC_MBM_ST_RQ_SCHED;
+    PLC_CLEAR_TIMER(plc_mbm.watchdog);
 }
 
 /*Request function table*/
@@ -725,6 +727,11 @@ static void _sched_construct(uint16_t i)
     }
 }
 
+static inline void _mbm_init(void)
+{
+    mb_init(&mb_master, &mb_transport, (plc_mbm.cfg->mode)?MB_ASCII:MB_RTU, TRUE, 0, (mb_port_base_struct *)&mbm_inst_usart, plc_mbm.cfg->baud, MB_PAR_NONE);
+    mb_enable(&mb_master);
+}
 
 void PLC_IOM_LOCAL_START(void) /*Внимание!!! Это надо исправить во вссех файлах драйверов*/
 {
@@ -776,8 +783,8 @@ void PLC_IOM_LOCAL_START(void) /*Внимание!!! Это надо испра�
         }
     }
 
-    mb_init(&mb_master, &mb_transport, (plc_mbm.cfg->mode)?MB_ASCII:MB_RTU, TRUE, 0, (mb_port_base_struct *)&mbm_inst_usart, plc_mbm.cfg->baud, MB_PAR_NONE);
-    mb_enable(&mb_master);
+    PLC_CLEAR_TIMER(plc_mbm.watchdog);
+    _mbm_init();
 }
 
 void PLC_IOM_LOCAL_STOP(void)
@@ -832,6 +839,8 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
         uint32_t mdl = _RQ_DEADLINE_FLG - 1;
         plc_mbm.crqi = plc_mbm.rq_end;
 
+        PLC_CLEAR_TIMER(plc_mbm.watchdog);
+
         for (j = plc_mbm.rq_start; j < plc_mbm.rq_end; j++)
         {
             plc_mbm_rq_cfg_struct * rq_cfg;
@@ -869,6 +878,13 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
             /*Начинаем обработку запроса.*/
             plc_mbm_tr_tbl[plc_mbm.crqcfg->type][PLC_MBM_ST_RQ_SCHED]();
         }
+    }
+
+    if ((PLC_MBM_ST_STOP != plc_mbm.state) && (PLC_TIMER(plc_mbm.watchdog) > 3000))
+    {
+        mb_disable(&mb_master);
+        _mbm_init();
+        plc_mbm_tf_error(PLC_MBM_RST_ERR_FAIL);
     }
 
     if ((plc_mbm.timed_func) && (PLC_TIMER(plc_mbm.timer) > plc_mbm.cfg->delay))
@@ -933,7 +949,8 @@ void mb_mstr_error_timeout_cb(mb_inst_struct *inst)
 void mb_mstr_error_rcv_data_cb(mb_inst_struct *inst)
 {
     (void)inst;
-
+    /*Вычисляем следующий дедлайн запроса*/
+    PLC_APP_WTE(plc_mbm.crqwte.dsc.start) += plc_mbm.crqcfg->period_ms;
     plc_mbm_tf_error(PLC_MBM_RST_ERR_RCV);
 }
 
@@ -950,7 +967,8 @@ void mb_mstr_error_rcv_data_cb(mb_inst_struct *inst)
 void mb_mstr_error_exec_fn_cb(mb_inst_struct *inst)
 {
     (void)inst;
-
+    /*Вычисляем следующий дедлайн запроса*/
+    PLC_APP_WTE(plc_mbm.crqwte.dsc.start) += plc_mbm.crqcfg->period_ms;
     plc_mbm_tf_error(PLC_MBM_RST_ERR_FN);
 }
 
