@@ -880,7 +880,7 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
         }
     }
 
-    if ((PLC_MBM_ST_STOP != plc_mbm.state) && (PLC_TIMER(plc_mbm.watchdog) > 3000))
+    if ((PLC_MBM_ST_RQ_LIM > plc_mbm.state) && (PLC_TIMER(plc_mbm.watchdog) > 3000))
     {
         mb_disable(&mb_master);
         _mbm_init();

@@ -97,7 +97,6 @@
 		</Unit>
 		<Unit filename="../../../libremodbus/include/mb.h" />
 		<Unit filename="../../../libremodbus/include/mb_types.h" />
-		<Unit filename="../../../libremodbus/include/mbconfig.h" />
 		<Unit filename="../../../libremodbus/include/mbframe.h" />
 		<Unit filename="../../../libremodbus/include/mbfunc.h" />
 		<Unit filename="../../../libremodbus/include/mbport.h" />
