@@ -475,18 +475,21 @@ void _plc_ain_cfg(uint32_t port, uint32_t mode)
         plc_gpio_clear(non0   + port);
         plc_gpio_clear(non1   + port);
         break;
-    case PLC_AIN_MODE_20MA:
-        plc_gpio_set  (pwr_ai0 + port);
-        plc_gpio_set  (pwr_ai1 + port);
-        plc_gpio_set  (non0   + port);
-        plc_gpio_clear(non1   + port);
-        break;
     case PLC_AIN_MODE_10V:
         plc_gpio_set  (pwr_ai0 + port);
         plc_gpio_set  (pwr_ai1 + port);
         plc_gpio_clear(non0   + port);
         plc_gpio_set  (non1   + port);
         break;
+    case PLC_AIN_MODE_20MA:
+    case PLC_AIN_MODE_OFF:
+    default:
+        plc_gpio_set  (pwr_ai0 + port);
+        plc_gpio_set  (pwr_ai1 + port);
+        plc_gpio_set  (non0   + port);
+        plc_gpio_clear(non1   + port);
+        break;
+    /*
     case PLC_AIN_MODE_OFF:
     default:
         plc_gpio_set  (pwr_ai0 + port);
@@ -494,6 +497,7 @@ void _plc_ain_cfg(uint32_t port, uint32_t mode)
         plc_gpio_clear(non0   + port);
         plc_gpio_clear(non1   + port);
         break;
+    */
     }
 }
 
@@ -529,8 +533,9 @@ void _plc_ain_init(void)
     PLC_GPIO_GR_SET    (pwr_ai1);
 
     // Управление шунтами аналоговых входов
+    // Стартуем в режиме 4-20мА, теперь это режим по умолчанию.
     PLC_GPIO_GR_CFG_OUT(non0);
-    PLC_GPIO_GR_CLEAR  (non0);
+    PLC_GPIO_GR_SET    (non0);
 
     PLC_GPIO_GR_CFG_OUT(non1);
     PLC_GPIO_GR_CLEAR  (non1);
