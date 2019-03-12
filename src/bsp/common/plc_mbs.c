@@ -7,6 +7,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #include <plc_config.h>
 #include <plc_abi.h>
@@ -71,14 +72,18 @@ static mb_trans_union mb_slave_transport;
 static tm mbtime;
 static bool mbt_sflg = false;
 
-static bool mb_init_flg = false;
+/*static bool mb_init_flg = false;*/
 static bool mb_start = false;
 
-static bool mb_gotinit = false;
-static bool mb_enabled = false;
-static bool mb_ascii = false;
-uint32_t mb_baudrate = 9600;
-uint8_t mb_slave_addr = 1;
+/*static bool mb_gotinit = false;*/
+/*static bool mb_waitinit = false;*/
+static bool mb_enabled = true;
+static bool mb_ascii = MB_DEFAULT_TRANSPORT;
+static IEC_BYTE* mb_ascii_ptr = NULL;
+uint32_t mb_baudrate = MB_DEFAULT_BAUDRATE;
+static IEC_BYTE* mb_baudrate_ptr = NULL;
+uint8_t mb_slave_addr = MB_DEFAULT_ADDRESS;
+static IEC_BYTE* mb_slave_addr_ptr = NULL;
 
 static unsigned short reg_holding_start = REG_HOLDING_START;
 static unsigned short reg_holding_buf[REG_HOLDING_NREGS-MB_REG_SEC-1];
@@ -127,7 +132,7 @@ static uint16_t mb_hr_get(uint16_t reg)
     case MB_REG_RS09:
     case MB_REG_RS10:
     case MB_REG_RS11:
-        /* */
+    /* */
     case MB_REG_AI00:
     case MB_REG_AI01:
     case MB_REG_AI10:
@@ -169,41 +174,41 @@ static void mb_hr_set(uint16_t reg, uint16_t val)
 {
     switch (reg)
     {
-        /* */
+    /* */
     case MB_REG_HWST:
-        /* */
+    /* */
     case MB_REG_DIAG1:
     case MB_REG_DIAG2:
     case MB_REG_DIAG3:
     case MB_REG_DIAG4:
     case MB_REG_DIAG5:
     case MB_REG_DIAG6:
-        /* */
+    /* */
     case MB_REG_RS07:
     case MB_REG_RS08:
     case MB_REG_RS09:
     case MB_REG_RS10:
     case MB_REG_RS11:
-        /* */
+    /* */
     case MB_REG_DIN:
-        /* */
+    /* */
     case MB_REG_DOUT:
-        /* */
+    /* */
     case MB_REG_AI00:
     case MB_REG_AI01:
-        /* */
+    /* */
     case MB_REG_AI10:
     case MB_REG_AI11:
-        /* */
+    /* */
     case MB_REG_AI20:
     case MB_REG_AI21:
-        /* */
+    /* */
     case MB_REG_AI30:
     case MB_REG_AI31:
-        /* */
+    /* */
     case MB_REG_AO00:
     case MB_REG_AO01:
-        /* */
+    /* */
     case MB_REG_AO10:
     case MB_REG_AO11:
         break;
@@ -271,30 +276,37 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
 //    uint32_t addr;
     switch (PLC_APP->l_tab[i]->v_size)
     {
-    case PLC_LSZ_X:
-        if (PLC_LT_Q != PLC_APP->l_tab[i]->v_type)
+    case PLC_LSZ_B: //configuration variables:
+        if(PLC_LT_M != PLC_APP->l_tab[i]->v_type)
         {
-            //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mb_err_tp_init, sizeof(plc_mb_err_tp_init));
-            plc_iom_errno_print(PLC_ERRNO_MBS_TP_INIT);
-            return false;
-        }
-        if (3 != PLC_APP->l_tab[i]->a_size)
-        {
-            //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mb_err_init, sizeof(plc_mb_err_init));
             plc_iom_errno_print(PLC_ERRNO_MBS_INIT);
             return false;
         }
-        if (mb_gotinit)
+        if (1 != PLC_APP->l_tab[i]->a_size)
         {
-            //plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_mb_err_extrainit, sizeof(plc_mb_err_extrainit));
-            plc_iom_errno_print(PLC_ERRNO_MBS_EX_INIT);
+            plc_iom_errno_print(PLC_ERRNO_MBS_INIT);
             return false;
         }
+        /*
+        if(0 != PLC_APP->l_tab[i]->a_data[0])
+        {
+            plc_iom_errno_print(PLC_ERRNO_MBS_INIT);
+            return false;
+        }
+        */
 
-        mb_gotinit = true;
-        mb_baudrate = (int)PLC_APP->l_tab[i]->a_data[1];
-        mb_slave_addr = (int)PLC_APP->l_tab[i]->a_data[0];
-        mb_ascii = ((int)PLC_APP->l_tab[i]->a_data[2]!=0);
+        switch((int)PLC_APP->l_tab[i]->a_data[0])
+        {
+        case 0: // slave address
+            mb_slave_addr_ptr = (IEC_BYTE*)(PLC_APP->l_tab[i]->v_buf);
+            break;
+        case 1: //baudrate
+            mb_baudrate_ptr = (IEC_BYTE*)(PLC_APP->l_tab[i]->v_buf);
+            break;
+        case 2://mode
+            mb_ascii_ptr = (IEC_BYTE*)(PLC_APP->l_tab[i]->v_buf);
+            break;
+        }
         return true;
 
     case PLC_LSZ_W:
@@ -322,11 +334,68 @@ bool PLC_IOM_LOCAL_CHECK(uint16_t i)
         PLC_LOG_ERR_SZ();//plc_curr_app->log_msg_post(LOG_CRITICAL, (char *)plc_iom_err_sz, plc_iom_err_sz_sz);
         return false;
     }
+    return false;
 }
 
 void PLC_IOM_LOCAL_START(uint16_t i)
 {
     (void)i;
+
+    if(mb_baudrate_ptr)
+    {
+        switch(*(IEC_BYTE*)(mb_baudrate_ptr))
+        {
+        case 0:
+            mb_baudrate=0;
+            break;
+        case 1:
+            mb_baudrate=1200;
+            break;
+        case 2:
+            mb_baudrate=2400;
+            break;
+        case 3:
+            mb_baudrate=4800;
+            break;
+
+        default:
+        case 4:
+            mb_baudrate=9600;
+            break;
+
+        case 5:
+            mb_baudrate=19200;
+            break;
+        case 6:
+            mb_baudrate=38400;
+            break;
+        case 7:
+            mb_baudrate=57600;
+            break;
+        case 8:
+            mb_baudrate=115200;
+            break;
+        }
+    }
+
+    if(mb_ascii_ptr)
+    {
+        mb_ascii = *(IEC_BYTE*)(mb_ascii_ptr);
+    }
+
+    if(mb_slave_addr_ptr)
+    {
+        mb_slave_addr = *(IEC_BYTE*)(mb_slave_addr_ptr);
+    }
+
+    if(mb_slave_addr>244) mb_slave_addr = 244;
+
+    if(0 == mb_baudrate || 0 == mb_slave_addr)
+        mb_enabled = false;
+
+    mb_init(&mb_slave, &mb_slave_transport, (mb_ascii)?MB_ASCII:MB_RTU, FALSE, mb_slave_addr, (mb_port_base_struct *)&mbs_inst_usart, mb_baudrate, MB_PAR_NONE);
+    mb_start = true;
+
 }
 
 void PLC_IOM_LOCAL_STOP(void)
@@ -342,21 +411,6 @@ void PLC_IOM_LOCAL_BEGIN(uint16_t i)
 void PLC_IOM_LOCAL_END(uint16_t i)
 {
     (void)i;
-    if (!mb_init_flg)
-    {
-        mb_init_flg = true;
-        //If no init location specified then start with default params.
-        if (!mb_gotinit)
-        {
-            mb_ascii = MB_DEFAULT_TRANSPORT;
-            mb_slave_addr = MB_DEFAULT_ADDRESS;
-            mb_baudrate = MB_DEFAULT_BAUDRATE;
-            mb_enabled = true;
-            mb_start = true;
-        }
-        //mb_init_rtu(&mb_slave, &mb_slave_transport, mb_slave_addr, (mb_port_base_struct *)&mbs_inst_usart, mb_baudrate, MB_PAR_NONE);
-        mb_init(&mb_slave, &mb_slave_transport, (mb_ascii)?MB_ASCII:MB_RTU, FALSE, mb_slave_addr, (mb_port_base_struct *)&mbs_inst_usart, mb_baudrate, MB_PAR_NONE);
-    }
 }
 
 uint32_t PLC_IOM_LOCAL_SCHED(uint16_t lid, uint32_t tick)
@@ -370,7 +424,6 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
 {
     (void)tick;
     //Do once!
-    if (!mb_init_flg) return;
 
     if (mb_start)
     {
@@ -393,7 +446,7 @@ void PLC_IOM_LOCAL_POLL(uint32_t tick)
 }
 uint32_t PLC_IOM_LOCAL_WEIGTH(uint16_t i)
 {
-    return PLC_APP->l_tab[i]->a_data[0];
+    return (PLC_APP->l_tab[i]->a_data[0])<<(PLC_APP->l_tab[i]->v_size*8);
 }
 
 uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
@@ -401,7 +454,10 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
     switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_M:
-        *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf) = reg_holding_buf[plc_curr_app->l_tab[i]->a_data[0]];
+        if(1==plc_curr_app->l_tab[i]->a_data[0])
+        {
+            *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf) = reg_holding_buf[plc_curr_app->l_tab[i]->a_data[0]];
+        }
         break;
     case PLC_LT_Q://Write only access to init location
     default:
@@ -415,16 +471,12 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_M:
-        reg_holding_buf[plc_curr_app->l_tab[i]->a_data[0]] = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
-        break;
-    case PLC_LT_Q:
-        if (mb_gotinit)
+        if(0!=plc_curr_app->l_tab[i]->a_data[0])
         {
-            mb_enabled = *(IEC_BOOL *)(PLC_APP->l_tab[i]->v_buf);
-            mb_start = true; //Now we can start
-            mb_gotinit = false; //Do not check locationy any more
+            reg_holding_buf[plc_curr_app->l_tab[i]->a_data[0]] = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
         }
         break;
+
     default:
         break;
     }
@@ -444,7 +496,7 @@ mb_reg_input_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT r
 
 mb_err_enum
 mb_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT reg_num,
-                 mb_reg_mode_enum mode)
+                  mb_reg_mode_enum mode)
 {
     mb_err_enum    status = MB_ENOERR;
     int             reg_index;
@@ -457,7 +509,7 @@ mb_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT
         reg_index = (int)(reg_addr - reg_holding_start);
         switch (mode)
         {
-            /* Pass current register values to the protocol stack. */
+        /* Pass current register values to the protocol stack. */
         case MB_REG_READ:
             while (reg_num > 0)
             {
@@ -470,8 +522,8 @@ mb_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT
             }
             break;
 
-            /* Update current register values with new values from the
-             * protocol stack. */
+        /* Update current register values with new values from the
+         * protocol stack. */
         case MB_REG_WRITE:
             while (reg_num > 0)
             {
@@ -494,7 +546,7 @@ mb_reg_holding_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT
 
 mb_err_enum
 mb_reg_coils_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHORT coil_num,
-               mb_reg_mode_enum mode)
+                mb_reg_mode_enum mode)
 {
     (void)inst;
     (void)reg_buff;
@@ -513,4 +565,3 @@ mb_reg_discrete_cb(mb_inst_struct *inst, UCHAR *reg_buff, USHORT reg_addr, USHOR
     (void)disc_num;
     return MB_ENOREG;
 }
-
