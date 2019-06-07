@@ -454,7 +454,7 @@ uint32_t PLC_IOM_LOCAL_GET(uint16_t i)
     switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_M:
-        if(1==plc_curr_app->l_tab[i]->a_data[0])
+        if (PLC_LSZ_W == PLC_APP->l_tab[i]->v_size)
         {
             *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf) = reg_holding_buf[plc_curr_app->l_tab[i]->a_data[0]];
         }
@@ -471,7 +471,7 @@ uint32_t PLC_IOM_LOCAL_SET(uint16_t i)
     switch (plc_curr_app->l_tab[i]->v_type)
     {
     case PLC_LT_M:
-        if(0!=plc_curr_app->l_tab[i]->a_data[0])
+        if (PLC_LSZ_W == PLC_APP->l_tab[i]->v_size)
         {
             reg_holding_buf[plc_curr_app->l_tab[i]->a_data[0]] = *(IEC_UINT *)(plc_curr_app->l_tab[i]->v_buf);
         }
